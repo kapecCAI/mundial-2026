@@ -8,9 +8,15 @@
 :root{--bg:#0f172a;--card:#ffffff;--ink:#1e293b;--muted:#64748b;--line:#e2e8f0;}
 *{box-sizing:border-box;}
 body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,Arial,sans-serif;background:#0b1220;color:var(--ink);}
-header{background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;padding:26px 20px 18px;text-align:center;}
-header h1{margin:0;font-size:26px;letter-spacing:.5px;}
-header p{margin:6px 0 0;color:#94a3b8;font-size:14px;}
+header{background:radial-gradient(circle at 50% -10%,#243b66 0%,#13203b 45%,#0b1220 100%);color:#fff;text-align:center;}
+.hero{min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:48px 20px 40px;}
+.hero .trophy{font-size:130px;line-height:1;filter:drop-shadow(0 10px 26px rgba(0,0,0,.55));animation:float 3.4s ease-in-out infinite;}
+.hero h1{margin:10px 0 0;font-size:clamp(38px,9vw,80px);font-weight:900;letter-spacing:2px;background:linear-gradient(90deg,#fde68a,#f59e0b,#fcd34d,#f59e0b);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 2px 30px rgba(245,158,11,.25);}
+.hero .sub{margin:2px 0 0;color:#e2e8f0;font-size:clamp(15px,2.6vw,22px);font-weight:700;letter-spacing:3px;text-transform:uppercase;}
+.hero .sub2{margin:10px 0 0;color:#7c8aa3;font-size:13px;max-width:540px;}
+.hero .scroll{margin-top:30px;color:#9fb0c9;font-size:14px;font-weight:600;animation:bounce 1.8s infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(9px)}}
 .wrap{max-width:1080px;margin:0 auto;padding:0 14px 60px;}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:18px 0 0;}
 .tab{padding:11px 22px;border-radius:11px 11px 0 0;background:#1e293b;color:#cbd5e1;cursor:pointer;font-weight:700;font-size:15px;border:none;transition:.15s;}
@@ -38,8 +44,10 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 .stand .p3{background:#fef9c3;}.stand .p4{background:#fee2e2;}
 .stand td.c{text-align:center;width:34px;}
 .mtable{margin-top:9px;font-size:12.5px;}
-.mtable .row{display:flex;justify-content:space-between;padding:3px 4px;border-bottom:1px dashed #eef2f7;}
-.mtable .sc{font-weight:700;color:var(--ink);padding:0 8px;}
+.mtable .row{display:grid;grid-template-columns:1fr 58px 1fr;align-items:center;padding:4px 2px;border-bottom:1px dashed #eef2f7;}
+.mtable .row .h{text-align:right;}
+.mtable .row .a{text-align:left;}
+.mtable .sc{text-align:center;font-weight:800;color:var(--ink);background:#f1f5f9;border-radius:5px;padding:1px 0;}
 .banner{background:#16784b;color:#fff;padding:10px 16px;border-radius:10px;margin:18px 0;font-size:14px;}
 .banner b{color:#bbf7d0;}
 .ko h3{margin:20px 0 8px;font-size:17px;border-left:4px solid var(--ink);padding-left:10px;}
@@ -76,13 +84,23 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
  .gcard,.kotable,.awards,.exp,.champbar,.banner{break-inside:avoid;}
  .grid{grid-template-columns:repeat(2,1fr);}
  .fl{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+ .hero{min-height:auto;padding:16px 10px;}
+ .hero .trophy{font-size:64px;animation:none;}
+ .hero h1{font-size:40px;}
+ .hero .scroll{display:none;}
+ header{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 }
 </style>
 </head>
 <body>
 <header>
-<h1>🏆 Prode Mundial 2026 — Comparativa de 4 agentes</h1>
-<p>Predicción completa del fixture · Claude · Codex · Gemini · Kimi · Maldini · Consenso</p>
+<div class="hero">
+<div class="trophy">🏆</div>
+<h1>PRODE MUNDIAL 2026</h1>
+<p class="sub">Canadá · México · Estados Unidos</p>
+<p class="sub2">Comparativa del fixture completo según 6 opiniones: Claude · Codex · Gemini · Kimi · Maldini · Consenso</p>
+<div class="scroll">▼ Elegí una opinión</div>
+</div>
 </header>
 <div class="wrap">
 <div class="tabs" id="agentTabs"></div>
@@ -114,7 +132,7 @@ function standRows(st,ptsLabel){
 }
 function matchRows(m){
   let h='<div class="mtable">';
-  m.forEach(x=>{h+=`<div class="row"><span>${team(x[0])}</span><span class="sc">${x[1]}</span><span style="text-align:left">${team(x[2])}</span></div>`;});
+  m.forEach(x=>{h+=`<div class="row"><span class="h">${team(x[0])}</span><span class="sc">${x[1]}</span><span class="a">${team(x[2])}</span></div>`;});
   return h+'</div>';
 }
 function fixtureHTML(a){
