@@ -115,6 +115,21 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 .bk-team:disabled{color:#cbd5e1;cursor:default;}
 .bk-team .fl{width:18px;height:13px;}
 .bk-champ{text-align:center;font-size:20px;font-weight:900;padding:14px;margin-top:6px;background:#fffbeb;border-radius:12px;}
+#pb-groups{grid-template-columns:repeat(auto-fill,minmax(320px,1fr));}
+.gm{display:grid;grid-template-columns:1fr auto auto 1fr;align-items:center;gap:6px;padding:7px 0;border-bottom:1px dashed #eef2f7;}
+.gm .gm-t{font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:5px;}
+.gm .gm-t.r{justify-content:flex-end;text-align:right;}
+.stp{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+.st-b{border:none;background:#f1f5f9;color:#0ea5e9;font-weight:900;font-size:15px;width:24px;height:28px;cursor:pointer;line-height:1;}
+.st-b:hover{background:#e0f2fe;}
+.st-v{min-width:22px;text-align:center;font-weight:800;font-size:14px;}
+.gstand{margin-top:10px;}
+.gstand table{width:100%;border-collapse:collapse;font-size:12px;}
+.gstand td,.gstand th{padding:3px 5px;border-bottom:1px solid #f1f5f9;text-align:center;}
+.gstand th{color:#94a3b8;font-size:10px;text-transform:uppercase;font-weight:600;}
+.gstand td.tn{text-align:left;font-weight:600;}
+.gstand tr.q td{background:#dcfce7;}
+.gstand tr.q3 td{background:#fef9c3;}
 .fl{width:24px;height:18px;border-radius:2px;vertical-align:middle;margin-right:6px;box-shadow:0 0 1px rgba(0,0,0,.5);object-fit:cover;}
 .kotable .away .fl{margin-right:6px;}
 .printonly{display:none;}
@@ -302,62 +317,68 @@ async function loadLive(){
   if(!liveTimer)liveTimer=setInterval(loadLive,60000);
 }
 
-// ===== ARMÁ TU PRODE (constructor + cuadro interactivo, guardado en localStorage) =====
+// ===== ARMÁ TU PRODE (cargás resultados, la tabla y el cuadro se autocompletan) =====
 const GRUPOS={A:["México","Sudáfrica","Corea del Sur","Rep. Checa"],B:["Suiza","Canadá","Bosnia","Qatar"],C:["Brasil","Marruecos","Escocia","Haití"],D:["Estados Unidos","Paraguay","Australia","Turquía"],E:["Alemania","Curazao","Costa de Marfil","Ecuador"],F:["Países Bajos","Japón","Suecia","Túnez"],G:["Bélgica","Egipto","Irán","Nueva Zelanda"],H:["España","Cabo Verde","Arabia Saudita","Uruguay"],I:["Francia","Senegal","Irak","Noruega"],J:["Argentina","Argelia","Austria","Jordania"],K:["Portugal","Uzbekistán","Colombia","RD Congo"],L:["Inglaterra","Croacia","Ghana","Panamá"]};
 const ALL48=Object.values(GRUPOS).flat().sort((a,b)=>a.localeCompare(b,'es'));
+const GFIX=[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]];
 const R32=[["73","2A","2B"],["74","1E","T1"],["75","1F","2C"],["76","1C","2F"],["77","1I","T2"],["78","2E","2I"],["79","1A","T3"],["80","1L","T4"],["81","1D","T5"],["82","1G","T6"],["83","2K","2L"],["84","1H","2J"],["85","1B","T7"],["86","1J","2H"],["87","1K","T8"],["88","2D","2G"]];
 const R16=[["89","W74","W77"],["90","W73","W75"],["91","W76","W78"],["92","W79","W80"],["93","W83","W84"],["94","W81","W82"],["95","W86","W88"],["96","W85","W87"]];
 const QFR=[["97","W89","W90"],["98","W93","W94"],["99","W91","W92"],["100","W95","W96"]];
 const SFR=[["101","W97","W98"],["102","W99","W100"]];
 const FNR=[["104","W101","W102"]];
 const ROUNDS=[["16avos",R32],["Octavos",R16],["Cuartos",QFR],["Semis",SFR],["Final",FNR]];
-let PB_TQ=[], PB_KB={};
-const CONSENSO_PICKS={camp:"España",sub:"Argentina",ter:"Francia",cua:"Brasil",gol:"Kylian Mbappé",mvp:"Lamine Yamal",
-  g:{A:["México","Corea del Sur","Rep. Checa"],B:["Suiza","Canadá","Bosnia"],C:["Brasil","Marruecos","Escocia"],D:["Estados Unidos","Turquía","Paraguay"],E:["Alemania","Ecuador","Costa de Marfil"],F:["Países Bajos","Japón","Suecia"],G:["Bélgica","Egipto","Irán"],H:["España","Uruguay","Arabia Saudita"],I:["Francia","Noruega","Senegal"],J:["Argentina","Austria","Argelia"],K:["Portugal","Colombia","RD Congo"],L:["Inglaterra","Croacia","Ghana"]},
-  tq:["A","C","D","E","F","I","J","L"],
-  kb:{"73":"Canadá","74":"Alemania","75":"Países Bajos","76":"Brasil","77":"Francia","78":"Noruega","79":"México","80":"Inglaterra","81":"Estados Unidos","82":"Bélgica","83":"Colombia","84":"España","85":"Suiza","86":"Argentina","87":"Portugal","88":"Turquía","89":"Francia","90":"Países Bajos","91":"Brasil","92":"Inglaterra","93":"España","94":"Bélgica","95":"Argentina","96":"Portugal","97":"Francia","98":"España","99":"Brasil","100":"Argentina","101":"España","102":"Argentina","104":"España"}};
+let PB_MS={}, PB_KB={};
+const CONSENSO_ORDER={A:["México","Corea del Sur","Rep. Checa","Sudáfrica"],B:["Suiza","Canadá","Bosnia","Qatar"],C:["Brasil","Marruecos","Escocia","Haití"],D:["Estados Unidos","Turquía","Paraguay","Australia"],E:["Alemania","Ecuador","Costa de Marfil","Curazao"],F:["Países Bajos","Japón","Suecia","Túnez"],G:["Bélgica","Egipto","Irán","Nueva Zelanda"],H:["España","Uruguay","Arabia Saudita","Cabo Verde"],I:["Francia","Noruega","Senegal","Irak"],J:["Argentina","Austria","Argelia","Jordania"],K:["Portugal","Colombia","RD Congo","Uzbekistán"],L:["Inglaterra","Croacia","Ghana","Panamá"]};
+const CONSENSO_KB={"73":"Canadá","74":"Alemania","75":"Países Bajos","76":"Brasil","77":"Francia","78":"Noruega","79":"México","80":"Inglaterra","81":"Estados Unidos","82":"Bélgica","83":"Colombia","84":"España","85":"Suiza","86":"Argentina","87":"Portugal","88":"Turquía","89":"Francia","90":"Países Bajos","91":"Brasil","92":"Inglaterra","93":"España","94":"Bélgica","95":"Argentina","96":"Portugal","97":"Francia","98":"España","99":"Brasil","100":"Argentina","101":"España","102":"Argentina","104":"España"};
 function pbOpts(arr){return '<option value="">— elegí —</option>'+arr.map(t=>`<option value="${t}">${t}</option>`).join('');}
 function makeProde(){
   const defs=`<div class="pb-card"><h3>🏆 Definiciones del torneo</h3><div class="pb-defs">`+
-    [['camp','🏆 Campeón'],['sub','🥈 Subcampeón'],['ter','🥉 Tercer puesto'],['cua','4º puesto']].map(d=>`<label class="pb-field">${d[1]}<select id="pr-${d[0]}">${pbOpts(ALL48)}</select></label>`).join('')+
+    [['camp','🏆 Campeón (auto)'],['sub','🥈 Subcampeón (auto)'],['ter','🥉 Tercer puesto'],['cua','4º puesto']].map(d=>`<label class="pb-field">${d[1]}<select id="pr-${d[0]}">${pbOpts(ALL48)}</select></label>`).join('')+
     `<label class="pb-field">👟 Goleador<input id="pr-gol" placeholder="Ej: Kylian Mbappé"></label>`+
     `<label class="pb-field">⭐ Mejor jugador<input id="pr-mvp" placeholder="Ej: Lamine Yamal"></label></div></div>`;
-  let groups='<div class="pb-card"><h3>📋 Fase de grupos — elegí 1º, 2º y 3º de cada grupo</h3><div class="pb-grid">';
-  for(const g in GRUPOS){groups+=`<div class="pb-g"><h4><span class="gl">${g}</span>Grupo ${g}</h4>`+[0,1,2].map(i=>`<div class="ln"><span class="pos">${i+1}º</span><select id="pr-g-${g}-${i}">${pbOpts(GRUPOS[g])}</select></div>`).join('')+`</div>`;}
-  groups+='</div></div>';
-  const thirds=`<div class="pb-card"><h3>🎟️ Mejores 8 terceros que clasifican</h3><p style="color:#64748b;font-size:13px;margin:0 0 10px">Marcá 8 de los 12 terceros (antes elegí el 3º de cada grupo arriba).</p><div id="pb-thirds"></div></div>`;
-  const bracket=`<div class="pb-card"><h3>🏆 Cuadro de eliminatorias</h3><p style="color:#64748b;font-size:13px;margin:0 0 10px">Tocá el equipo que pasa en cada llave; los ganadores avanzan solos hasta la final. <i>(La asignación de terceros a las llaves es por orden de grupo, simplificada.)</i></p><div id="pb-bracket"></div></div>`;
+  const groups=`<div class="pb-card"><h3>📋 Fase de grupos — cargá los resultados</h3><p style="color:#64748b;font-size:13px;margin:0 0 10px">Tocá <b>−</b> / <b>+</b> para el marcador de cada partido. La tabla (puntos, DG, clasificados) se calcula sola. 🟢 1º-2º pasan · 🟡 3º puede entrar.</p><div class="pb-grid" id="pb-groups"></div></div>`;
+  const thirds=`<div class="pb-card"><h3>🎟️ Mejores 8 terceros (automático)</h3><p style="color:#64748b;font-size:13px;margin:0 0 10px">Se eligen solos según puntos y diferencia de gol de tus resultados.</p><div id="pb-thirds"></div></div>`;
+  const bracket=`<div class="pb-card"><h3>🏆 Cuadro de eliminatorias</h3><p style="color:#64748b;font-size:13px;margin:0 0 10px">Se arma con tus clasificados. Tocá el equipo que pasa en cada llave; los ganadores avanzan solos hasta la final. <i>(Terceros asignados por orden de grupo, simplificado.)</i></p><div id="pb-bracket"></div></div>`;
   const actions=`<div class="pb-actions"><button class="pb-btn" id="pb-cons">✨ Cargar sugerencia del consenso</button><button class="pb-btn alt" id="pb-copy">📋 Copiar resumen</button><button class="pb-btn alt" id="pb-dl">⬇️ Descargar .txt</button><button class="pb-btn ghost" id="pb-reset">🗑️ Borrar</button></div>`;
-  const intro=`<div class="banner" style="background:#334155">ℹ️ Armá tu propio prode: se <b>guarda solo</b> en este navegador. Completá grupos, elegí los 8 terceros, armá el cuadro tocando quién pasa, y <b>copiá o descargá el resumen</b> para tu pozo.</div>`;
+  const intro=`<div class="banner" style="background:#334155">ℹ️ Armá tu propio prode cargando los resultados. Se <b>guarda solo</b> en este navegador. La tabla, los clasificados y el cuadro se <b>autocompletan</b>; después tocás quién pasa en las llaves y <b>copiás o descargás</b> tu resumen.</div>`;
   return intro+actions+defs+groups+thirds+bracket+`<div class="pb-summary" id="pb-sum"></div>`;
 }
 function pbVal(id){const e=document.getElementById(id);return e?e.value:'';}
 function pbSet(id,v){const e=document.getElementById(id);if(e)e.value=v||'';}
-function prodeRead(){const s={camp:pbVal('pr-camp'),sub:pbVal('pr-sub'),ter:pbVal('pr-ter'),cua:pbVal('pr-cua'),gol:pbVal('pr-gol'),mvp:pbVal('pr-mvp'),g:{}};for(const g in GRUPOS)s.g[g]=[pbVal('pr-g-'+g+'-0'),pbVal('pr-g-'+g+'-1'),pbVal('pr-g-'+g+'-2')];return s;}
-function fullState(){const s=prodeRead();s.tq=PB_TQ.slice();s.kb=Object.assign({},PB_KB);return s;}
-function prodeWrite(s){if(!s)return;pbSet('pr-camp',s.camp);pbSet('pr-sub',s.sub);pbSet('pr-ter',s.ter);pbSet('pr-cua',s.cua);pbSet('pr-gol',s.gol);pbSet('pr-mvp',s.mvp);if(s.g)for(const g in GRUPOS)(s.g[g]||[]).forEach((t,i)=>pbSet('pr-g-'+g+'-'+i,t));PB_TQ=(s.tq||[]).slice();PB_KB=Object.assign({},s.kb||{});}
-function thirdsArr(){const gp=prodeRead().g;return PB_TQ.slice().sort().map(g=>(gp[g]&&gp[g][2])||'').filter(Boolean);}
-function resolveRef(ref,gp,thirds){if(ref[0]==='W')return PB_KB[ref.slice(1)]||'';if(ref[0]==='T')return thirds[parseInt(ref.slice(1))-1]||'';const pos=(+ref[0])-1,g=ref.slice(1),a=gp[g];return (a&&a[pos])||'';}
-function renderThirds(){
-  const cont=document.getElementById('pb-thirds');if(!cont)return;
-  const gp=prodeRead().g;
-  PB_TQ=PB_TQ.filter(g=>gp[g]&&gp[g][2]);
-  let h='<div class="pb-tc">';
-  for(const g in GRUPOS){const t=(gp[g]&&gp[g][2])||'';const ck=PB_TQ.includes(g);
-    h+=`<label class="pb-tk ${t?'':'off'}"><input type="checkbox" data-g="${g}" ${ck?'checked':''} ${t?'':'disabled'}> <b>${g}</b>&nbsp;${t?team(t):'<span style="color:#94a3b8">elegí el 3º</span>'}</label>`;}
-  h+=`</div><div class="pb-tcount">Terceros elegidos: <b>${PB_TQ.length}</b> / 8</div>`;
-  cont.innerHTML=h;
-  cont.querySelectorAll('input[type=checkbox]').forEach(cb=>cb.onchange=()=>{const g=cb.dataset.g;
-    if(cb.checked){if(PB_TQ.length>=8&&!PB_TQ.includes(g)){cb.checked=false;pbToast('Ya elegiste 8 terceros');return;}if(!PB_TQ.includes(g))PB_TQ.push(g);}
-    else PB_TQ=PB_TQ.filter(x=>x!==g);
-    prodeSave();});
-}
+function prodeRead(){return {camp:pbVal('pr-camp'),sub:pbVal('pr-sub'),ter:pbVal('pr-ter'),cua:pbVal('pr-cua'),gol:pbVal('pr-gol'),mvp:pbVal('pr-mvp')};}
+function fullState(){const s=prodeRead();s.ms=PB_MS;s.kb=PB_KB;return s;}
+function prodeWrite(s){if(!s)return;pbSet('pr-camp',s.camp);pbSet('pr-sub',s.sub);pbSet('pr-ter',s.ter);pbSet('pr-cua',s.cua);pbSet('pr-gol',s.gol);pbSet('pr-mvp',s.mvp);PB_MS=Object.assign({},s.ms||{});PB_KB=Object.assign({},s.kb||{});}
+function computeStandings(g){const ts=GRUPOS[g];const m={};ts.forEach(t=>m[t]={t:t,pj:0,pts:0,gf:0,ga:0});
+  GFIX.forEach((pr,idx)=>{const sc=PB_MS[g+idx];if(!sc||sc[0]===null||sc[0]===undefined||sc[1]===null||sc[1]===undefined)return;const H=m[ts[pr[0]]],A=m[ts[pr[1]]];const h=+sc[0],a=+sc[1];H.pj++;A.pj++;H.gf+=h;H.ga+=a;A.gf+=a;A.ga+=h;if(h>a)H.pts+=3;else if(a>h)A.pts+=3;else{H.pts++;A.pts++;}});
+  const arr=ts.map(t=>{const x=m[t];x.dg=x.gf-x.ga;return x;});
+  arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.t.localeCompare(b.t,'es'));
+  return arr;}
+function bestThirds(ST){const arr=Object.keys(GRUPOS).map(g=>{const o=ST[g][2];return {g:g,t:o.t,pts:o.pts,dg:o.dg,gf:o.gf,pj:o.pj};});
+  arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.g.localeCompare(b.g));return arr;}
+function thirdSlots(ST){return bestThirds(ST).slice(0,8).map(x=>x.g).sort().map(g=>ST[g][2].t);}
+function stepHTML(k,side,v){const t=(v===null||v===undefined)?'–':v;return `<span class="stp"><button class="st-b" data-k="${k}" data-s="${side}" data-d="-1">−</button><span class="st-v" id="v-${k}-${side}">${t}</span><button class="st-b" data-k="${k}" data-s="${side}" data-d="1">+</button></span>`;}
+function standHTML(g){const st=computeStandings(g);let h='<table><tr><th>#</th><th style="text-align:left">Equipo</th><th>PJ</th><th>Pts</th><th>DG</th></tr>';
+  st.forEach((x,i)=>{const cls=i<2?'q':(i===2?'q3':'');h+=`<tr class="${cls}"><td>${i+1}</td><td class="tn">${team(x.t)}</td><td>${x.pj}</td><td><b>${x.pts}</b></td><td>${x.dg>0?'+':''}${x.dg}</td></tr>`;});
+  return h+'</table>';}
+function renderGroups(){const cont=document.getElementById('pb-groups');if(!cont)return;let h='';
+  for(const g in GRUPOS){h+=`<div class="pb-g"><h4><span class="gl">${g}</span>Grupo ${g}</h4>`;
+    GFIX.forEach((pr,idx)=>{const k=g+idx;const home=GRUPOS[g][pr[0]],away=GRUPOS[g][pr[1]];const sc=PB_MS[k]||[null,null];
+      h+=`<div class="gm"><span class="gm-t r">${team(home)}</span>${stepHTML(k,0,sc[0])}${stepHTML(k,1,sc[1])}<span class="gm-t">${team(away)}</span></div>`;});
+    h+=`<div class="gstand" id="stand-${g}">${standHTML(g)}</div></div>`;}
+  cont.innerHTML=h;}
+function pbStep(k,side,d){const cur=(PB_MS[k]||[null,null]).slice();let v=cur[side];v=(v===null||v===undefined)?(d>0?0:null):v+d;if(v!==null&&v<0)v=null;if(v!==null&&v>20)v=20;cur[side]=v;PB_MS[k]=cur;
+  const el=document.getElementById('v-'+k+'-'+side);if(el)el.textContent=(v===null?'–':v);
+  const sd=document.getElementById('stand-'+k[0]);if(sd)sd.innerHTML=standHTML(k[0]);
+  prodeSave();}
+function renderThirds(){const cont=document.getElementById('pb-thirds');if(!cont)return;const ST={};for(const g in GRUPOS)ST[g]=computeStandings(g);
+  const b=bestThirds(ST).slice(0,8);
+  cont.innerHTML='<div class="pb-tc">'+b.map((x,i)=>`<div class="pb-tk">${i+1}. ${team(x.t)} <span style="color:#94a3b8">(${x.g}·${x.pts}pt)</span></div>`).join('')+'</div>';}
 function bkBtn(mn,t,w){const sel=(t&&w===t)?'sel':'';return `<button class="bk-team ${sel}" data-m="${mn}" data-t="${t||''}" ${t?'':'disabled'}>${t?team(t):'—'}</button>`;}
-function renderBracket(){
-  const cont=document.getElementById('pb-bracket');if(!cont)return;
-  const gp=prodeRead().g, thirds=thirdsArr();
+function renderBracket(){const cont=document.getElementById('pb-bracket');if(!cont)return;
+  const ST={};for(const g in GRUPOS)ST[g]=computeStandings(g);const ts=thirdSlots(ST);
+  function rref(ref){if(ref[0]==='W')return PB_KB[ref.slice(1)]||'';if(ref[0]==='T')return ts[parseInt(ref.slice(1))-1]||'';const pos=(+ref[0])-1,g=ref.slice(1);return (ST[g][pos]&&ST[g][pos].t)||'';}
   const order=[...R32,...R16,...QFR,...SFR,...FNR];const teams={};
-  order.forEach(m=>{const a=resolveRef(m[1],gp,thirds),b=resolveRef(m[2],gp,thirds);teams[m[0]]=[a,b];if(PB_KB[m[0]]&&PB_KB[m[0]]!==a&&PB_KB[m[0]]!==b)delete PB_KB[m[0]];});
+  order.forEach(m=>{const a=rref(m[1]),b=rref(m[2]);teams[m[0]]=[a,b];if(PB_KB[m[0]]&&PB_KB[m[0]]!==a&&PB_KB[m[0]]!==b)delete PB_KB[m[0]];});
   let h='<div class="bk-rounds">';
   ROUNDS.forEach(rd=>{h+=`<div class="bk-round"><div class="bk-h">${rd[0]}</div>`;
     rd[1].forEach(m=>{const tm=teams[m[0]],w=PB_KB[m[0]]||'';h+=`<div class="bk-m">${bkBtn(m[0],tm[0],w)}<span class="bk-vs">vs</span>${bkBtn(m[0],tm[1],w)}</div>`;});
@@ -367,31 +388,32 @@ function renderBracket(){
   h+=`<div class="bk-champ">🏆 ${champ?team(champ):'<span style="color:#94a3b8">— definí la final —</span>'}</div>`;
   cont.innerHTML=h;
   if(champ){pbSet('pr-camp',champ);pbSet('pr-sub',fin[0]===champ?fin[1]:fin[0]);}
-  cont.querySelectorAll('.bk-team').forEach(el=>el.onclick=()=>{const tm=el.dataset.t;if(!tm)return;PB_KB[el.dataset.m]=tm;prodeSave();});
-}
+  cont.querySelectorAll('.bk-team').forEach(el=>el.onclick=()=>{const tm=el.dataset.t;if(!tm)return;PB_KB[el.dataset.m]=tm;prodeSave();});}
 function prodeSave(){renderThirds();renderBracket();try{localStorage.setItem('prode2026',JSON.stringify(fullState()));}catch(e){}prodeSummary();}
 function prodeSummary(){const s=prodeRead();const c=document.getElementById('pb-sum');if(!c)return;let h='<h3>📝 Tu prode</h3>';
   h+=`<div class="row">🏆 <b>Campeón:</b> ${s.camp?team(s.camp):'—'}</div>`;
   h+=`<div class="row">🥈 ${s.sub?team(s.sub):'—'} &nbsp;·&nbsp; 🥉 ${s.ter?team(s.ter):'—'} &nbsp;·&nbsp; 4º ${s.cua?team(s.cua):'—'}</div>`;
   h+=`<div class="row">👟 Goleador: <b>${s.gol||'—'}</b> &nbsp;·&nbsp; ⭐ Mejor jugador: <b>${s.mvp||'—'}</b></div>`;
-  const gl=Object.keys(GRUPOS).map(g=>{const a=s.g[g]||[];return a[0]?`${g}: ${a[0]}${a[1]?' / '+a[1]:''}`:'';}).filter(Boolean).join(' · ');
-  if(gl)h+=`<div class="row" style="color:#94a3b8;font-size:13px;margin-top:8px">Grupos (1º/2º): ${gl}</div>`;
+  const gl=Object.keys(GRUPOS).map(g=>{const st=computeStandings(g);return st[0].pj>0?`${g}: ${st[0].t} / ${st[1].t}`:'';}).filter(Boolean).join(' · ');
+  if(gl)h+=`<div class="row" style="color:#94a3b8;font-size:13px;margin-top:8px">Clasificados (1º/2º): ${gl}</div>`;
   c.innerHTML=h;}
-function prodeText(){const s=prodeRead();const L=['PRODE MUNDIAL 2026','','CAMPEON: '+(s.camp||'-'),'SUBCAMPEON: '+(s.sub||'-'),'TERCERO: '+(s.ter||'-'),'CUARTO: '+(s.cua||'-'),'GOLEADOR: '+(s.gol||'-'),'MEJOR JUGADOR: '+(s.mvp||'-'),'','FASE DE GRUPOS:'];
-  for(const g in GRUPOS){const a=s.g[g]||[];L.push('Grupo '+g+':  1) '+(a[0]||'-')+'   2) '+(a[1]||'-')+'   3) '+(a[2]||'-'));}
+function prodeText(){const s=prodeRead();const L=['PRODE MUNDIAL 2026','','CAMPEON: '+(s.camp||'-'),'SUBCAMPEON: '+(s.sub||'-'),'TERCERO: '+(s.ter||'-'),'CUARTO: '+(s.cua||'-'),'GOLEADOR: '+(s.gol||'-'),'MEJOR JUGADOR: '+(s.mvp||'-'),'','FASE DE GRUPOS (posiciones):'];
+  for(const g in GRUPOS){const st=computeStandings(g);L.push('Grupo '+g+': 1) '+st[0].t+'  2) '+st[1].t+'  3) '+st[2].t+'  4) '+st[3].t);}
   const any=ROUNDS.some(rd=>rd[1].some(m=>PB_KB[m[0]]));
   if(any){L.push('','CUADRO (ganadores):');ROUNDS.forEach(rd=>{const ws=rd[1].map(m=>PB_KB[m[0]]).filter(Boolean);if(ws.length)L.push(rd[0]+': '+ws.join(', '));});}
   return L.join('\n');}
 function pbToast(m){let t=document.getElementById('pb-toast');if(!t){t=document.createElement('div');t.id='pb-toast';t.className='pb-toast';document.body.appendChild(t);}t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600);}
+function genScores(g,ord){GFIX.forEach((pr,idx)=>{const ti=GRUPOS[g][pr[0]],tj=GRUPOS[g][pr[1]];PB_MS[g+idx]=(ord.indexOf(ti)<ord.indexOf(tj))?[2,0]:[0,2];});}
 function wireProde(panel){
-  panel.querySelectorAll('select').forEach(el=>el.addEventListener('change',prodeSave));
+  panel.querySelectorAll('select,input').forEach(el=>el.addEventListener('change',prodeSave));
   panel.querySelectorAll('input').forEach(el=>el.addEventListener('input',()=>{clearTimeout(window._pbt);window._pbt=setTimeout(prodeSave,400);}));
-  panel.querySelector('#pb-cons').onclick=()=>{prodeWrite(CONSENSO_PICKS);prodeSave();pbToast('Cargué el consenso ✨');};
-  panel.querySelector('#pb-reset').onclick=()=>{if(confirm('¿Borrar tu prode?')){try{localStorage.removeItem('prode2026');}catch(e){}PB_TQ=[];PB_KB={};prodeWrite({camp:'',sub:'',ter:'',cua:'',gol:'',mvp:'',g:{},tq:[],kb:{}});for(const g in GRUPOS)[0,1,2].forEach(i=>pbSet('pr-g-'+g+'-'+i,''));prodeSave();pbToast('Prode borrado');}};
+  panel.querySelector('#pb-groups').addEventListener('click',e=>{const b=e.target.closest('.st-b');if(b)pbStep(b.dataset.k,+b.dataset.s,+b.dataset.d);});
+  panel.querySelector('#pb-cons').onclick=()=>{for(const g in CONSENSO_ORDER)genScores(g,CONSENSO_ORDER[g]);PB_KB=Object.assign({},CONSENSO_KB);pbSet('pr-ter','Francia');pbSet('pr-cua','Brasil');pbSet('pr-gol','Kylian Mbappé');pbSet('pr-mvp','Lamine Yamal');renderGroups();prodeSave();pbToast('Cargué el consenso ✨');};
+  panel.querySelector('#pb-reset').onclick=()=>{if(confirm('¿Borrar tu prode?')){try{localStorage.removeItem('prode2026');}catch(e){}PB_MS={};PB_KB={};prodeWrite({});renderGroups();prodeSave();pbToast('Prode borrado');}};
   panel.querySelector('#pb-copy').onclick=async()=>{try{await navigator.clipboard.writeText(prodeText());pbToast('Resumen copiado 📋');}catch(e){pbToast('No pude copiar');}};
   panel.querySelector('#pb-dl').onclick=()=>{const b=new Blob([prodeText()],{type:'text/plain'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='mi-prode-2026.txt';a.click();URL.revokeObjectURL(u);pbToast('Descargando ⬇️');};
   let saved=null;try{saved=JSON.parse(localStorage.getItem('prode2026')||'null');}catch(e){}
-  prodeWrite(saved);renderThirds();renderBracket();prodeSummary();
+  prodeWrite(saved);renderGroups();prodeSave();
 }
 
 function build(){
