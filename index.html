@@ -72,6 +72,12 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 .credit{text-align:center;color:#94a3b8;font-size:15px;margin-top:10px;}
 .credit a{color:#fbbf24;font-weight:800;text-decoration:none;border-bottom:1px dotted #fbbf24;}
 .credit a:hover{color:#fde68a;border-bottom-color:#fde68a;}
+.donate{max-width:560px;margin:40px auto 0;background:#fff;border:1px solid var(--line);border-radius:16px;padding:28px 24px;text-align:center;box-shadow:0 10px 28px rgba(0,0,0,.10);}
+.donate-emoji{font-size:50px;line-height:1;}
+.donate h3{margin:8px 0 4px;font-size:22px;color:var(--ink);}
+.donate p{margin:0 auto 18px;color:#64748b;font-size:15px;max-width:430px;line-height:1.5;}
+.donate-btn{display:inline-flex;align-items:center;gap:8px;background:#009ee3;color:#fff;font-weight:800;font-size:16px;text-decoration:none;padding:13px 28px;border-radius:30px;box-shadow:0 6px 16px rgba(0,158,227,.35);transition:.15s;}
+.donate-btn:hover{background:#0089c7;transform:translateY(-2px);}
 .fl{width:24px;height:18px;border-radius:2px;vertical-align:middle;margin-right:6px;box-shadow:0 0 1px rgba(0,0,0,.5);object-fit:cover;}
 .kotable .away .fl{margin-right:6px;}
 .printonly{display:none;}
@@ -110,6 +116,7 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
  .hero .scroll{display:none;}
  header{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
  #panel-LIVE{display:none!important;}
+ .donate{display:none!important;}
 }
 </style>
 </head>
@@ -126,6 +133,12 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 <div class="wrap">
 <div class="tabs" id="agentTabs"></div>
 <div id="panels"></div>
+<div class="donate">
+<div class="donate-emoji">☕</div>
+<h3>¿Te sirvió el prode?</h3>
+<p>Invitame un cafecito o colaborá con lo que quieras por Mercado Pago. ¡Toda ayuda banca el proyecto! 💛</p>
+<a class="donate-btn" href="https://mpago.la/1V5TXHn" target="_blank" rel="noopener">☕ Colaborar por Mercado Pago</a>
+</div>
 <div class="note">Predicciones generadas por modelos de IA con datos a junio 2026. No son garantía: el fútbol tiene varianza.</div>
 <div class="credit">Hecho por <a href="https://web-cv-amber-rho.vercel.app/" target="_blank" rel="noopener">Joel Pacheco</a></div>
 </div>
