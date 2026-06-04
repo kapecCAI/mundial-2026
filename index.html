@@ -133,6 +133,17 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 .gstand td.tn{text-align:left;font-weight:600;}
 .gstand tr.q td{background:#dcfce7;}
 .gstand tr.q3 td{background:#fef9c3;}
+.gr-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+.gr-name{font-size:20px;font-weight:800;}
+.gr-sub{color:#64748b;font-size:13px;}
+.gr-share{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;background:#f1f5f9;padding:10px 12px;border-radius:10px;}
+.gr-share input{flex:1;min-width:200px;padding:8px;border:1px solid var(--line);border-radius:8px;font-size:13px;}
+.gr-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+.gr-table th,.gr-table td{padding:9px 12px;border-bottom:1px solid #f1f5f9;text-align:left;font-size:14px;}
+.gr-table th{background:#7c3aed;color:#fff;font-size:12px;}
+.gr-table tr:first-child td{font-weight:700;}
+.gr-note{color:#64748b;font-size:12px;margin-top:10px;}
+#gr-code,#gr-newname,#gr-newplayer{padding:9px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;}
 .fl{width:24px;height:18px;border-radius:2px;vertical-align:middle;margin-right:6px;box-shadow:0 0 1px rgba(0,0,0,.5);object-fit:cover;}
 .kotable .away .fl{margin-right:6px;}
 .printonly{display:none;}
@@ -172,6 +183,7 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
  header{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
  #panel-LIVE{display:none!important;}
  #panel-PRODE{display:none!important;}
+ #panel-GRUPOS{display:none!important;}
  .donate{display:none!important;}
 }
 </style>
@@ -419,6 +431,56 @@ function wireProde(panel){
   prodeWrite(saved);renderGroups();prodeSave();
 }
 
+// ===== GRUPOS ENTRE AMIGOS (backend serverless + KV) =====
+const GR_API='/api/groups';
+function grParam(){return new URLSearchParams(location.search).get('grupo');}
+function grPid(){let p=localStorage.getItem('prode_pid');if(!p){p=Math.random().toString(36).slice(2,10);localStorage.setItem('prode_pid',p);}return p;}
+function grName(){return localStorage.getItem('prode_name')||'';}
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function currentPicks(){const s=prodeRead();return {ms:PB_MS,kb:PB_KB,camp:s.camp,sub:s.sub,ter:s.ter,cua:s.cua,gol:s.gol,mvp:s.mvp};}
+function standingsFrom(teams,matches){const m={};teams.forEach(t=>m[t]={t:t,pj:0,pts:0,gf:0,ga:0});
+  matches.forEach(x=>{if(!m[x.h]||!m[x.a])return;const H=m[x.h],A=m[x.a];H.pj++;A.pj++;H.gf+=x.hs;H.ga+=x.as;A.gf+=x.as;A.ga+=x.hs;if(x.hs>x.as)H.pts+=3;else if(x.as>x.hs)A.pts+=3;else{H.pts++;A.pts++;}});
+  const arr=teams.map(t=>{const z=m[t];z.dg=z.gf-z.ga;return z;});arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.t.localeCompare(b.t,'es'));return arr;}
+function picksStandings(g,ms){const matches=GFIX.map((pr,idx)=>{const sc=(ms||{})[g+idx];if(!sc||sc[0]==null||sc[1]==null)return null;return {h:GRUPOS[g][pr[0]],a:GRUPOS[g][pr[1]],hs:+sc[0],as:+sc[1]};}).filter(Boolean);return standingsFrom(GRUPOS[g],matches);}
+function memberChampion(p){return (p&&p.kb&&p.kb['104'])||(p&&p.camp)||'';}
+function esName(n){const t=TEAMS_EN[(n||'').trim()];return t?t[0]:(n||'');}
+async function fetchActual(){try{const r=await fetch(WC_API,{cache:'no-store'});const j=await r.json();const ev=(j&&j.events)||[];const byG={};for(const g in GRUPOS)byG[g]=[];
+  ev.forEach(e=>{if(e.intHomeScore==null||e.intAwayScore==null||e.intHomeScore==='')return;const h=esName(e.strHomeTeam),a=esName(e.strAwayTeam);for(const g in GRUPOS){if(GRUPOS[g].includes(h)&&GRUPOS[g].includes(a)){byG[g].push({h:h,a:a,hs:+e.intHomeScore,as:+e.intAwayScore});break;}}});
+  const st={};for(const g in GRUPOS)st[g]=byG[g].length?standingsFrom(GRUPOS[g],byG[g]):null;return st;}catch(e){return null;}}
+function scoreMember(p,actual){if(!actual||!p)return 0;let pts=0;for(const g in GRUPOS){if(!actual[g])continue;const pred=picksStandings(g,p.ms);for(let i=0;i<3;i++){if(pred[i]&&actual[g][i]&&pred[i].t===actual[g][i].t)pts+=(3-i);}}return pts;}
+function grFormHTML(){return `
+  <div class="pb-card"><h3>➕ Crear un grupo</h3>
+    <p style="color:#64748b;font-size:13px;margin:0 0 10px">Primero armá tu prode en la pestaña <b>🧩 Armá tu prode</b>. Al crear el grupo se guarda tu prode y obtenés un link para mandarles a tus amigos.</p>
+    <div class="pb-defs"><label class="pb-field">Nombre del grupo<input id="gr-newname" placeholder="Ej: Los del asado"></label><label class="pb-field">Tu nombre<input id="gr-newplayer" placeholder="Tu nombre" value="${esc(grName())}"></label></div>
+    <div class="pb-actions"><button class="pb-btn" id="gr-create">Crear grupo y sumar mi prode</button></div></div>
+  <div class="pb-card"><h3>🔑 Entrar a un grupo</h3>
+    <div class="pb-actions"><input id="gr-code" placeholder="Código (ej: AB12CD)"><button class="pb-btn alt" id="gr-go">Entrar</button></div></div>`;}
+function renderGrupos(){const cont=document.getElementById('gr-content');if(!cont)return;const p=grParam();
+  if(p){cont.innerHTML='<div id="gr-view"></div>';loadGroup(p);return;}
+  cont.innerHTML=grFormHTML();
+  cont.querySelector('#gr-create').onclick=createGroup;
+  cont.querySelector('#gr-go').onclick=()=>{const c=cont.querySelector('#gr-code').value.trim().toUpperCase();if(c){history.replaceState(null,'',location.pathname+'?grupo='+c);renderGrupos();}};}
+async function createGroup(){const gn=document.getElementById('gr-newname').value.trim()||'Mi grupo';let nm=document.getElementById('gr-newplayer').value.trim()||grName()||'Anónimo';nm=nm.slice(0,30);localStorage.setItem('prode_name',nm);
+  try{const r=await fetch(GR_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'create',name:gn,pid:grPid(),player:nm,picks:currentPicks()})});const j=await r.json();if(!j.id)throw 0;history.replaceState(null,'',location.pathname+'?grupo='+j.id);renderGrupos();pbToast('Grupo creado 🎉');}catch(e){pbToast('No se pudo crear (¿DB conectada?)');}}
+async function joinGroup(id){let nm=grName()||prompt('Tu nombre para el grupo:');if(nm===null)return;nm=(nm||'Anónimo').slice(0,30);localStorage.setItem('prode_name',nm);
+  try{const r=await fetch(GR_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'submit',id:id,pid:grPid(),player:nm,picks:currentPicks()})});if(!r.ok)throw 0;pbToast('¡Prode cargado al grupo! ✅');loadGroup(id);}catch(e){pbToast('No se pudo guardar');}}
+async function loadGroup(id){const cont=document.getElementById('gr-view');if(!cont)return;cont.innerHTML='<div class="live-empty">Cargando grupo…</div>';
+  let g;try{const r=await fetch(GR_API+'?id='+encodeURIComponent(id));if(!r.ok)throw 0;g=await r.json();}catch(e){cont.innerHTML='<div class="live-empty">No se encontró el grupo, o estás abriendo el archivo local. Los grupos funcionan en el sitio publicado (Vercel).<br><br><a href="'+location.pathname+'" style="color:#7c3aed;font-weight:700">← Volver</a></div>';return;}
+  const actual=await fetchActual();
+  const members=Object.values(g.entries||{}).map(m=>({name:m.name,picks:m.picks||{},pts:scoreMember(m.picks||{},actual)}));
+  members.sort((a,b)=>b.pts-a.pts||(a.name||'').localeCompare(b.name||''));
+  const link=location.origin+location.pathname+'?grupo='+g.id;
+  let h=`<div class="gr-head"><div><div class="gr-name">👥 ${esc(g.name)}</div><div class="gr-sub">Código <b>${g.id}</b> · ${members.length} participante(s)</div></div><button class="pb-btn" id="gr-join">➕ Sumar / actualizar mi prode</button></div>`;
+  h+=`<div class="gr-share">📎 <input readonly id="gr-link" value="${link}"><button class="pb-btn alt" id="gr-copy">Copiar link</button></div>`;
+  if(!members.length){h+='<div class="live-empty">Todavía no hay prodes cargados. Armá el tuyo y tocá “Sumar mi prode”.</div>';}
+  else{h+='<table class="gr-table"><tr><th>#</th><th>Jugador</th><th>Campeón</th><th>Pts</th></tr>';
+    members.forEach((m,i)=>{h+=`<tr><td>${i+1}</td><td>${esc(m.name)}</td><td>${m.picks?team(memberChampion(m.picks)):'—'}</td><td><b>${m.pts}</b></td></tr>`;});
+    h+='</table><p class="gr-note">Puntos automáticos con los resultados reales: 3 por 1º de grupo, 2 por 2º, 1 por 3º. Hoy están en 0 porque el Mundial no empezó.</p>';}
+  h+='<p class="gr-note"><a href="'+location.pathname+'" style="color:#7c3aed;font-weight:700">← Crear / entrar a otro grupo</a></p>';
+  cont.innerHTML=h;
+  const cp=cont.querySelector('#gr-copy');if(cp)cp.onclick=()=>{const i=document.getElementById('gr-link');i.select();try{navigator.clipboard.writeText(i.value);}catch(e){}pbToast('Link copiado 📋');};
+  cont.querySelector('#gr-join').onclick=()=>joinGroup(g.id);}
+
 function build(){
   const tabs=document.getElementById('agentTabs');
   const panels=document.getElementById('panels');
@@ -462,6 +524,21 @@ function build(){
   panels.appendChild(pp);
   wireProde(pp);
 
+  // ----- pestaña GRUPOS (tercera) -----
+  const GC="#7c3aed";
+  const gt=document.createElement('button');
+  gt.className='tab'; gt.textContent='👥 Grupos'; gt.style.borderTop='4px solid '+GC;
+  gt.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>{x.classList.remove('active');x.style.background='';});
+    gt.classList.add('active'); gt.style.background=GC;
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById('panel-GRUPOS').classList.add('active'); renderGrupos();
+  };
+  tabs.appendChild(gt);
+  const gp2=document.createElement('div'); gp2.className='panel'; gp2.id='panel-GRUPOS';
+  gp2.innerHTML=`<div class="champbar" style="background:${GC}"><span class="crown">👥</span><div><b>GRUPOS ENTRE AMIGOS</b><br><span>Creá un grupo, compartí el link y jueguen el prode juntos</span></div></div><div id="gr-content"></div>`;
+  panels.appendChild(gp2);
+
   ORDER.forEach((name,i)=>{
     const a=DATA[name];
     const t=document.createElement('button');
@@ -501,6 +578,7 @@ function build(){
     });
   });
   loadLive();
+  if(grParam())gt.click();
 }
 build();
 </script>
