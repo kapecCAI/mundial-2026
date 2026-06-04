@@ -14,13 +14,17 @@ Hecho por [Joel Pacheco](https://web-cv-amber-rho.vercel.app/).
 
 Es HTML estático (`index.html`) + una función serverless (`api/groups.js`). Importá el repo en Vercel y deploy.
 
-### Activar los GRUPOS (base de datos — 3 pasos, gratis)
+### Activar los GRUPOS (Supabase — una sola vez, gratis)
 
-Los grupos necesitan una base de datos. Se hace una sola vez:
-
-1. En **Vercel** → entrá a tu proyecto → pestaña **Storage** → **Create Database**.
-2. Elegí **Upstash (Redis / KV)** → creala (plan gratis) y **conectala a este proyecto**. Vercel agrega solo las variables `KV_REST_API_URL` y `KV_REST_API_TOKEN`.
-3. **Redeploy** el proyecto (Deployments → ⋯ → Redeploy) para que tome las variables.
+1. **Crear la tabla.** En Supabase → **SQL Editor** → pegá y ejecutá:
+   ```sql
+   create table if not exists grupos (id text primary key, data jsonb);
+   ```
+2. **Copiar credenciales.** Supabase → **Settings → API**: copiá el **Project URL** y la clave **service_role** (secreta).
+3. **Pegarlas en Vercel.** Proyecto → **Settings → Environment Variables**, agregá:
+   - `SUPABASE_URL` = el Project URL
+   - `SUPABASE_SERVICE_ROLE_KEY` = la clave service_role
+4. **Redeploy** (Deployments → ⋯ → Redeploy).
 
 Listo: ya se pueden crear grupos y compartir el link `…/?grupo=CODIGO`.
 
