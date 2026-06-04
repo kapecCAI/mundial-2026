@@ -100,6 +100,21 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 .pb-summary .row{padding:3px 0;font-size:14px;}
 .pb-toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#16784b;color:#fff;padding:11px 20px;border-radius:10px;font-weight:700;opacity:0;transition:.3s;pointer-events:none;z-index:99;}
 .pb-toast.show{opacity:1;}
+.pb-tc{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;}
+.pb-tk{display:flex;align-items:center;gap:6px;font-size:13px;background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:6px 8px;cursor:pointer;}
+.pb-tk.off{opacity:.55;}
+.pb-tcount{margin-top:8px;font-size:14px;font-weight:700;}
+.bk-rounds{display:flex;gap:14px;overflow-x:auto;padding-bottom:10px;}
+.bk-round{min-width:205px;flex:0 0 auto;}
+.bk-h{font-weight:800;color:#0ea5e9;font-size:12px;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;}
+.bk-m{background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px;margin-bottom:10px;}
+.bk-vs{display:block;text-align:center;font-size:10px;color:#94a3b8;margin:2px 0;}
+.bk-team{display:block;width:100%;text-align:left;background:#f8fafc;border:1px solid var(--line);border-radius:7px;padding:6px 8px;font-size:13px;cursor:pointer;font-family:inherit;color:var(--ink);}
+.bk-team:hover:not(:disabled){background:#e0f2fe;}
+.bk-team.sel{background:#0ea5e9;color:#fff;border-color:#0ea5e9;font-weight:800;}
+.bk-team:disabled{color:#cbd5e1;cursor:default;}
+.bk-team .fl{width:18px;height:13px;}
+.bk-champ{text-align:center;font-size:20px;font-weight:900;padding:14px;margin-top:6px;background:#fffbeb;border-radius:12px;}
 .fl{width:24px;height:18px;border-radius:2px;vertical-align:middle;margin-right:6px;box-shadow:0 0 1px rgba(0,0,0,.5);object-fit:cover;}
 .kotable .away .fl{margin-right:6px;}
 .printonly{display:none;}
@@ -287,10 +302,20 @@ async function loadLive(){
   if(!liveTimer)liveTimer=setInterval(loadLive,60000);
 }
 
-// ===== ARMÁ TU PRODE (constructor propio, guardado en localStorage) =====
+// ===== ARMÁ TU PRODE (constructor + cuadro interactivo, guardado en localStorage) =====
 const GRUPOS={A:["México","Sudáfrica","Corea del Sur","Rep. Checa"],B:["Suiza","Canadá","Bosnia","Qatar"],C:["Brasil","Marruecos","Escocia","Haití"],D:["Estados Unidos","Paraguay","Australia","Turquía"],E:["Alemania","Curazao","Costa de Marfil","Ecuador"],F:["Países Bajos","Japón","Suecia","Túnez"],G:["Bélgica","Egipto","Irán","Nueva Zelanda"],H:["España","Cabo Verde","Arabia Saudita","Uruguay"],I:["Francia","Senegal","Irak","Noruega"],J:["Argentina","Argelia","Austria","Jordania"],K:["Portugal","Uzbekistán","Colombia","RD Congo"],L:["Inglaterra","Croacia","Ghana","Panamá"]};
 const ALL48=Object.values(GRUPOS).flat().sort((a,b)=>a.localeCompare(b,'es'));
-const CONSENSO_PICKS={camp:"España",sub:"Argentina",ter:"Francia",cua:"Brasil",gol:"Kylian Mbappé",mvp:"Lamine Yamal",g:{A:["México","Corea del Sur","Rep. Checa"],B:["Suiza","Canadá","Bosnia"],C:["Brasil","Marruecos","Escocia"],D:["Estados Unidos","Turquía","Paraguay"],E:["Alemania","Ecuador","Costa de Marfil"],F:["Países Bajos","Japón","Suecia"],G:["Bélgica","Egipto","Irán"],H:["España","Uruguay","Arabia Saudita"],I:["Francia","Noruega","Senegal"],J:["Argentina","Austria","Argelia"],K:["Portugal","Colombia","RD Congo"],L:["Inglaterra","Croacia","Ghana"]}};
+const R32=[["73","2A","2B"],["74","1E","T1"],["75","1F","2C"],["76","1C","2F"],["77","1I","T2"],["78","2E","2I"],["79","1A","T3"],["80","1L","T4"],["81","1D","T5"],["82","1G","T6"],["83","2K","2L"],["84","1H","2J"],["85","1B","T7"],["86","1J","2H"],["87","1K","T8"],["88","2D","2G"]];
+const R16=[["89","W74","W77"],["90","W73","W75"],["91","W76","W78"],["92","W79","W80"],["93","W83","W84"],["94","W81","W82"],["95","W86","W88"],["96","W85","W87"]];
+const QFR=[["97","W89","W90"],["98","W93","W94"],["99","W91","W92"],["100","W95","W96"]];
+const SFR=[["101","W97","W98"],["102","W99","W100"]];
+const FNR=[["104","W101","W102"]];
+const ROUNDS=[["16avos",R32],["Octavos",R16],["Cuartos",QFR],["Semis",SFR],["Final",FNR]];
+let PB_TQ=[], PB_KB={};
+const CONSENSO_PICKS={camp:"España",sub:"Argentina",ter:"Francia",cua:"Brasil",gol:"Kylian Mbappé",mvp:"Lamine Yamal",
+  g:{A:["México","Corea del Sur","Rep. Checa"],B:["Suiza","Canadá","Bosnia"],C:["Brasil","Marruecos","Escocia"],D:["Estados Unidos","Turquía","Paraguay"],E:["Alemania","Ecuador","Costa de Marfil"],F:["Países Bajos","Japón","Suecia"],G:["Bélgica","Egipto","Irán"],H:["España","Uruguay","Arabia Saudita"],I:["Francia","Noruega","Senegal"],J:["Argentina","Austria","Argelia"],K:["Portugal","Colombia","RD Congo"],L:["Inglaterra","Croacia","Ghana"]},
+  tq:["A","C","D","E","F","I","J","L"],
+  kb:{"73":"Canadá","74":"Alemania","75":"Países Bajos","76":"Brasil","77":"Francia","78":"Noruega","79":"México","80":"Inglaterra","81":"Estados Unidos","82":"Bélgica","83":"Colombia","84":"España","85":"Suiza","86":"Argentina","87":"Portugal","88":"Turquía","89":"Francia","90":"Países Bajos","91":"Brasil","92":"Inglaterra","93":"España","94":"Bélgica","95":"Argentina","96":"Portugal","97":"Francia","98":"España","99":"Brasil","100":"Argentina","101":"España","102":"Argentina","104":"España"}};
 function pbOpts(arr){return '<option value="">— elegí —</option>'+arr.map(t=>`<option value="${t}">${t}</option>`).join('');}
 function makeProde(){
   const defs=`<div class="pb-card"><h3>🏆 Definiciones del torneo</h3><div class="pb-defs">`+
@@ -300,15 +325,51 @@ function makeProde(){
   let groups='<div class="pb-card"><h3>📋 Fase de grupos — elegí 1º, 2º y 3º de cada grupo</h3><div class="pb-grid">';
   for(const g in GRUPOS){groups+=`<div class="pb-g"><h4><span class="gl">${g}</span>Grupo ${g}</h4>`+[0,1,2].map(i=>`<div class="ln"><span class="pos">${i+1}º</span><select id="pr-g-${g}-${i}">${pbOpts(GRUPOS[g])}</select></div>`).join('')+`</div>`;}
   groups+='</div></div>';
+  const thirds=`<div class="pb-card"><h3>🎟️ Mejores 8 terceros que clasifican</h3><p style="color:#64748b;font-size:13px;margin:0 0 10px">Marcá 8 de los 12 terceros (antes elegí el 3º de cada grupo arriba).</p><div id="pb-thirds"></div></div>`;
+  const bracket=`<div class="pb-card"><h3>🏆 Cuadro de eliminatorias</h3><p style="color:#64748b;font-size:13px;margin:0 0 10px">Tocá el equipo que pasa en cada llave; los ganadores avanzan solos hasta la final. <i>(La asignación de terceros a las llaves es por orden de grupo, simplificada.)</i></p><div id="pb-bracket"></div></div>`;
   const actions=`<div class="pb-actions"><button class="pb-btn" id="pb-cons">✨ Cargar sugerencia del consenso</button><button class="pb-btn alt" id="pb-copy">📋 Copiar resumen</button><button class="pb-btn alt" id="pb-dl">⬇️ Descargar .txt</button><button class="pb-btn ghost" id="pb-reset">🗑️ Borrar</button></div>`;
-  const intro=`<div class="banner" style="background:#334155">ℹ️ Armá tu propio prode: se <b>guarda solo</b> en este navegador. Mirá las otras pestañas para inspirarte y, cuando termines, <b>copiá o descargá el resumen</b> para cargarlo en tu pozo.</div>`;
-  return intro+actions+defs+groups+`<div class="pb-summary" id="pb-sum"></div>`;
+  const intro=`<div class="banner" style="background:#334155">ℹ️ Armá tu propio prode: se <b>guarda solo</b> en este navegador. Completá grupos, elegí los 8 terceros, armá el cuadro tocando quién pasa, y <b>copiá o descargá el resumen</b> para tu pozo.</div>`;
+  return intro+actions+defs+groups+thirds+bracket+`<div class="pb-summary" id="pb-sum"></div>`;
 }
 function pbVal(id){const e=document.getElementById(id);return e?e.value:'';}
 function pbSet(id,v){const e=document.getElementById(id);if(e)e.value=v||'';}
 function prodeRead(){const s={camp:pbVal('pr-camp'),sub:pbVal('pr-sub'),ter:pbVal('pr-ter'),cua:pbVal('pr-cua'),gol:pbVal('pr-gol'),mvp:pbVal('pr-mvp'),g:{}};for(const g in GRUPOS)s.g[g]=[pbVal('pr-g-'+g+'-0'),pbVal('pr-g-'+g+'-1'),pbVal('pr-g-'+g+'-2')];return s;}
-function prodeWrite(s){if(!s)return;pbSet('pr-camp',s.camp);pbSet('pr-sub',s.sub);pbSet('pr-ter',s.ter);pbSet('pr-cua',s.cua);pbSet('pr-gol',s.gol);pbSet('pr-mvp',s.mvp);if(s.g)for(const g in GRUPOS)(s.g[g]||[]).forEach((t,i)=>pbSet('pr-g-'+g+'-'+i,t));}
-function prodeSave(){try{localStorage.setItem('prode2026',JSON.stringify(prodeRead()));}catch(e){}prodeSummary();}
+function fullState(){const s=prodeRead();s.tq=PB_TQ.slice();s.kb=Object.assign({},PB_KB);return s;}
+function prodeWrite(s){if(!s)return;pbSet('pr-camp',s.camp);pbSet('pr-sub',s.sub);pbSet('pr-ter',s.ter);pbSet('pr-cua',s.cua);pbSet('pr-gol',s.gol);pbSet('pr-mvp',s.mvp);if(s.g)for(const g in GRUPOS)(s.g[g]||[]).forEach((t,i)=>pbSet('pr-g-'+g+'-'+i,t));PB_TQ=(s.tq||[]).slice();PB_KB=Object.assign({},s.kb||{});}
+function thirdsArr(){const gp=prodeRead().g;return PB_TQ.slice().sort().map(g=>(gp[g]&&gp[g][2])||'').filter(Boolean);}
+function resolveRef(ref,gp,thirds){if(ref[0]==='W')return PB_KB[ref.slice(1)]||'';if(ref[0]==='T')return thirds[parseInt(ref.slice(1))-1]||'';const pos=(+ref[0])-1,g=ref.slice(1),a=gp[g];return (a&&a[pos])||'';}
+function renderThirds(){
+  const cont=document.getElementById('pb-thirds');if(!cont)return;
+  const gp=prodeRead().g;
+  PB_TQ=PB_TQ.filter(g=>gp[g]&&gp[g][2]);
+  let h='<div class="pb-tc">';
+  for(const g in GRUPOS){const t=(gp[g]&&gp[g][2])||'';const ck=PB_TQ.includes(g);
+    h+=`<label class="pb-tk ${t?'':'off'}"><input type="checkbox" data-g="${g}" ${ck?'checked':''} ${t?'':'disabled'}> <b>${g}</b>&nbsp;${t?team(t):'<span style="color:#94a3b8">elegí el 3º</span>'}</label>`;}
+  h+=`</div><div class="pb-tcount">Terceros elegidos: <b>${PB_TQ.length}</b> / 8</div>`;
+  cont.innerHTML=h;
+  cont.querySelectorAll('input[type=checkbox]').forEach(cb=>cb.onchange=()=>{const g=cb.dataset.g;
+    if(cb.checked){if(PB_TQ.length>=8&&!PB_TQ.includes(g)){cb.checked=false;pbToast('Ya elegiste 8 terceros');return;}if(!PB_TQ.includes(g))PB_TQ.push(g);}
+    else PB_TQ=PB_TQ.filter(x=>x!==g);
+    prodeSave();});
+}
+function bkBtn(mn,t,w){const sel=(t&&w===t)?'sel':'';return `<button class="bk-team ${sel}" data-m="${mn}" data-t="${t||''}" ${t?'':'disabled'}>${t?team(t):'—'}</button>`;}
+function renderBracket(){
+  const cont=document.getElementById('pb-bracket');if(!cont)return;
+  const gp=prodeRead().g, thirds=thirdsArr();
+  const order=[...R32,...R16,...QFR,...SFR,...FNR];const teams={};
+  order.forEach(m=>{const a=resolveRef(m[1],gp,thirds),b=resolveRef(m[2],gp,thirds);teams[m[0]]=[a,b];if(PB_KB[m[0]]&&PB_KB[m[0]]!==a&&PB_KB[m[0]]!==b)delete PB_KB[m[0]];});
+  let h='<div class="bk-rounds">';
+  ROUNDS.forEach(rd=>{h+=`<div class="bk-round"><div class="bk-h">${rd[0]}</div>`;
+    rd[1].forEach(m=>{const tm=teams[m[0]],w=PB_KB[m[0]]||'';h+=`<div class="bk-m">${bkBtn(m[0],tm[0],w)}<span class="bk-vs">vs</span>${bkBtn(m[0],tm[1],w)}</div>`;});
+    h+='</div>';});
+  h+='</div>';
+  const champ=PB_KB['104']||'',fin=teams['104']||['',''];
+  h+=`<div class="bk-champ">🏆 ${champ?team(champ):'<span style="color:#94a3b8">— definí la final —</span>'}</div>`;
+  cont.innerHTML=h;
+  if(champ){pbSet('pr-camp',champ);pbSet('pr-sub',fin[0]===champ?fin[1]:fin[0]);}
+  cont.querySelectorAll('.bk-team').forEach(el=>el.onclick=()=>{const tm=el.dataset.t;if(!tm)return;PB_KB[el.dataset.m]=tm;prodeSave();});
+}
+function prodeSave(){renderThirds();renderBracket();try{localStorage.setItem('prode2026',JSON.stringify(fullState()));}catch(e){}prodeSummary();}
 function prodeSummary(){const s=prodeRead();const c=document.getElementById('pb-sum');if(!c)return;let h='<h3>📝 Tu prode</h3>';
   h+=`<div class="row">🏆 <b>Campeón:</b> ${s.camp?team(s.camp):'—'}</div>`;
   h+=`<div class="row">🥈 ${s.sub?team(s.sub):'—'} &nbsp;·&nbsp; 🥉 ${s.ter?team(s.ter):'—'} &nbsp;·&nbsp; 4º ${s.cua?team(s.cua):'—'}</div>`;
@@ -316,17 +377,21 @@ function prodeSummary(){const s=prodeRead();const c=document.getElementById('pb-
   const gl=Object.keys(GRUPOS).map(g=>{const a=s.g[g]||[];return a[0]?`${g}: ${a[0]}${a[1]?' / '+a[1]:''}`:'';}).filter(Boolean).join(' · ');
   if(gl)h+=`<div class="row" style="color:#94a3b8;font-size:13px;margin-top:8px">Grupos (1º/2º): ${gl}</div>`;
   c.innerHTML=h;}
-function prodeText(){const s=prodeRead();const L=['PRODE MUNDIAL 2026','','CAMPEON: '+(s.camp||'-'),'SUBCAMPEON: '+(s.sub||'-'),'TERCERO: '+(s.ter||'-'),'CUARTO: '+(s.cua||'-'),'GOLEADOR: '+(s.gol||'-'),'MEJOR JUGADOR: '+(s.mvp||'-'),'','FASE DE GRUPOS:'];for(const g in GRUPOS){const a=s.g[g]||[];L.push('Grupo '+g+':  1) '+(a[0]||'-')+'   2) '+(a[1]||'-')+'   3) '+(a[2]||'-'));}return L.join('\n');}
+function prodeText(){const s=prodeRead();const L=['PRODE MUNDIAL 2026','','CAMPEON: '+(s.camp||'-'),'SUBCAMPEON: '+(s.sub||'-'),'TERCERO: '+(s.ter||'-'),'CUARTO: '+(s.cua||'-'),'GOLEADOR: '+(s.gol||'-'),'MEJOR JUGADOR: '+(s.mvp||'-'),'','FASE DE GRUPOS:'];
+  for(const g in GRUPOS){const a=s.g[g]||[];L.push('Grupo '+g+':  1) '+(a[0]||'-')+'   2) '+(a[1]||'-')+'   3) '+(a[2]||'-'));}
+  const any=ROUNDS.some(rd=>rd[1].some(m=>PB_KB[m[0]]));
+  if(any){L.push('','CUADRO (ganadores):');ROUNDS.forEach(rd=>{const ws=rd[1].map(m=>PB_KB[m[0]]).filter(Boolean);if(ws.length)L.push(rd[0]+': '+ws.join(', '));});}
+  return L.join('\n');}
 function pbToast(m){let t=document.getElementById('pb-toast');if(!t){t=document.createElement('div');t.id='pb-toast';t.className='pb-toast';document.body.appendChild(t);}t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600);}
 function wireProde(panel){
   panel.querySelectorAll('select').forEach(el=>el.addEventListener('change',prodeSave));
   panel.querySelectorAll('input').forEach(el=>el.addEventListener('input',()=>{clearTimeout(window._pbt);window._pbt=setTimeout(prodeSave,400);}));
   panel.querySelector('#pb-cons').onclick=()=>{prodeWrite(CONSENSO_PICKS);prodeSave();pbToast('Cargué el consenso ✨');};
-  panel.querySelector('#pb-reset').onclick=()=>{if(confirm('¿Borrar tu prode?')){try{localStorage.removeItem('prode2026');}catch(e){}prodeWrite({camp:'',sub:'',ter:'',cua:'',gol:'',mvp:'',g:{}});for(const g in GRUPOS)[0,1,2].forEach(i=>pbSet('pr-g-'+g+'-'+i,''));prodeSummary();pbToast('Prode borrado');}};
+  panel.querySelector('#pb-reset').onclick=()=>{if(confirm('¿Borrar tu prode?')){try{localStorage.removeItem('prode2026');}catch(e){}PB_TQ=[];PB_KB={};prodeWrite({camp:'',sub:'',ter:'',cua:'',gol:'',mvp:'',g:{},tq:[],kb:{}});for(const g in GRUPOS)[0,1,2].forEach(i=>pbSet('pr-g-'+g+'-'+i,''));prodeSave();pbToast('Prode borrado');}};
   panel.querySelector('#pb-copy').onclick=async()=>{try{await navigator.clipboard.writeText(prodeText());pbToast('Resumen copiado 📋');}catch(e){pbToast('No pude copiar');}};
   panel.querySelector('#pb-dl').onclick=()=>{const b=new Blob([prodeText()],{type:'text/plain'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='mi-prode-2026.txt';a.click();URL.revokeObjectURL(u);pbToast('Descargando ⬇️');};
   let saved=null;try{saved=JSON.parse(localStorage.getItem('prode2026')||'null');}catch(e){}
-  prodeWrite(saved);prodeSummary();
+  prodeWrite(saved);renderThirds();renderBracket();prodeSummary();
 }
 
 function build(){
