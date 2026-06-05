@@ -1,7 +1,7 @@
 # Mundial 2026 — Prode + Simulador + Grupos
 
 Sitio del Mundial 2026 con:
-- **🔴 LIVE** — resultados en vivo (API TheSportsDB, sin key).
+- **🔴 LIVE** — resultados en vivo (API TheSportsDB, sin key) + todos los partidos de fase de grupos con fecha confirmada.
 - **🧩 Armá tu prode** — cargás los resultados de cada grupo con steppers, la tabla y el cuadro de eliminatorias se autocompletan. Se guarda en tu navegador.
 - **👥 Grupos** — creás un grupo, compartís el link y juegan el prode entre amigos, con tabla de posiciones que se autopuntúa contra los resultados reales.
 - **Comparativa** de 5 análisis (Claude, Codex, Gemini, Kimi, Maldini).
