@@ -6,7 +6,7 @@ Sitio del Mundial 2026 con:
 - **👥 Grupos** — creás un grupo, compartís el link y juegan el prode entre amigos, con tabla de posiciones que se autopuntúa contra los resultados reales.
 - **Comparativa** de 5 análisis (Claude, Codex, Gemini, Kimi, Maldini).
 
-Hecho por [Joel Pacheco](https://web-cv-amber-rho.vercel.app/).
+Hecho por [Joel Pacheco](https://www.instagram.com/joelp_____/).
 
 ---
 
