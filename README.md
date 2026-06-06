@@ -1,3 +1,10 @@
+<!--
+⚠️  IMPORTANTE PARA CLAUDE / OTROS LLMs ⚠️
+El archivo `index.html` se edita DIRECTO (Joel hace cambios a mano).
+NO regenerar desde ningún script Python externo: pisaría los cambios manuales.
+Para cualquier modificación al index.html, usar Edit puntual sobre este archivo.
+-->
+
 # Mundial 2026 — Prode + Simulador + Grupos
 
 Sitio del Mundial 2026 con:
