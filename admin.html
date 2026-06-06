@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin · Prode Mundial 2026</title>
+<meta name="robots" content="noindex,nofollow">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,Arial,sans-serif;background:#0b1220;color:#e2e8f0;}
+header{background:linear-gradient(135deg,#0f172a,#1e293b);padding:18px 20px;text-align:center;border-bottom:2px solid #334155;}
+header h1{margin:0;font-size:20px;color:#fbbf24;letter-spacing:.5px;}
+header p{margin:4px 0 0;color:#94a3b8;font-size:12px;}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 16px 60px;}
+.login{max-width:380px;margin:60px auto;background:#1e293b;border:1px solid #334155;border-radius:14px;padding:28px;text-align:center;}
+.login h2{margin:0 0 18px;color:#fbbf24;font-size:18px;}
+.login input{width:100%;padding:11px 14px;font-size:15px;border-radius:9px;border:1px solid #475569;background:#0f172a;color:#fff;margin-bottom:12px;font-family:inherit;}
+.btn{background:#fbbf24;color:#0f172a;border:none;border-radius:9px;padding:11px 24px;font-weight:800;cursor:pointer;font-size:14px;width:100%;}
+.btn:hover{background:#fde68a;}
+.btn.alt{background:#475569;color:#fff;}
+.err{color:#f87171;font-size:13px;margin-top:8px;min-height:18px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px;}
+.kpi{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:18px;}
+.kpi .l{color:#94a3b8;font-size:12px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;}
+.kpi .v{font-size:34px;font-weight:900;color:#fbbf24;margin-top:6px;}
+.kpi .s{color:#94a3b8;font-size:12px;margin-top:4px;}
+.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:18px;margin-bottom:14px;}
+.card h3{margin:0 0 12px;font-size:16px;color:#fbbf24;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th,td{padding:8px 10px;border-bottom:1px solid #334155;text-align:left;}
+th{color:#94a3b8;font-size:11px;text-transform:uppercase;}
+.bar{display:flex;align-items:flex-end;gap:6px;height:120px;margin-top:8px;}
+.bar .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.bar .b{width:100%;background:linear-gradient(180deg,#fbbf24,#b45309);border-radius:4px 4px 0 0;min-height:2px;}
+.bar .l{font-size:10px;color:#94a3b8;}
+.bar .n{font-size:11px;color:#fff;font-weight:700;}
+.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.toolbar .who{color:#94a3b8;font-size:13px;}
+.toolbar .btn{width:auto;}
+.note{text-align:center;color:#64748b;font-size:11px;margin-top:30px;}
+.note a{color:#fbbf24;text-decoration:none;}
+</style>
+</head>
+<body>
+<header>
+<h1>⚙️ Admin · Prode Mundial 2026</h1>
+<p>Vista privada de métricas</p>
+</header>
+<div class="wrap">
+
+<div id="login-view" class="login">
+<h2>🔒 Acceso restringido</h2>
+<input type="password" id="pass" placeholder="Contraseña de admin" autofocus>
+<button class="btn" id="login-btn">Entrar</button>
+<div class="err" id="login-err"></div>
+</div>
+
+<div id="dash" style="display:none">
+<div class="toolbar">
+<span class="who">🟢 Sesión admin</span>
+<button class="btn alt" id="reload">↻ Actualizar</button>
+</div>
+
+<div class="grid" id="kpis"></div>
+
+<div class="card">
+<h3>📈 Visitas últimos 7 días</h3>
+<div class="bar" id="bar"></div>
+</div>
+
+<div class="card">
+<h3>👥 Grupos recientes</h3>
+<div id="grupos"></div>
+</div>
+</div>
+
+<div class="note">← <a href="/">Volver al sitio público</a></div>
+</div>
+<script>
+let PASS_=null;
+function $(id){return document.getElementById(id);}
+async function login(){
+  const p=$('pass').value.trim();if(!p)return;
+  try{
+    const r=await fetch('/api/admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pass:p})});
+    if(!r.ok){const j=await r.json().catch(()=>({}));$('login-err').textContent=(j.error==='pass_invalida')?'Contraseña incorrecta.':('Error: '+(j.error||r.status));return;}
+    PASS_=p;sessionStorage.setItem('admin_pass',p);
+    $('login-view').style.display='none';$('dash').style.display='block';
+    const j=await r.json();render(j);
+  }catch(e){$('login-err').textContent='No se pudo conectar.';}
+}
+async function reload(){
+  if(!PASS_){PASS_=sessionStorage.getItem('admin_pass');if(!PASS_)return;}
+  try{const r=await fetch('/api/admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pass:PASS_})});if(r.ok)render(await r.json());}catch(e){}
+}
+function render(j){
+  const s=j.stats||{};
+  $('kpis').innerHTML=[
+    ['Visitas totales',s.visitasTotales,'únicas (hash IP/día)'],
+    ['Visitas hoy',s.visitasHoy,'únicas en el día'],
+    ['Visitas 7 días',s.visitas7d,'últimos 7 días'],
+    ['Prodes guardados',s.prodes,'personas que armaron su prode'],
+    ['Grupos creados',s.grupos,'grupos activos'],
+  ].map(k=>`<div class="kpi"><div class="l">${k[0]}</div><div class="v">${k[1]??0}</div><div class="s">${k[2]}</div></div>`).join('');
+  const max=Math.max(1,...((j.serie||[]).map(x=>x.n)));
+  $('bar').innerHTML=(j.serie||[]).map(x=>`<div class="col"><span class="n">${x.n}</span><div class="b" style="height:${(x.n/max)*100}%"></div><span class="l">${x.dia.slice(5)}</span></div>`).join('');
+  const g=j.recientes||[];
+  $('grupos').innerHTML=g.length?('<table><tr><th>Código</th><th>Nombre</th><th>Participantes</th><th>Creado</th></tr>'+g.map(x=>`<tr><td><b>${x.id}</b></td><td>${x.name||''}</td><td>${x.entries}</td><td>${x.created?new Date(x.created).toLocaleString('es-AR'):'—'}</td></tr>`).join('')+'</table>'):'<p style="color:#94a3b8;font-size:13px">Todavía no hay grupos creados.</p>';
+}
+$('login-btn').onclick=login;
+$('pass').addEventListener('keydown',e=>{if(e.key==='Enter')login();});
+$('reload').onclick=reload;
+const saved=sessionStorage.getItem('admin_pass');
+if(saved){PASS_=saved;fetch('/api/admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pass:saved})}).then(r=>r.ok?r.json():null).then(j=>{if(j){$('login-view').style.display='none';$('dash').style.display='block';render(j);}});}
+</script>
+</body>
+</html>

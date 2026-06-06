@@ -1,12 +1,17 @@
-// Serverless function (Vercel) para grupos del prode — backend con SUPABASE.
-// Sin dependencias: usa la REST API (PostgREST) de Supabase vía fetch.
+// Serverless function (Vercel) para grupos + métricas. Backend: SUPABASE (PostgREST).
+// Sin dependencias: usa fetch.
+//
 // Variables de entorno (Vercel → Settings → Environment Variables):
 //   SUPABASE_URL                 (ej: https://xxxx.supabase.co)
-//   SUPABASE_SERVICE_ROLE_KEY    (clave "service_role", secreta)
-// Tabla necesaria (Supabase → SQL Editor):
+//   SUPABASE_SERVICE_ROLE_KEY    (clave service_role, secreta)
+//
+// Tablas necesarias (Supabase → SQL Editor):
 //   create table if not exists grupos (id text primary key, data jsonb);
+//   create table if not exists visitas  (hash text, dia date, primary key (hash, dia));
+//   create table if not exists prodes   (pid text primary key, updated timestamptz default now());
 const URL_ = process.env.SUPABASE_URL;
 const KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY;
+const SALT = process.env.ADMIN_PASSWORD || 'salt-default-mundial-2026';
 
 function H(extra) {
   return Object.assign({ apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' }, extra || {});
@@ -25,11 +30,35 @@ async function putGroup(id, data) {
   });
   if (!r.ok) throw new Error('PUT ' + r.status + ' ' + (await r.text()));
 }
+async function upsertVisit(hash) {
+  const dia = new Date().toISOString().slice(0, 10);
+  const r = await fetch(URL_ + '/rest/v1/visitas', {
+    method: 'POST',
+    headers: H({ Prefer: 'resolution=ignore-duplicates,return=minimal' }),
+    body: JSON.stringify({ hash: hash, dia: dia })
+  });
+  if (!r.ok && r.status !== 409) throw new Error('VISIT ' + r.status + ' ' + (await r.text()));
+}
+async function upsertProde(pid) {
+  const r = await fetch(URL_ + '/rest/v1/prodes', {
+    method: 'POST',
+    headers: H({ Prefer: 'resolution=merge-duplicates,return=minimal' }),
+    body: JSON.stringify({ pid: pid, updated: new Date().toISOString() })
+  });
+  if (!r.ok) throw new Error('PRODE ' + r.status + ' ' + (await r.text()));
+}
 function id6() {
   const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let s = '';
   for (let i = 0; i < 6; i++) s += c[Math.floor(Math.random() * c.length)];
   return s;
+}
+function hashIp(ip) {
+  const crypto = require('crypto');
+  return crypto.createHash('sha256').update((ip || '0') + '|' + SALT).digest('hex').slice(0, 32);
+}
+function clientIp(req) {
+  return (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket && req.socket.remoteAddress || '0';
 }
 
 module.exports = async (req, res) => {
@@ -46,6 +75,14 @@ module.exports = async (req, res) => {
       let b = req.body;
       if (typeof b === 'string') { try { b = JSON.parse(b || '{}'); } catch (e) { b = {}; } }
       b = b || {};
+
+      // ---- TRACK: registra visita (hash de IP) y/o prode guardado ----
+      if (b.action === 'track') {
+        try { await upsertVisit(hashIp(clientIp(req))); } catch (e) {}
+        if (b.pid) { try { await upsertProde(String(b.pid).slice(0, 24)); } catch (e) {} }
+        res.status(200).json({ ok: true }); return;
+      }
+
       const picks = b.picks || {};
       if (JSON.stringify(picks).length > 12000) { res.status(413).json({ error: 'picks_grande' }); return; }
       const player = String(b.player || 'Anónimo').slice(0, 30);
