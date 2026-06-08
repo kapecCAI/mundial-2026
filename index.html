@@ -41,15 +41,15 @@ header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;ba
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(246,180,14,.5)}70%{box-shadow:0 0 0 10px rgba(246,180,14,0)}}
 .wrap{max-width:1180px;margin:0 auto;padding:0 14px 60px;}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:0;padding:14px 8px 0;background:transparent;position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);background:rgba(8,23,43,.75);border-bottom:1px solid rgba(117,170,219,.15);}
-.tab{padding:10px 16px;border-radius:10px;background:rgba(255,255,255,.06);color:#cfe2f5;cursor:pointer;font-weight:700;font-size:14px;border:1px solid transparent;transition:all .18s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
-.tab:hover{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(117,170,219,.3);transform:translateY(-1px);}
-.tab.active{background:linear-gradient(135deg,var(--celeste) 0%,var(--celeste-2) 100%);color:#fff;border-color:var(--celeste);box-shadow:0 4px 14px rgba(117,170,219,.4);}
-.tab.tab-live{background:rgba(239,68,68,.15);color:#fca5a5;border-color:rgba(239,68,68,.3);}
-.tab.tab-live.active{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-color:#ef4444;box-shadow:0 4px 14px rgba(239,68,68,.4);}
-.tab.tab-live::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;animation:pulse 1.6s infinite;}
+.tabs{display:none;}
 .panel{background:#f8fafc;border-radius:14px;padding:24px 20px;display:none;margin-top:18px;box-shadow:0 4px 30px rgba(0,0,0,.08);animation:fadeIn .35s;}
 .panel.active{display:block;}
+.panel#panel-INICIO{padding:0;background:transparent;box-shadow:none;}
+.backbar{display:flex;align-items:center;gap:10px;margin:-8px -4px 16px;position:sticky;top:0;background:rgba(248,250,252,.96);backdrop-filter:blur(8px);padding:10px 6px;border-bottom:1px solid var(--line);z-index:40;border-radius:10px 10px 0 0;}
+.back-btn{background:#fff;border:1px solid var(--line);color:var(--navy);padding:8px 14px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:.18s;font-family:inherit;}
+.back-btn:hover{background:var(--celeste);color:#fff;border-color:var(--celeste);transform:translateX(-2px);box-shadow:0 4px 12px rgba(117,170,219,.35);}
+.backbar .crumb{font-size:13px;color:var(--muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase;}
+.backbar .crumb b{color:var(--navy);}
 .champbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 18px;border-radius:12px;color:#fff;margin-bottom:16px;}
 .champbar .crown{font-size:30px;}
 .champbar b{font-size:22px;}
@@ -295,6 +295,39 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 .zona-card .zt:last-child{border-bottom:none;}
 .zona-card .zt .fl{width:22px;height:16px;}
 
+/* ===== MODAL DE DETALLE ===== */
+.modal-bg{position:fixed;inset:0;background:rgba(8,23,43,.78);backdrop-filter:blur(6px);display:none;align-items:flex-start;justify-content:center;z-index:200;padding:30px 14px;overflow-y:auto;}
+.modal-bg.show{display:flex;animation:fadeIn .25s;}
+.modal{background:#fff;border-radius:18px;max-width:760px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.4);overflow:hidden;animation:fadeIn .3s;margin:auto;}
+.modal-head{background:linear-gradient(135deg,var(--celeste-2) 0%,var(--navy) 100%);color:#fff;padding:24px 26px;position:relative;}
+.modal-head.sol{background:linear-gradient(135deg,var(--sol) 0%,#d49102 100%);color:var(--navy);}
+.modal-head .modal-close{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.18);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;font-weight:900;transition:.18s;}
+.modal-head .modal-close:hover{background:rgba(255,255,255,.32);transform:rotate(90deg);}
+.modal-head.sol .modal-close{background:rgba(11,37,69,.15);color:var(--navy);}
+.modal-head h2{margin:0;font-size:28px;font-weight:900;line-height:1.1;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.modal-head h2 .fl{width:42px;height:31px;border-radius:5px;box-shadow:0 0 1px rgba(0,0,0,.4);}
+.modal-head .modal-sub{margin-top:6px;font-size:14px;opacity:.88;font-weight:600;}
+.modal-body{padding:22px 26px;}
+.modal-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:18px;}
+.modal-stat{background:var(--bg-soft);border-radius:10px;padding:12px;text-align:center;}
+.modal-stat b{display:block;font-size:24px;font-weight:900;color:var(--navy);line-height:1;}
+.modal-stat span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:5px;font-weight:700;}
+.modal-section{margin-top:18px;}
+.modal-section h3{font-size:13px;font-weight:800;color:var(--celeste-2);text-transform:uppercase;letter-spacing:1.5px;margin:0 0 10px;display:flex;align-items:center;gap:8px;}
+.modal-section .modal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;}
+.modal-section .mtag{background:var(--bg-soft);padding:9px 12px;border-radius:8px;font-size:13px;color:var(--navy);font-weight:700;display:flex;align-items:center;gap:6px;border-left:3px solid var(--celeste);}
+.modal-section .mtag.cap{border-left-color:var(--sol);background:#fffbeb;}
+.modal-section p{margin:0;color:var(--ink);font-size:14px;line-height:1.55;}
+.modal-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;padding-top:18px;border-top:1px solid var(--line);}
+.modal-link{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:var(--celeste);color:#fff;text-decoration:none;font-weight:800;font-size:13px;border-radius:10px;transition:.18s;}
+.modal-link:hover{background:var(--celeste-2);transform:translateY(-2px);box-shadow:0 6px 14px rgba(117,170,219,.35);}
+.modal-link.sol{background:var(--sol);color:var(--navy);}
+.modal-link.sol:hover{background:var(--sol-2);box-shadow:0 6px 14px rgba(246,180,14,.35);}
+.modal-link.ghost{background:#fff;color:var(--navy);border:1px solid var(--line);}
+.modal-link.ghost:hover{background:var(--navy);color:#fff;border-color:var(--navy);}
+.sede-card,.pl-card,.quick-link{cursor:pointer;}
+.sede-card .sede-cta,.pl-card .pl-cta{margin-top:10px;font-size:12px;color:var(--celeste-2);font-weight:800;display:flex;align-items:center;gap:4px;}
+
 @media(max-width:680px){
   .home-hero{grid-template-columns:1fr;}
   .hero h1{letter-spacing:.5px;}
@@ -357,6 +390,7 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 <div class="note">Datos oficiales FIFA · Predicciones de IA con datos a junio 2026 (orientativas, no son garantía).</div>
 <div class="credit">Hecho por <a class="author" href="https://www.instagram.com/joelp_____/" target="_blank" rel="noopener">Joel Pacheco</a><a class="coffee-link" href="https://mpago.la/1V5TXHn" target="_blank" rel="noopener" aria-label="Colaborar con un cafe" title="Colaborar con un cafe">☕</a></div>
 </div>
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()"><div class="modal" id="modal"></div></div>
 <script>
 const DATA = {"Claude": {"name": "Claude", "accent": "#D97757", "champ": "ESPAÑA", "tag": "Campeón España · Subcampeón Argentina · 3º Francia · 4º Brasil", "groups": {"A": {"st": [["México", 7, "+6"], ["Corea Rep.", 7, "+4"], ["Chequia", 3, "-7"], ["Sudáfrica", 0, "-3"]], "m": [["México", "3-0", "Sudáfrica"], ["México", "2-2", "Corea Rep."], ["México", "3-0", "Chequia"], ["Corea Rep.", "2-1", "Chequia"], ["Corea Rep.", "3-0", "Sudáfrica"], ["Chequia", "1-0", "Sudáfrica"]]}, "B": {"st": [["Suiza", 9, "+5"], ["Canadá", 6, "+2"], ["Bosnia", 3, "-3"], ["Qatar", 0, "-7"]], "m": [["Suiza", "2-0", "Qatar"], ["Suiza", "2-1", "Canadá"], ["Suiza", "2-1", "Bosnia"], ["Canadá", "2-1", "Bosnia"], ["Canadá", "3-0", "Qatar"], ["Bosnia", "1-0", "Qatar"]]}, "C": {"st": [["Brasil", 7, "+4"], ["Marruecos", 6, "+2"], ["Escocia", 4, "+1"], ["Haití", 0, "-7"]], "m": [["Brasil", "1-1", "Escocia"], ["Brasil", "2-1", "Marruecos"], ["Brasil", "3-0", "Haití"], ["Marruecos", "2-1", "Escocia"], ["Marruecos", "2-0", "Haití"], ["Escocia", "3-0", "Haití"]]}, "D": {"st": [["Estados Unidos", 7, "+2"], ["Turquía", 5, "+3"], ["Paraguay", 4, "0"], ["Australia", 0, "-5"]], "m": [["Estados Unidos", "2-1", "Australia"], ["Estados Unidos", "1-1", "Turquía"], ["Estados Unidos", "2-1", "Paraguay"], ["Turquía", "1-1", "Paraguay"], ["Turquía", "3-0", "Australia"], ["Paraguay", "2-0", "Australia"]]}, "E": {"st": [["Alemania", 7, "+5"], ["Ecuador", 6, "+2"], ["Costa de Marfil", 4, "+1"], ["Curazao", 0, "-8"]], "m": [["Alemania", "3-0", "Curazao"], ["Alemania", "2-1", "Ecuador"], ["Alemania", "1-1", "Costa de Marfil"], ["Ecuador", "2-1", "Costa de Marfil"], ["Ecuador", "2-0", "Curazao"], ["Costa de Marfil", "2-0", "Curazao"]]}, "F": {"st": [["Países Bajos", 7, "+3"], ["Japón", 6, "+2"], ["Suecia", 4, "0"], ["Túnez", 0, "-5"]], "m": [["Países Bajos", "2-0", "Túnez"], ["Países Bajos", "2-1", "Japón"], ["Países Bajos", "1-1", "Suecia"], ["Japón", "2-1", "Suecia"], ["Japón", "2-0", "Túnez"], ["Suecia", "2-0", "Túnez"]]}, "G": {"st": [["Bélgica", 7, "+5"], ["Egipto", 5, "+2"], ["Irán", 4, "+1"], ["Nueva Zelanda", 0, "-8"]], "m": [["Bélgica", "1-1", "Egipto"], ["Bélgica", "2-0", "Irán"], ["Bélgica", "3-0", "Nueva Zelanda"], ["Egipto", "1-1", "Irán"], ["Egipto", "2-0", "Nueva Zelanda"], ["Irán", "2-0", "Nueva Zelanda"]]}, "H": {"st": [["España", 9, "+7"], ["Uruguay", 6, "+3"], ["Cabo Verde", 3, "-2"], ["Arabia Saudita", 0, "-8"]], "m": [["España", "3-0", "Arabia Saudita"], ["España", "2-1", "Uruguay"], ["España", "2-0", "Cabo Verde"], ["Uruguay", "2-0", "Arabia Saudita"], ["Uruguay", "2-0", "Cabo Verde"], ["Cabo Verde", "1-0", "Arabia Saudita"]]}, "I": {"st": [["Francia", 9, "+6"], ["Noruega", 4, "+2"], ["Senegal", 4, "+1"], ["Irak", 0, "-9"]], "m": [["Francia", "2-1", "Noruega"], ["Francia", "2-1", "Senegal"], ["Francia", "3-0", "Irak"], ["Noruega", "1-1", "Senegal"], ["Noruega", "3-0", "Irak"], ["Senegal", "2-0", "Irak"]]}, "J": {"st": [["Argentina", 9, "+7"], ["Austria", 4, "+2"], ["Argelia", 4, "+1"], ["Jordania", 0, "-10"]], "m": [["Argentina", "2-1", "Austria"], ["Argentina", "2-0", "Argelia"], ["Argentina", "3-0", "Jordania"], ["Austria", "1-1", "Argelia"], ["Austria", "3-0", "Jordania"], ["Argelia", "3-0", "Jordania"]]}, "K": {"st": [["Portugal", 9, "+6"], ["Colombia", 4, "+2"], ["RD Congo", 4, "0"], ["Uzbekistán", 0, "-8"]], "m": [["Portugal", "3-0", "Uzbekistán"], ["Portugal", "2-1", "Colombia"], ["Portugal", "2-0", "RD Congo"], ["Colombia", "3-0", "Uzbekistán"], ["Colombia", "1-1", "RD Congo"], ["RD Congo", "2-0", "Uzbekistán"]]}, "L": {"st": [["Inglaterra", 9, "+6"], ["Croacia", 6, "+2"], ["Ghana", 3, "-3"], ["Panamá", 0, "-9"]], "m": [["Inglaterra", "3-0", "Panamá"], ["Inglaterra", "2-1", "Croacia"], ["Inglaterra", "2-0", "Ghana"], ["Croacia", "2-0", "Panamá"], ["Croacia", "2-1", "Ghana"], ["Ghana", "2-0", "Panamá"]]}}, "thirds": "Senegal (I), Costa de Marfil (E), Paraguay (D), Escocia (C), Argelia (J), Suecia (F), Irán (G), RD Congo (K)", "ko": {"Dieciseisavos (Ronda de 32)": [["73", "Corea Rep.", "1-2", "Canadá", "Canadá"], ["74", "Alemania", "3-0", "Escocia", "Alemania"], ["75", "Países Bajos", "2-1", "Marruecos", "Países Bajos"], ["76", "Brasil", "2-1", "Japón", "Brasil"], ["77", "Francia", "2-0", "Paraguay", "Francia"], ["78", "Ecuador", "1-2", "Noruega", "Noruega"], ["79", "México", "2-1", "Costa de Marfil", "México"], ["80", "Inglaterra", "3-1", "RD Congo", "Inglaterra"], ["81", "Estados Unidos", "2-1", "Suecia", "Estados Unidos"], ["82", "Bélgica", "2-1", "Senegal", "Bélgica"], ["83", "Colombia", "2-1", "Croacia", "Colombia"], ["84", "España", "3-0", "Austria", "España"], ["85", "Suiza", "1-0", "Irán", "Suiza"], ["86", "Argentina", "2-1", "Uruguay", "Argentina"], ["87", "Portugal", "2-1", "Argelia", "Portugal"], ["88", "Turquía", "2-1", "Egipto", "Turquía"]], "Octavos": [["89", "Alemania", "1-2", "Francia", "Francia"], ["90", "Canadá", "0-2", "Países Bajos", "Países Bajos"], ["91", "Brasil", "2-1", "Noruega", "Brasil"], ["92", "México", "1-2", "Inglaterra", "Inglaterra"], ["93", "Colombia", "0-2", "España", "España"], ["94", "Estados Unidos", "1-2", "Bélgica", "Bélgica"], ["95", "Argentina", "3-1", "Turquía", "Argentina"], ["96", "Suiza", "1-2", "Portugal", "Portugal"]], "Cuartos": [["97", "Francia", "2-1", "Países Bajos", "Francia"], ["98", "España", "2-1", "Bélgica", "España"], ["99", "Brasil", "2-1", "Inglaterra", "Brasil"], ["100", "Argentina", "2-1", "Portugal", "Argentina"]], "Semifinales": [["101", "España", "2-1", "Francia", "España"], ["102", "Brasil", "0-1", "Argentina", "Argentina"]], "Tercer puesto": [["103", "Francia", "3-2", "Brasil", "Francia"]], "FINAL": [["104", "España", "2-1", "Argentina", "España"]]}, "awards": [["Bota de Oro (goleador)", "Kylian Mbappé (Francia) — 7 goles"], ["Balón de Oro (mejor jugador)", "Lamine Yamal (España)"], ["Mejor equipo / más goleador", "España (~15 goles)"], ["Escolta goleador", "Julián Álvarez 6 · Harry Kane 5"]], "exp": "<h3>Por qué España campeón</h3>\n<p>España cruza las tres capas que rara vez coinciden a la vez: <b>modelo, plantel y estilo</b>. Es la gran favorita del mercado y de los modelos (Opta), tiene a Rodri como eje, control con Pedri/Merino/Zubimendi y diferencia arriba con Yamal, Nico Williams y Olmo. Es la única que combina dominio de pelota con fondo de banco insuperable en un torneo de 8 partidos.</p>\n<h3>Argentina subcampeona (mi hedge)</h3>\n<p>El bicampeonato es el \"upset\" más probable: estructura de élite (Dibu, Romero, Mac Allister, De Paul, Messi, Lautaro, Julián) y un equipo que sabe ganar partidos trabados y sobrevivir a penales. Si querés arriesgar para diferenciarte en el prode, este es el camino.</p>\n<h3>Francia tercera, Brasil cuarto</h3>\n<p>Francia tiene el ataque más letal (Mbappé, Dembélé) pero ruido defensivo y un camino durísimo. Brasil con Ancelotti recién asentado se queda en semis.</p>\n<h3>Premios</h3>\n<p><b>Bota de Oro: Mbappé</b> — máximo valor esperado: penal-taker y llega a semi + tercer puesto (7 partidos). <b>Balón de Oro: Yamal</b>, figura del campeón.</p>\n<h3>Las 5 jugadas clave (mis dudas reales)</h3>\n<ol>\n<li>México y EE.UU. 1ros por localía, pero Turquía puede dar el golpe en el D.</li>\n<li>Grupo I: el orden 2º-3º (Noruega/Senegal) es moneda al aire; igual avanzan los dos.</li>\n<li>Brasil vs Inglaterra (cuartos): el más parejo, 50/50.</li>\n<li>Final España-Argentina: el upset más probable es Argentina bicampeón.</li>\n<li>Bota de Oro: Mbappé es el de mayor valor; plan B Julián Álvarez (llega a la final).</li>\n</ol>"}, "Codex": {"name": "Codex", "accent": "#10A37F", "champ": "ESPAÑA", "tag": "Campeón España · Subcampeón Argentina · 3º Francia · 4º Brasil", "groups": {"A": {"st": [["México", "", ""], ["Corea del Sur", "", ""], ["Rep. Checa", "", ""], ["Sudáfrica", "", ""]], "m": [["México", "2-0", "Sudáfrica"], ["Corea del Sur", "1-1", "Rep. Checa"], ["México", "1-1", "Corea del Sur"], ["Rep. Checa", "2-1", "Sudáfrica"], ["Rep. Checa", "0-1", "México"], ["Sudáfrica", "0-2", "Corea del Sur"]]}, "B": {"st": [["Suiza", "", ""], ["Canadá", "", ""], ["Bosnia", "", ""], ["Qatar", "", ""]], "m": [["Canadá", "2-1", "Bosnia"], ["Qatar", "0-2", "Suiza"], ["Suiza", "2-0", "Bosnia"], ["Canadá", "2-0", "Qatar"], ["Suiza", "1-1", "Canadá"], ["Bosnia", "2-1", "Qatar"]]}, "C": {"st": [["Brasil", "", ""], ["Marruecos", "", ""], ["Escocia", "", ""], ["Haití", "", ""]], "m": [["Brasil", "2-1", "Marruecos"], ["Haití", "0-2", "Escocia"], ["Escocia", "1-1", "Marruecos"], ["Brasil", "4-0", "Haití"], ["Escocia", "1-2", "Brasil"], ["Marruecos", "3-0", "Haití"]]}, "D": {"st": [["Estados Unidos", "", ""], ["Turquía", "", ""], ["Paraguay", "", ""], ["Australia", "", ""]], "m": [["Estados Unidos", "2-1", "Paraguay"], ["Australia", "1-2", "Turquía"], ["Estados Unidos", "2-0", "Australia"], ["Turquía", "1-1", "Paraguay"], ["Turquía", "1-1", "Estados Unidos"], ["Paraguay", "1-1", "Australia"]]}, "E": {"st": [["Alemania", "", ""], ["Ecuador", "", ""], ["Costa de Marfil", "", ""], ["Curazao", "", ""]], "m": [["Alemania", "3-0", "Curazao"], ["Costa de Marfil", "1-1", "Ecuador"], ["Alemania", "2-1", "Costa de Marfil"], ["Ecuador", "2-0", "Curazao"], ["Ecuador", "1-2", "Alemania"], ["Curazao", "1-3", "Costa de Marfil"]]}, "F": {"st": [["Países Bajos", "", ""], ["Japón", "", ""], ["Suecia", "", ""], ["Túnez", "", ""]], "m": [["Países Bajos", "2-1", "Japón"], ["Suecia", "2-0", "Túnez"], ["Países Bajos", "1-1", "Suecia"], ["Túnez", "0-2", "Japón"], ["Japón", "1-1", "Suecia"], ["Túnez", "0-2", "Países Bajos"]]}, "G": {"st": [["Bélgica", "", ""], ["Egipto", "", ""], ["Irán", "", ""], ["Nueva Zelanda", "", ""]], "m": [["Bélgica", "2-1", "Egipto"], ["Irán", "1-1", "Nueva Zelanda"], ["Bélgica", "2-0", "Irán"], ["Nueva Zelanda", "0-2", "Egipto"], ["Egipto", "1-1", "Irán"], ["Nueva Zelanda", "0-2", "Bélgica"]]}, "H": {"st": [["España", "", ""], ["Uruguay", "", ""], ["Arabia Saudí", "", ""], ["Cabo Verde", "", ""]], "m": [["España", "2-0", "Cabo Verde"], ["Arabia Saudí", "0-2", "Uruguay"], ["España", "2-0", "Arabia Saudí"], ["Uruguay", "2-0", "Cabo Verde"], ["Cabo Verde", "1-1", "Arabia Saudí"], ["Uruguay", "1-1", "España"]]}, "I": {"st": [["Francia", "", ""], ["Noruega", "", ""], ["Senegal", "", ""], ["Iraq", "", ""]], "m": [["Francia", "2-1", "Senegal"], ["Iraq", "0-3", "Noruega"], ["Francia", "3-0", "Iraq"], ["Noruega", "2-2", "Senegal"], ["Noruega", "1-2", "Francia"], ["Senegal", "2-0", "Iraq"]]}, "J": {"st": [["Argentina", "", ""], ["Austria", "", ""], ["Argelia", "", ""], ["Jordania", "", ""]], "m": [["Argentina", "2-0", "Argelia"], ["Austria", "2-0", "Jordania"], ["Argentina", "2-1", "Austria"], ["Jordania", "0-2", "Argelia"], ["Argelia", "1-1", "Austria"], ["Jordania", "0-3", "Argentina"]]}, "K": {"st": [["Portugal", "", ""], ["Colombia", "", ""], ["RD Congo", "", ""], ["Uzbekistán", "", ""]], "m": [["Portugal", "2-0", "RD Congo"], ["Uzbekistán", "1-2", "Colombia"], ["Portugal", "3-0", "Uzbekistán"], ["Colombia", "2-1", "RD Congo"], ["Colombia", "1-1", "Portugal"], ["RD Congo", "1-1", "Uzbekistán"]]}, "L": {"st": [["Inglaterra", "", ""], ["Croacia", "", ""], ["Ghana", "", ""], ["Panamá", "", ""]], "m": [["Inglaterra", "1-1", "Croacia"], ["Ghana", "2-1", "Panamá"], ["Inglaterra", "2-1", "Ghana"], ["Panamá", "0-2", "Croacia"], ["Panamá", "0-3", "Inglaterra"], ["Croacia", "1-1", "Ghana"]]}}, "thirds": "Rep. Checa (A), Escocia (C), Paraguay (D), Costa de Marfil (E), Suecia (F), Senegal (I), Argelia (J), Ghana (L)", "ko": {"Dieciseisavos (Ronda de 32)": [["73", "Corea del Sur", "2-1", "Canadá", "Corea del Sur"], ["74", "Alemania", "2-0", "Paraguay", "Alemania"], ["75", "Países Bajos", "2-1", "Marruecos", "Países Bajos"], ["76", "Brasil", "2-1", "Japón", "Brasil"], ["77", "Francia", "2-0", "Suecia", "Francia"], ["78", "Ecuador", "1-2", "Noruega", "Noruega"], ["79", "México", "2-1", "Escocia", "México"], ["80", "Inglaterra", "2-1 (pró.)", "Senegal", "Inglaterra"], ["81", "Estados Unidos", "2-1", "Costa de Marfil", "Estados Unidos"], ["82", "Bélgica", "2-0", "Rep. Checa", "Bélgica"], ["83", "Colombia", "2-1", "Croacia", "Colombia"], ["84", "España", "2-0", "Austria", "España"], ["85", "Suiza", "1-0", "Argelia", "Suiza"], ["86", "Argentina", "2-1", "Uruguay", "Argentina"], ["87", "Portugal", "3-1", "Ghana", "Portugal"], ["88", "Turquía", "2-1", "Egipto", "Turquía"]], "Octavos": [["89", "Corea del Sur", "0-2", "Países Bajos", "Países Bajos"], ["90", "Alemania", "1-2", "Francia", "Francia"], ["91", "Brasil", "3-2", "Noruega", "Brasil"], ["92", "México", "1-2", "Inglaterra", "Inglaterra"], ["93", "Colombia", "1-2", "España", "España"], ["94", "Estados Unidos", "2-1", "Bélgica", "Estados Unidos"], ["95", "Argentina", "2-0", "Turquía", "Argentina"], ["96", "Suiza", "1-2", "Portugal", "Portugal"]], "Cuartos": [["97", "Países Bajos", "1-2", "Francia", "Francia"], ["98", "España", "2-0", "Estados Unidos", "España"], ["99", "Brasil", "2-1", "Inglaterra", "Brasil"], ["100", "Argentina", "2-1", "Portugal", "Argentina"]], "Semifinales": [["101", "Francia", "1-2", "España", "España"], ["102", "Brasil", "1-1 (pen)", "Argentina", "Argentina"]], "Tercer puesto": [["103", "Francia", "2-1", "Brasil", "Francia"]], "FINAL": [["104", "España", "2-1", "Argentina", "España"]]}, "awards": [["Goleador del torneo", "Kylian Mbappé"], ["Mejor jugador", "Lamine Yamal"], ["Mejor arquero", "Unai Simón"], ["Equipo goleador", "España"], ["Sorpresas", "EE.UU. a cuartos · Escocia tercero · Inglaterra cae en cuartos"]], "exp": "<h3>Por qué España campeón</h3>\n<p>España es el pick porque cruza tres capas que rara vez coinciden: <b>modelo, plantel y estilo</b>. Opta la tiene primera con 16,1%; el mercado (Kalshi/BetMGM) la tiene prácticamente empatada con Francia; el ranking FIFA la pone segunda, a un punto de Francia y Argentina. La estructura de De la Fuente ya probó que compite, Rodri vuelve como eje, Pedri/Gavi/Zubimendi/Merino dan control, y Yamal/Nico/Ferran/Olmo/Oyarzabal aportan perfiles distintos. <i>Riesgo:</i> la lesión reciente de Yamal — por eso no la proyecto con goleadas constantes en grupos.</p>\n<h3>Por qué Argentina finalista</h3>\n<p>Ruta favorable si gana el Grupo J. Estructura de élite (Dibu, Romero/Lisandro/Otamendi, Enzo/Mac Allister/De Paul/Paredes, Messi, Lautaro, Julián). Sabe jugar partidos trabados, bajar pulsaciones y sobrevivir a penales. Contra: la dificultad histórica de repetir título y la edad de varios líderes.</p>\n<h3>Por qué no Francia campeón</h3>\n<p>Puede ganar perfectamente (es el otro pick principal por ranking y mercado). La dejo afuera por dos razones de prode: camino durísimo (Alemania, Países Bajos y España) y ruido defensivo con la situación de Saliba. Arriba le sobra: Mbappé, Dembélé, Olise, Barcola, Doué, Cherki, Thuram, Mateta.</p>\n<h3>Goleador y mejor jugador</h3>\n<p><b>Bota de Oro: Mbappé</b> — Francia llega profundo, 12 goles mundialistas previos, altísimo volumen en el Madrid y un grupo con Iraq + duelo abierto ante Noruega. <b>Balón de Oro: Yamal</b> si España campeona (plan B: Rodri / Messi / Mbappé).</p>\n<p style=\"color:#5a6473;font-size:13px\"><i>Metodología basada en fuentes: ranking FIFA (abril 2026), Opta Supercomputer (10.000 simulaciones), mercado Kalshi/BetMGM, planteles confirmados (2 jun) y estado físico de figuras (Yamal, Saliba).</i></p>"}, "Gemini": {"name": "Gemini", "accent": "#4285F4", "champ": "ARGENTINA", "tag": "Campeón Argentina · Subcampeón España · Semifinalistas Brasil y Uruguay", "groups": {"A": {"st": [["México", 7, ""], ["Corea del Sur", 5, ""], ["Rep. Checa", 4, ""], ["Sudáfrica", 0, ""]], "m": [["México", "2-0", "Sudáfrica"], ["Corea del Sur", "1-1", "Rep. Checa"], ["México", "1-1", "Corea del Sur"], ["Sudáfrica", "0-2", "Rep. Checa"], ["México", "2-1", "Rep. Checa"], ["Sudáfrica", "0-3", "Corea del Sur"]]}, "B": {"st": [["Suiza", 7, ""], ["Canadá", 5, ""], ["Bosnia", 4, ""], ["Catar", 0, ""]], "m": [["Canadá", "2-1", "Bosnia"], ["Catar", "0-3", "Suiza"], ["Bosnia", "1-1", "Suiza"], ["Canadá", "3-0", "Catar"], ["Canadá", "1-1", "Suiza"], ["Bosnia", "2-0", "Catar"]]}, "C": {"st": [["Brasil", 9, ""], ["Marruecos", 6, ""], ["Escocia", 3, ""], ["Haití", 0, ""]], "m": [["Brasil", "3-1", "Marruecos"], ["Haití", "0-2", "Escocia"], ["Marruecos", "2-1", "Escocia"], ["Brasil", "4-0", "Haití"], ["Brasil", "2-0", "Escocia"], ["Marruecos", "3-0", "Haití"]]}, "D": {"st": [["Estados Unidos", 7, ""], ["Turquía", 5, ""], ["Australia", 4, ""], ["Paraguay", 0, ""]], "m": [["Estados Unidos", "2-0", "Paraguay"], ["Australia", "1-1", "Turquía"], ["Estados Unidos", "1-1", "Australia"], ["Paraguay", "0-2", "Turquía"], ["Estados Unidos", "2-1", "Turquía"], ["Paraguay", "1-2", "Australia"]]}, "E": {"st": [["Alemania", 9, ""], ["Ecuador", 6, ""], ["Costa de Marfil", 3, ""], ["Curazao", 0, ""]], "m": [["Alemania", "4-0", "Curazao"], ["Costa de Marfil", "1-2", "Ecuador"], ["Alemania", "3-1", "Costa de Marfil"], ["Curazao", "0-3", "Ecuador"], ["Alemania", "2-0", "Ecuador"], ["Curazao", "0-4", "Costa de Marfil"]]}, "F": {"st": [["Países Bajos", 7, ""], ["Japón", 6, ""], ["Suecia", 4, ""], ["Túnez", 0, ""]], "m": [["Países Bajos", "2-1", "Japón"], ["Suecia", "2-0", "Túnez"], ["Países Bajos", "1-1", "Suecia"], ["Japón", "3-0", "Túnez"], ["Países Bajos", "2-0", "Túnez"], ["Japón", "2-1", "Suecia"]]}, "G": {"st": [["Bélgica", 9, ""], ["Irán", 4, ""], ["Egipto", 2, ""], ["Nueva Zelanda", 1, ""]], "m": [["Bélgica", "3-0", "Egipto"], ["Irán", "1-1", "Nueva Zelanda"], ["Bélgica", "2-0", "Irán"], ["Egipto", "1-1", "Nueva Zelanda"], ["Bélgica", "4-0", "Nueva Zelanda"], ["Egipto", "0-1", "Irán"]]}, "H": {"st": [["España", 7, ""], ["Uruguay", 7, ""], ["Arabia Saudita", 3, ""], ["Cabo Verde", 0, ""]], "m": [["España", "3-0", "Cabo Verde"], ["Arabia Saudita", "0-2", "Uruguay"], ["España", "1-1", "Uruguay"], ["Cabo Verde", "0-1", "Arabia Saudita"], ["España", "4-0", "Arabia Saudita"], ["Cabo Verde", "0-3", "Uruguay"]]}, "I": {"st": [["Francia", 9, ""], ["Senegal", 6, ""], ["Noruega", 3, ""], ["Irak", 0, ""]], "m": [["Francia", "2-0", "Senegal"], ["Irak", "0-3", "Noruega"], ["Francia", "4-0", "Irak"], ["Senegal", "2-1", "Noruega"], ["Francia", "3-1", "Noruega"], ["Senegal", "2-0", "Irak"]]}, "J": {"st": [["Argentina", 9, ""], ["Austria", 6, ""], ["Argelia", 3, ""], ["Jordania", 0, ""]], "m": [["Argentina", "3-0", "Argelia"], ["Austria", "2-0", "Jordania"], ["Argentina", "2-0", "Austria"], ["Argelia", "3-0", "Jordania"], ["Argentina", "4-0", "Jordania"], ["Argelia", "1-2", "Austria"]]}, "K": {"st": [["Portugal", 9, ""], ["Colombia", 6, ""], ["Uzbekistán", 1, ""], ["RD Congo", 1, ""]], "m": [["Portugal", "3-0", "RD Congo"], ["Uzbekistán", "0-2", "Colombia"], ["Portugal", "2-0", "Uzbekistán"], ["RD Congo", "0-3", "Colombia"], ["Portugal", "2-1", "Colombia"], ["RD Congo", "1-1", "Uzbekistán"]]}, "L": {"st": [["Inglaterra", 9, ""], ["Croacia", 6, ""], ["Ghana", 3, ""], ["Panamá", 0, ""]], "m": [["Inglaterra", "2-0", "Croacia"], ["Ghana", "2-0", "Panamá"], ["Inglaterra", "3-0", "Ghana"], ["Croacia", "2-0", "Panamá"], ["Inglaterra", "4-0", "Panamá"], ["Croacia", "2-1", "Ghana"]]}}, "thirds": "Rep. Checa, Escocia, Costa de Marfil, Suecia, Noruega, Argelia, Bosnia y Australia (combinación según cruces)", "ko": {"Dieciseisavos (Ronda de 32)": [["", "México", "2-1", "Argelia", "México"], ["", "Suiza", "1-0", "Noruega", "Suiza"], ["", "Brasil", "3-0", "Escocia", "Brasil"], ["", "Estados Unidos", "2-1 (alargue)", "Costa de Marfil", "Estados Unidos"], ["", "Alemania", "2-0", "Suecia", "Alemania"], ["", "Países Bajos", "3-1", "Australia", "Países Bajos"], ["", "Bélgica", "2-0", "Bosnia", "Bélgica"], ["", "España", "3-0", "Rep. Checa", "España"], ["", "Francia", "2-1", "Colombia", "Francia"], ["", "Argentina", "2-0", "Turquía", "Argentina"], ["", "Portugal", "1-0", "Senegal", "Portugal"], ["", "Inglaterra", "2-0", "Austria", "Inglaterra"], ["", "Uruguay", "1-1 (5-4 pen)", "Japón", "Uruguay"], ["", "Croacia", "2-1", "Ecuador", "Croacia"], ["", "Corea del Sur", "1-0", "Canadá", "Corea del Sur"], ["", "Marruecos", "2-0", "Irán", "Marruecos"]], "Octavos": [["", "Suiza", "2-1", "México", "Suiza"], ["", "Brasil", "2-0", "Estados Unidos", "Brasil"], ["", "Alemania", "2-1", "Países Bajos", "Alemania"], ["", "España", "1-0", "Bélgica", "España"], ["", "Argentina", "2-1", "Francia", "Argentina"], ["", "Inglaterra", "1-1 (4-3 pen)", "Portugal", "Inglaterra"], ["", "Uruguay", "2-0", "Croacia", "Uruguay"], ["", "Marruecos", "1-0", "Corea del Sur", "Marruecos"]], "Cuartos": [["", "Brasil", "2-1", "Suiza", "Brasil"], ["", "España", "2-1 (alargue)", "Alemania", "España"], ["", "Argentina", "1-0", "Inglaterra", "Argentina"], ["", "Uruguay", "1-0", "Marruecos", "Uruguay"]], "Semifinales": [["", "España", "1-0", "Brasil", "España"], ["", "Argentina", "2-1", "Uruguay", "Argentina"]], "FINAL": [["104", "Argentina", "2-1", "España", "Argentina"]]}, "awards": [["Balón de Oro (mejor jugador)", "Alexis Mac Allister (Argentina)"], ["Bota de Oro (goleador)", "Kylian Mbappé — 6 goles"], ["Guante de Oro (arquero)", "Emiliano \"Dibu\" Martínez (Argentina)"]], "exp": "<h3>Metodología</h3>\n<p>Análisis multidimensional que cruzó: <b>fatiga híbrida y carga de minutos</b> en ligas de élite, <b>madurez táctica del DT</b> (procesos consolidados como Scaloni vs. transiciones de emergencia), <b>ventaja logística y localía regional</b> (impacto térmico/geográfico de las sedes) y <b>fricción competitiva</b> de cada clasificación (CONMEBOL y UEFA), con modelos de expectativa de gol (xG) ajustados a la jerarquía de plantillas.</p>\n<h3>La gran final: Argentina 2-1 España</h3>\n<p>Choque del juego de posición español contra el sistema pragmático y resiliente de Scaloni. España domina territorialmente, pero Scaloni diseña una trampa de presión media para contragolpear: <b>Messi</b>, como enganche organizador, filtra para Mac Allister, que asiste a <b>Julián Álvarez</b> para el 1-0. El ingreso de Nico Williams le da a España el empate transitorio. Cuando el partido se encaminaba a la prórroga, una recuperación alta de De Paul permite que <b>Lautaro Martínez</b> defina cruzado en el minuto 82 y selle el histórico bicampeonato.</p>\n<h3>Distinciones</h3>\n<p><b>Balón de Oro: Mac Allister</b> — el mediocampista total: 91% de pases, lidera recuperaciones en campo rival, MVP silencioso ante Francia, Inglaterra y España. <b>Bota de Oro: Mbappé (6)</b> pese a la caída temprana de Francia (hat-trick a Irak, doblete a Senegal). <b>Guante de Oro: Dibu Martínez</b>, decisivo en los minutos finales ante Uruguay e Inglaterra.</p>\n<h3>Gestión de riesgo para el prode</h3>\n<p>No inventar sorpresas extremas en octavos (las potencias imponen jerarquía en torneos largos), priorizar empates con goles en grupos parejos (F y H) y confiar en bloques defensivos consolidados. Los mundiales se ganan desde la solidez del arco propio.</p>"}, "Kimi": {"name": "Kimi", "accent": "#6C4DF6", "champ": "FRANCIA", "tag": "Campeón Francia · Subcampeón Argentina · 3º España · 4º Inglaterra", "groups": {"A": {"st": [["México", 7, "+4"], ["Corea del Sur", 4, "+2"], ["Rep. Checa", 4, "0"], ["Sudáfrica", 0, "-6"]], "m": [["México", "2-0", "Sudáfrica"], ["Corea del Sur", "1-1", "Rep. Checa"], ["Rep. Checa", "2-0", "Sudáfrica"], ["México", "1-1", "Corea del Sur"], ["Rep. Checa", "0-1", "México"], ["Sudáfrica", "0-3", "Corea del Sur"]]}, "B": {"st": [["Suiza", 7, "+4"], ["Canadá", 4, "+2"], ["Bosnia", 4, "-1"], ["Qatar", 0, "-5"]], "m": [["Canadá", "1-1", "Bosnia"], ["Qatar", "0-2", "Suiza"], ["Suiza", "2-0", "Bosnia"], ["Canadá", "2-0", "Qatar"], ["Suiza", "1-1", "Canadá"], ["Bosnia", "2-1", "Qatar"]]}, "C": {"st": [["Brasil", 9, "+7"], ["Marruecos", 4, "+1"], ["Escocia", 4, "0"], ["Haití", 0, "-8"]], "m": [["Brasil", "2-1", "Marruecos"], ["Haití", "0-3", "Escocia"], ["Escocia", "1-1", "Marruecos"], ["Brasil", "4-0", "Haití"], ["Escocia", "0-2", "Brasil"], ["Marruecos", "3-0", "Haití"]]}, "D": {"st": [["Estados Unidos", 7, "+2"], ["Turquía", 6, "+1"], ["Paraguay", 3, "0"], ["Australia", 1, "-3"]], "m": [["Estados Unidos", "2-1", "Paraguay"], ["Australia", "0-1", "Turquía"], ["Turquía", "2-1", "Paraguay"], ["Estados Unidos", "1-1", "Australia"], ["Turquía", "1-2", "Estados Unidos"], ["Paraguay", "2-0", "Australia"]]}, "E": {"st": [["Alemania", 9, "+8"], ["Ecuador", 6, "+3"], ["Costa de Marfil", 3, "-1"], ["Curazao", 0, "-10"]], "m": [["Alemania", "5-0", "Curazao"], ["Costa de Marfil", "1-1", "Ecuador"], ["Alemania", "2-0", "Costa de Marfil"], ["Ecuador", "3-0", "Curazao"], ["Ecuador", "1-2", "Alemania"], ["Curazao", "0-2", "Costa de Marfil"]]}, "F": {"st": [["Países Bajos", 9, "+5"], ["Japón", 4, "+1"], ["Suecia", 2, "-1"], ["Túnez", 1, "-4"]], "m": [["Países Bajos", "2-1", "Japón"], ["Suecia", "1-1", "Túnez"], ["Países Bajos", "2-0", "Suecia"], ["Túnez", "0-2", "Japón"], ["Japón", "1-1", "Suecia"], ["Túnez", "0-2", "Países Bajos"]]}, "G": {"st": [["Bélgica", 9, "+5"], ["Egipto", 4, "+3"], ["Irán", 4, "+1"], ["Nueva Zelanda", 0, "-8"]], "m": [["Irán", "2-0", "Nueva Zelanda"], ["Bélgica", "2-1", "Egipto"], ["Bélgica", "1-0", "Irán"], ["Nueva Zelanda", "0-3", "Egipto"], ["Egipto", "1-1", "Irán"], ["Nueva Zelanda", "0-3", "Bélgica"]]}, "H": {"st": [["España", 9, "+6"], ["Uruguay", 6, "+1"], ["Cabo Verde", 1, "-3"], ["Arabia Saudita", 1, "-4"]], "m": [["España", "3-0", "Cabo Verde"], ["Arabia Saudita", "0-2", "Uruguay"], ["España", "2-0", "Arabia Saudita"], ["Uruguay", "1-0", "Cabo Verde"], ["Cabo Verde", "1-1", "Arabia Saudita"], ["Uruguay", "1-2", "España"]]}, "I": {"st": [["Francia", 9, "+7"], ["Noruega", 6, "+3"], ["Senegal", 3, "-3"], ["Irak", 0, "-7"]], "m": [["Francia", "2-0", "Senegal"], ["Irak", "0-3", "Noruega"], ["Francia", "4-0", "Irak"], ["Noruega", "2-1", "Senegal"], ["Noruega", "1-2", "Francia"], ["Senegal", "2-0", "Irak"]]}, "J": {"st": [["Argentina", 7, "+5"], ["Austria", 4, "+3"], ["Argelia", 4, "0"], ["Jordania", 0, "-8"]], "m": [["Argentina", "2-0", "Argelia"], ["Austria", "3-0", "Jordania"], ["Argentina", "1-1", "Austria"], ["Jordania", "0-2", "Argelia"], ["Argelia", "1-1", "Austria"], ["Jordania", "0-3", "Argentina"]]}, "K": {"st": [["Portugal", 7, "+5"], ["Colombia", 7, "+3"], ["Uzbekistán", 1, "-3"], ["RD Congo", 1, "-5"]], "m": [["Portugal", "3-0", "RD Congo"], ["Uzbekistán", "0-2", "Colombia"], ["Portugal", "2-0", "Uzbekistán"], ["Colombia", "2-0", "RD Congo"], ["Colombia", "1-1", "Portugal"], ["RD Congo", "1-1", "Uzbekistán"]]}, "L": {"st": [["Inglaterra", 9, "+6"], ["Croacia", 4, "+1"], ["Ghana", 4, "0"], ["Panamá", 0, "-7"]], "m": [["Inglaterra", "2-1", "Croacia"], ["Ghana", "3-0", "Panamá"], ["Inglaterra", "2-0", "Ghana"], ["Panamá", "0-2", "Croacia"], ["Panamá", "0-3", "Inglaterra"], ["Croacia", "1-1", "Ghana"]]}}, "thirds": "Escocia (C), Irán (G), Argelia (J), Ghana (L), Rep. Checa (A), Bosnia (B), Senegal (I), Costa de Marfil (E)", "ko": {"Dieciseisavos (Ronda de 32)": [["73", "Corea del Sur", "2-1", "Canadá", "Corea del Sur"], ["74", "Alemania", "3-0", "Escocia", "Alemania"], ["75", "Países Bajos", "2-0", "Marruecos", "Países Bajos"], ["76", "Brasil", "2-1", "Japón", "Brasil"], ["77", "Francia", "3-0", "Irán", "Francia"], ["78", "Ecuador", "2-1", "Noruega", "Ecuador"], ["79", "México", "2-1", "Costa de Marfil", "México"], ["80", "Inglaterra", "2-0", "Senegal", "Inglaterra"], ["81", "Estados Unidos", "2-1", "Bosnia", "Estados Unidos"], ["82", "Bélgica", "2-0", "Rep. Checa", "Bélgica"], ["83", "Colombia", "1-2", "Croacia", "Croacia"], ["84", "España", "3-0", "Austria", "España"], ["85", "Suiza", "1-0", "Argelia", "Suiza"], ["86", "Argentina", "2-1", "Uruguay", "Argentina"], ["87", "Portugal", "3-0", "Ghana", "Portugal"], ["88", "Turquía", "2-1", "Egipto", "Turquía"]], "Octavos": [["89", "Alemania", "1-2", "Francia", "Francia"], ["90", "Corea del Sur", "0-2", "Países Bajos", "Países Bajos"], ["91", "Brasil", "3-1", "Ecuador", "Brasil"], ["92", "México", "1-2", "Inglaterra", "Inglaterra"], ["93", "Colombia*", "0-2", "España", "España"], ["94", "Estados Unidos", "0-2", "Bélgica", "Bélgica"], ["95", "Argentina", "2-0", "Turquía", "Argentina"], ["96", "Suiza", "0-1", "Portugal", "Portugal"]], "Cuartos": [["97", "Francia", "2-1", "Países Bajos", "Francia"], ["98", "España", "2-1", "Bélgica", "España"], ["99", "Brasil", "1-2", "Inglaterra", "Inglaterra"], ["100", "Argentina", "2-1", "Portugal", "Argentina"]], "Semifinales": [["101", "Francia", "2-1", "España", "Francia"], ["102", "Inglaterra", "1-2", "Argentina", "Argentina"]], "Tercer puesto": [["103", "España", "2-1", "Inglaterra", "España"]], "FINAL": [["104", "Francia", "2-1 (prórroga)", "Argentina", "Francia"]]}, "awards": [["Bota de Oro (goleador)", "Kylian Mbappé — 8 goles"], ["Balón de Oro (mejor jugador)", "Kylian Mbappé (Francia)"], ["Mejor equipo del torneo", "Francia"]], "exp": "<h3>Por qué Francia campeón</h3>\n<p><b>Ranking FIFA #1</b> (abril 2026), por encima de España y Argentina. <b>Plantel sin fisuras</b>: Mbappé, Dembélé, Thuram, Konaté, Saliba, Upamecano, Tchouaméni, Camavinga, Kanté, Maignan — no dependen de una sola figura y tienen suplentes de nivel mundialista en cada posición. <b>Experiencia</b>: campeones 2018, finalistas 2022. <b>Profundidad de banquillo</b> decisiva en un torneo de 8 partidos. Fixture exigente pero manejable.</p>\n<h3>Argentina subcampeón</h3>\n<p>Base intacta del campeón 2022 (Dibu, Romero, Otamendi, De Paul, Enzo, Mac Allister, Julián, Lautaro) + Messi aún decisivo a los 38. ADN ganador y un cuadro accesible hasta la final. Cae en la final 2-1 en la prórroga.</p>\n<h3>España 3º · Inglaterra 4º</h3>\n<p>España: generación dorada joven (Yamal recuperado de un desgarro grado 1, Pedri, Rodri, Nico) y favorita del mercado, pero le falta veteranía en finales y cae ante Francia en semis. Inglaterra: el plantel más valioso del mundo (Kane, Bellingham, Saka, Foden) topea en semis por su \"maldición histórica\".</p>\n<h3>Brasil cae en cuartos</h3>\n<p>Ancelotti recién llegado sin regularidad táctica, Neymar en duda física y la sequía de 24 años. Inglaterra lo supera en casi todas las líneas excepto el arco.</p>\n<h3>Mbappé: Bota y Balón de Oro</h3>\n<p>Cuota 7.00 como goleador (favorito absoluto), Francia juega los 8 partidos posibles, ejecuta penales y tiros libres: <b>8 goles</b> proyectados. Doblete de premios al ser goleador + campeón.</p>\n<p style=\"color:#5a6473;font-size:13px\"><i>* En octavos (M93) el PDF original arrastra a Colombia pese a haber caído en dieciseisavos ante Croacia: se reproduce tal cual lo entregó Kimi.</i></p>"}, "Maldini": {"name": "Maldini", "accent": "#DC2626", "champ": "ESPAÑA", "noscore": true, "tag": "Tier list YouTube · Campeón España (final ibérica vs Portugal) · 4 semifinalistas europeos", "note": "Es una <b>tier list</b> (vídeo de Maldini): solo indica <b>quién pasa cada ronda, sin resultados</b>. Las posiciones de grupo no llevan puntos.", "groups": {"A": {"st": [["México", "", ""], ["Rep. Checa", "", ""], ["Corea del Sur", "", ""], ["Sudáfrica", "", ""]], "m": []}, "B": {"st": [["Suiza", "", ""], ["Bosnia", "", ""], ["Canadá", "", ""], ["Qatar", "", ""]], "m": []}, "C": {"st": [["Brasil", "", ""], ["Marruecos", "", ""], ["Escocia", "", ""], ["Haití", "", ""]], "m": []}, "D": {"st": [["Turquía", "", ""], ["Paraguay", "", ""], ["Estados Unidos", "", ""], ["Australia", "", ""]], "m": []}, "E": {"st": [["Alemania", "", ""], ["Ecuador", "", ""], ["Costa de Marfil", "", ""], ["Curazao", "", ""]], "m": []}, "F": {"st": [["Países Bajos", "", ""], ["Japón", "", ""], ["Túnez", "", ""], ["Suecia", "", ""]], "m": []}, "G": {"st": [["Bélgica", "", ""], ["Egipto", "", ""], ["Irán", "", ""], ["Nueva Zelanda", "", ""]], "m": []}, "H": {"st": [["España", "", ""], ["Uruguay", "", ""], ["Arabia Saudí", "", ""], ["Cabo Verde", "", ""]], "m": []}, "I": {"st": [["Francia", "", ""], ["Noruega", "", ""], ["Senegal", "", ""], ["Irak", "", ""]], "m": []}, "J": {"st": [["Argentina", "", ""], ["Austria", "", ""], ["Argelia", "", ""], ["Jordania", "", ""]], "m": []}, "K": {"st": [["Portugal", "", ""], ["Colombia", "", ""], ["RD Congo", "", ""], ["Uzbekistán", "", ""]], "m": []}, "L": {"st": [["Inglaterra", "", ""], ["Croacia", "", ""], ["Ghana", "", ""], ["Panamá", "", ""]], "m": []}}, "thirds": "Senegal, Costa de Marfil, Túnez, Escocia, Ghana, Arabia Saudí, Corea del Sur y Estados Unidos", "ko": {"Dieciseisavos (Ronda de 32)": [["", "Rep. Checa", "—", "Bosnia", "Bosnia"], ["", "Alemania", "—", "Senegal", "Alemania"], ["", "Países Bajos", "—", "Marruecos", "Países Bajos"], ["", "Brasil", "—", "Japón", "Brasil"], ["", "Francia", "—", "Ghana", "Francia"], ["", "Ecuador", "—", "Noruega", "Ecuador"], ["", "México", "—", "Costa de Marfil", "México"], ["", "Inglaterra", "—", "Arabia Saudí", "Inglaterra"], ["", "Turquía", "—", "Túnez", "Turquía"], ["", "Bélgica", "—", "Escocia", "Bélgica"], ["", "Colombia", "—", "Croacia", "Colombia"], ["", "España", "—", "Austria", "España"], ["", "Suiza", "—", "Corea del Sur", "Suiza"], ["", "Argentina", "—", "Uruguay", "Argentina"], ["", "Portugal", "—", "Estados Unidos", "Portugal"], ["", "Paraguay", "—", "Egipto", "Paraguay"]], "Octavos": [["", "Alemania", "—", "Francia", "Francia"], ["", "Bosnia", "—", "Países Bajos", "Países Bajos"], ["", "Brasil", "—", "Ecuador", "Brasil"], ["", "México", "—", "Inglaterra", "Inglaterra"], ["", "Colombia", "—", "España", "España"], ["", "Turquía", "—", "Bélgica", "Turquía"], ["", "Argentina", "—", "Paraguay", "Argentina"], ["", "Suiza", "—", "Portugal", "Portugal"]], "Cuartos": [["", "Francia", "—", "Países Bajos", "Francia"], ["", "España", "—", "Turquía", "España"], ["", "Brasil", "—", "Inglaterra", "Inglaterra"], ["", "Argentina", "—", "Portugal", "Portugal"]], "Semifinales": [["", "España", "—", "Francia", "España"], ["", "Inglaterra", "—", "Portugal", "Portugal"]], "FINAL": [["", "España", "—", "Portugal", "España"]]}, "awards": [["Bota de Oro (goleador)", "Kylian Mbappé — camino al récord histórico"], ["Mejor jugador", "No lo define (destaca a Mbappé; el título de España depende de un Yamal y Pedri \"perfectos\")"], ["Campeón", "España — final ibérica vs Portugal"], ["Pedradas", "4 semifinalistas europeos · Noruega llega lejos · Túnez 3º sobre Suecia"]], "exp": "<h3>Formato</h3>\n<p>Es una <b>tier list</b>: \"¿hasta dónde llega cada selección?\". Marca quién pasa cada ronda, <b>sin resultados</b>.</p>\n<h3>Fase de grupos</h3>\n<p><b>México 1º</b> del A (local, con el Vasco Aguirre); su obsesión es romper la maldición de octavos, con un posible cruce con Inglaterra en el Azteca. Sus <b>\"pedradas\"</b>: <b>Noruega</b> llega lejos \"como Marruecos en 2022\" (Haaland + Ødegaard + Sørloth), <b>Túnez 3º</b> por encima de Suecia en el grupo F, y <b>Estados Unidos</b> clasifica sufriendo (no le convence con Pochettino).</p>\n<h3>Eliminatorias</h3>\n<p>Su gran apuesta: <b>los 4 semifinalistas son europeos</b> (España, Francia, Inglaterra, Portugal) — caen Argentina (vs Portugal en cuartos) y Brasil (vs Inglaterra). De Argentina \"cree poco\": ve a Messi por debajo de 2022. Inglaterra elimina a Brasil (\"tiene más\"). Noruega, pese a la pedrada, cae en 16avos con Ecuador.</p>\n<h3>La final y el campeón</h3>\n<p><b>Final ibérica: España vs Portugal.</b> Considera a este Portugal \"la mejor selección de su historia\" (Vitinha, Bruno, João Neves + Cristiano titular) y \"la única que nunca ganó un Mundial que puede ganarlo\". Aun así pone <b>campeona a España</b>, con la condición de que <b>Yamal y Pedri lleguen perfectos</b> y aparezca un goleador tipo Oyarzabal.</p>\n<h3>Individual</h3>\n<p><b>Mbappé</b> camino a convertirse en el máximo goleador histórico de Mundiales.</p>\n<p style=\"color:#5a6473;font-size:13px\"><i>Fuente: vídeo \"TIER LIST Mundial 2026 ¿Hasta dónde llegará cada Selección?\" (Maldini). Detalle: en octavos dijo \"Portugal le ganaría a Suecia\" — un lapsus por <b>Suiza</b>, el rival real según su propio cuadro.</i></p>"}};
 const ORDER = ["Claude", "Codex", "Gemini", "Kimi", "Maldini"];
@@ -722,22 +756,22 @@ async function loadGroup(id){const cont=document.getElementById('gr-view');if(!c
 
 // ===== SEDES (16 estadios) =====
 const SEDES=[
-  {n:"Estadio Azteca",c:"Ciudad de México",p:"México",pc:"mx",cap:"87.523",partidos:5,nota:"Partido inaugural · Mundiales 1970, 1986 y 2026",icon:"🏟️"},
-  {n:"Estadio Akron",c:"Guadalajara",p:"México",pc:"mx",cap:"49.850",partidos:4,nota:"Casa de Chivas",icon:"⚽"},
-  {n:"Estadio BBVA",c:"Monterrey",p:"México",pc:"mx",cap:"53.500",partidos:4,nota:"El Gigante de Acero",icon:"⚡"},
-  {n:"MetLife Stadium",c:"East Rutherford, NJ",p:"Estados Unidos",pc:"us",cap:"82.500",partidos:8,nota:"FINAL del Mundial · NY/NJ",icon:"🏆"},
-  {n:"AT&T Stadium",c:"Arlington, TX",p:"Estados Unidos",pc:"us",cap:"80.000",partidos:9,nota:"Estadio techado de los Cowboys",icon:"🤠"},
-  {n:"SoFi Stadium",c:"Inglewood (LA), CA",p:"Estados Unidos",pc:"us",cap:"70.240",partidos:8,nota:"Casa de Rams y Chargers",icon:"🌴"},
-  {n:"Mercedes-Benz Stadium",c:"Atlanta, GA",p:"Estados Unidos",pc:"us",cap:"71.000",partidos:8,nota:"Techo retráctil futurista",icon:"🦅"},
-  {n:"NRG Stadium",c:"Houston, TX",p:"Estados Unidos",pc:"us",cap:"72.220",partidos:7,nota:"Techo retráctil · Texans",icon:"🚀"},
-  {n:"Lincoln Financial Field",c:"Filadelfia, PA",p:"Estados Unidos",pc:"us",cap:"67.594",partidos:6,nota:"Casa de los Eagles",icon:"🔔"},
-  {n:"Levi's Stadium",c:"Santa Clara (SF), CA",p:"Estados Unidos",pc:"us",cap:"68.500",partidos:6,nota:"Bahía de San Francisco",icon:"🌉"},
-  {n:"Hard Rock Stadium",c:"Miami Gardens, FL",p:"Estados Unidos",pc:"us",cap:"65.326",partidos:7,nota:"Tercer puesto · clima tropical",icon:"🌊"},
-  {n:"Lumen Field",c:"Seattle, WA",p:"Estados Unidos",pc:"us",cap:"68.740",partidos:6,nota:"El estadio más ruidoso de la NFL",icon:"🌧️"},
-  {n:"Gillette Stadium",c:"Foxborough (Boston), MA",p:"Estados Unidos",pc:"us",cap:"65.878",partidos:7,nota:"Casa de los Patriots",icon:"⚓"},
-  {n:"Arrowhead Stadium",c:"Kansas City, MO",p:"Estados Unidos",pc:"us",cap:"76.416",partidos:6,nota:"Casa de los Chiefs · récord de ruido",icon:"🏈"},
-  {n:"BMO Field",c:"Toronto",p:"Canadá",pc:"ca",cap:"45.500",partidos:6,nota:"Casa del Toronto FC",icon:"🍁"},
-  {n:"BC Place",c:"Vancouver",p:"Canadá",pc:"ca",cap:"54.500",partidos:7,nota:"Techo retráctil · Whitecaps",icon:"🏔️"}
+  {n:"Estadio Azteca",c:"Ciudad de México",p:"México",pc:"mx",cap:"87.523",partidos:5,inaugurado:1966,nota:"El estadio más legendario de América. Sede de las finales de 1970 (Brasil) y 1986 (Argentina-Maradona). Único en albergar 3 Mundiales. Acá juega el inaugural México-Sudáfrica.",icon:"🏟️",wiki:"https://es.wikipedia.org/wiki/Estadio_Azteca"},
+  {n:"Estadio Akron",c:"Guadalajara",p:"México",pc:"mx",cap:"49.850",partidos:4,inaugurado:2010,nota:"La casa de Chivas, conocido como Estadio Omnilife. Diseño moderno con vista a la sierra. Sede regional del oeste de México.",icon:"⚽",wiki:"https://es.wikipedia.org/wiki/Estadio_Akron"},
+  {n:"Estadio BBVA",c:"Monterrey",p:"México",pc:"mx",cap:"53.500",partidos:4,inaugurado:2015,nota:"Apodado 'El Gigante de Acero', casa de Rayados. Una de las construcciones más modernas de Latinoamérica con vista al Cerro de la Silla.",icon:"⚡",wiki:"https://es.wikipedia.org/wiki/Estadio_BBVA"},
+  {n:"MetLife Stadium",c:"East Rutherford, NJ",p:"Estados Unidos",pc:"us",cap:"82.500",partidos:8,inaugurado:2010,nota:"SEDE DE LA FINAL. Compartido por los NY Giants y NY Jets. Ya albergó el Super Bowl XLVIII. A 8 km de Manhattan.",icon:"🏆",wiki:"https://es.wikipedia.org/wiki/MetLife_Stadium"},
+  {n:"AT&T Stadium",c:"Arlington, TX",p:"Estados Unidos",pc:"us",cap:"80.000",partidos:9,inaugurado:2009,nota:"Hogar de los Dallas Cowboys. Techo retráctil, una de las pantallas centrales más grandes del mundo. Recibe la mayor cantidad de partidos del Mundial.",icon:"🤠",wiki:"https://es.wikipedia.org/wiki/AT%26T_Stadium"},
+  {n:"SoFi Stadium",c:"Inglewood (LA), CA",p:"Estados Unidos",pc:"us",cap:"70.240",partidos:8,inaugurado:2020,nota:"Casa de Rams y Chargers, el estadio más caro jamás construido (5.500 M USD). Diseño futurista en Los Ángeles.",icon:"🌴",wiki:"https://es.wikipedia.org/wiki/SoFi_Stadium"},
+  {n:"Mercedes-Benz Stadium",c:"Atlanta, GA",p:"Estados Unidos",pc:"us",cap:"71.000",partidos:8,inaugurado:2017,nota:"Techo retráctil con forma de pétalos. Hogar de Atlanta Falcons (NFL) y Atlanta United (MLS). Sede de Semifinal.",icon:"🦅",wiki:"https://es.wikipedia.org/wiki/Mercedes-Benz_Stadium"},
+  {n:"NRG Stadium",c:"Houston, TX",p:"Estados Unidos",pc:"us",cap:"72.220",partidos:7,inaugurado:2002,nota:"Primer estadio NFL con techo retráctil. Casa de los Houston Texans. Ya recibió 2 Super Bowls.",icon:"🚀",wiki:"https://es.wikipedia.org/wiki/NRG_Stadium"},
+  {n:"Lincoln Financial Field",c:"Filadelfia, PA",p:"Estados Unidos",pc:"us",cap:"67.594",partidos:6,inaugurado:2003,nota:"Casa de los Philadelphia Eagles. Ubicado en el complejo deportivo del sur de Filadelfia.",icon:"🔔",wiki:"https://es.wikipedia.org/wiki/Lincoln_Financial_Field"},
+  {n:"Levi's Stadium",c:"Santa Clara (SF), CA",p:"Estados Unidos",pc:"us",cap:"68.500",partidos:6,inaugurado:2014,nota:"Estadio LEED Gold (sustentable) de los San Francisco 49ers. En la Bahía de San Francisco.",icon:"🌉",wiki:"https://es.wikipedia.org/wiki/Levi%27s_Stadium"},
+  {n:"Hard Rock Stadium",c:"Miami Gardens, FL",p:"Estados Unidos",pc:"us",cap:"65.326",partidos:7,inaugurado:1987,nota:"Sede del partido por el 3er puesto. Casa de Miami Dolphins. Recibe el GP de Miami de F1 cada año.",icon:"🌊",wiki:"https://es.wikipedia.org/wiki/Hard_Rock_Stadium"},
+  {n:"Lumen Field",c:"Seattle, WA",p:"Estados Unidos",pc:"us",cap:"68.740",partidos:6,inaugurado:2002,nota:"Conocido como el estadio más ruidoso del fútbol americano (récord Guinness 137,6 dB). Casa de los Seahawks.",icon:"🌧️",wiki:"https://es.wikipedia.org/wiki/Lumen_Field"},
+  {n:"Gillette Stadium",c:"Foxborough (Boston), MA",p:"Estados Unidos",pc:"us",cap:"65.878",partidos:7,inaugurado:2002,nota:"Casa de los New England Patriots y el New England Revolution (MLS). A 30 km de Boston.",icon:"⚓",wiki:"https://es.wikipedia.org/wiki/Gillette_Stadium"},
+  {n:"Arrowhead Stadium",c:"Kansas City, MO",p:"Estados Unidos",pc:"us",cap:"76.416",partidos:6,inaugurado:1972,nota:"Casa de los Kansas City Chiefs. Tiene el récord mundial de ruido en estadio outdoor (142,2 dB).",icon:"🏈",wiki:"https://es.wikipedia.org/wiki/Arrowhead_Stadium"},
+  {n:"BMO Field",c:"Toronto",p:"Canadá",pc:"ca",cap:"45.500",partidos:6,inaugurado:2007,nota:"Casa del Toronto FC (MLS). Primer estadio canadiense diseñado específicamente para fútbol. Expandido para el Mundial.",icon:"🍁",wiki:"https://es.wikipedia.org/wiki/BMO_Field"},
+  {n:"BC Place",c:"Vancouver",p:"Canadá",pc:"ca",cap:"54.500",partidos:7,inaugurado:1983,nota:"Único estadio con techo retráctil tipo paraguas en Norteamérica. Casa de Vancouver Whitecaps. Recibe partidos clave de eliminatorias.",icon:"🏔️",wiki:"https://es.wikipedia.org/wiki/BC_Place"}
 ];
 
 // ===== PLANTELES (48 selecciones — info clave) =====
@@ -933,7 +967,6 @@ function renderInicio(){
   h+=`<div class="hc-title" style="margin:18px 0 10px">📍 Explorá el sitio</div>`;
   const quick=[
     ["FIXTURE","📅","Fixture","104 partidos"],
-    ["CALENDARIO","📆","Calendario","Día por día"],
     ["ZONAS","🗂️","Zonas","12 grupos"],
     ["SEDES","🏟️","Sedes","16 estadios"],
     ["PLANTELES","👕","Planteles","48 selecciones"],
@@ -1058,11 +1091,12 @@ function renderZonas(){
 // ===== SEDES =====
 function renderSedes(){
   const cont=document.getElementById('sedes-content');if(!cont)return;
-  let h='<div class="banner" style="background:linear-gradient(90deg,var(--celeste-2),var(--navy))">🏟️ <b>16 estadios</b> en 3 países: 11 en EE.UU., 3 en México y 2 en Canadá.</div>';
+  let h='<div class="banner" style="background:linear-gradient(90deg,var(--celeste-2),var(--navy))">🏟️ <b>16 estadios</b> en 3 países: 11 en EE.UU., 3 en México y 2 en Canadá. <b>Tocá cualquiera</b> para ver el detalle.</div>';
   h+='<div class="sedes-grid">';
-  SEDES.forEach(s=>{
-    const isFinal=s.partidos===8&&s.n.includes('MetLife');
-    h+=`<div class="sede-card">
+  SEDES.forEach((s,i)=>{
+    const isFinal=s.n.includes('MetLife');
+    const isOpen=s.n.includes('Azteca');
+    h+=`<div class="sede-card" data-sede="${i}">
       <div class="sede-cover ${s.pc}">
         <div class="sede-icon">${s.icon}</div>
         <div class="sede-flag">${({us:'🇺🇸',mx:'🇲🇽',ca:'🇨🇦'})[s.pc]||''}</div>
@@ -1072,16 +1106,18 @@ function renderSedes(){
         <h4>${s.n}</h4>
         <div style="font-size:12px;color:var(--muted);">${s.p}</div>
         ${isFinal?'<div class="sede-tag">🏆 FINAL</div>':''}
-        ${s.nota.includes('inaugural')?'<div class="sede-tag" style="background:var(--celeste)">⚽ INAUGURAL</div>':''}
+        ${isOpen?'<div class="sede-tag" style="background:var(--celeste);color:#fff">⚽ INAUGURAL</div>':''}
         <div class="sede-stats">
           <span>👥 <b>${s.cap}</b></span>
           <span>⚽ <b>${s.partidos}</b> partidos</span>
+          <span>📅 <b>${s.inaugurado}</b></span>
         </div>
-        <div style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.4">${s.nota}</div>
+        <div class="sede-cta">Ver detalle →</div>
       </div></div>`;
   });
   h+='</div>';
   cont.innerHTML=h;
+  cont.querySelectorAll('[data-sede]').forEach(el=>el.onclick=()=>openSedeModal(+el.dataset.sede));
 }
 
 // ===== PLANTELES =====
@@ -1109,7 +1145,7 @@ function filterPlanteles(){
   }).sort((a,b)=>(a[1].g+a[0]).localeCompare(b[1].g+b[0]));
   let h='<div class="planteles-grid">';
   all.forEach(([t,p])=>{
-    h+=`<div class="pl-card">
+    h+=`<div class="pl-card" data-team="${t}">
       <div class="pl-head">${flagImg(t,'48x36').replace('class="fl"','class="pl-flag-big"')}
         <div><h4>${t}</h4><span class="pl-grp">Grupo ${p.g}</span></div>
         <div class="pl-rank"><b>#${p.rk||'-'}</b>FIFA</div>
@@ -1118,11 +1154,14 @@ function filterPlanteles(){
       <div class="pl-row"><span class="pl-k">🎖️ Capitán</span><span class="pl-v">${p.cap}</span></div>
       <div class="pl-row"><span class="pl-k">🏆 Mundiales</span><span class="pl-v">${'⭐'.repeat(p.titles||0)||'—'}</span></div>
       ${p.nota?`<div style="font-size:11px;color:var(--sol);font-weight:700;margin-top:6px">✨ ${p.nota}</div>`:''}
-      <div class="pl-stars">${(p.stars||[]).map(s=>`<span class="pl-star">${s}</span>`).join('')}</div>
+      <div class="pl-stars">${(p.stars||[]).slice(0,4).map(s=>`<span class="pl-star">${s}</span>`).join('')}</div>
+      <div class="pl-cta">Ver plantel completo →</div>
     </div>`;
   });
   h+='</div>';
-  document.getElementById('pl-render').innerHTML=h||'<div class="live-empty">Sin selecciones para ese filtro.</div>';
+  const target=document.getElementById('pl-render');
+  target.innerHTML=h||'<div class="live-empty">Sin selecciones para ese filtro.</div>';
+  target.querySelectorAll('[data-team]').forEach(el=>el.onclick=()=>openPlantelModal(el.dataset.team));
 }
 
 // ===== HISTORIA =====
@@ -1144,8 +1183,142 @@ function renderHistoria(){
   cont.innerHTML=h;
 }
 
+// ===== MODAL =====
+function openModal(html){const bg=document.getElementById('modalBg');document.getElementById('modal').innerHTML=html;bg.classList.add('show');document.body.style.overflow='hidden';}
+function closeModal(){const bg=document.getElementById('modalBg');bg.classList.remove('show');document.body.style.overflow='';}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+// ===== WIKI/EXTERNAL URLS =====
+const TEAM_WIKI={
+"Argentina":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Argentina",
+"Brasil":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Brasil",
+"Francia":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Francia",
+"España":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Espa%C3%B1a",
+"Inglaterra":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Inglaterra",
+"Portugal":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Portugal",
+"Países Bajos":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_los_Pa%C3%ADses_Bajos",
+"Alemania":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Alemania",
+"Bélgica":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_B%C3%A9lgica",
+"Uruguay":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Uruguay",
+"Colombia":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Colombia",
+"Croacia":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Croacia",
+"Marruecos":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Marruecos",
+"Suiza":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Suiza",
+"México":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_M%C3%A9xico",
+"Estados Unidos":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_los_Estados_Unidos",
+"Canadá":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Canad%C3%A1",
+"Ecuador":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Ecuador",
+"Paraguay":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Paraguay",
+"Japón":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Jap%C3%B3n",
+"Corea del Sur":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Corea_del_Sur",
+"Australia":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Australia",
+"Irán":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Ir%C3%A1n",
+"Arabia Saudita":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Arabia_Saudita",
+"Qatar":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Catar",
+"Uzbekistán":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Uzbekist%C3%A1n",
+"Jordania":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Jordania",
+"Senegal":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Senegal",
+"Egipto":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Egipto",
+"Argelia":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Argelia",
+"Túnez":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_T%C3%BAnez",
+"Ghana":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Ghana",
+"Sudáfrica":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Sud%C3%A1frica",
+"Cabo Verde":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Cabo_Verde",
+"Costa de Marfil":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Costa_de_Marfil",
+"RD Congo":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_la_Rep%C3%BAblica_Democr%C3%A1tica_del_Congo",
+"Noruega":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Noruega",
+"Austria":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Austria",
+"Chequia":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_la_Rep%C3%BAblica_Checa",
+"Escocia":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Escocia",
+"Bosnia":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Bosnia_y_Herzegovina",
+"Curazao":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Curazao",
+"Nueva Zelanda":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Nueva_Zelanda",
+"Irak":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Irak",
+"Haití":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Hait%C3%AD",
+"Panamá":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Panam%C3%A1",
+"Turquía":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Turqu%C3%ADa",
+"Suecia":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Suecia"
+};
+function teamWikiUrl(t){return TEAM_WIKI[t]||('https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_'+encodeURIComponent(t.replace(/ /g,'_')));}
+
+// ===== MODAL: Sede =====
+function openSedeModal(idx){
+  const s=SEDES[idx];const flag={us:'🇺🇸',mx:'🇲🇽',ca:'🇨🇦'}[s.pc]||'';
+  const isFinal=s.n.includes('MetLife');
+  const isOpen=s.n.includes('Azteca');
+  let h=`<div class="modal-head ${isFinal?'sol':''}">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <h2>${s.icon} ${s.n}</h2>
+    <div class="modal-sub">${flag} ${s.c}, ${s.p}</div>
+  </div>
+  <div class="modal-body">
+    <div class="modal-stats">
+      <div class="modal-stat"><b>${s.cap}</b><span>Capacidad</span></div>
+      <div class="modal-stat"><b>${s.partidos}</b><span>Partidos del Mundial</span></div>
+      <div class="modal-stat"><b>${s.inaugurado}</b><span>Inaugurado</span></div>
+      <div class="modal-stat"><b>${2026-s.inaugurado}</b><span>Años</span></div>
+    </div>
+    ${isFinal?'<div class="modal-section"><h3>🏆 Sede de la final</h3><p>El 19 de julio de 2026 acá se levanta la Copa del Mundo. 82.500 espectadores van a presenciar la final que coronará al campeón.</p></div>':''}
+    ${isOpen?'<div class="modal-section"><h3>⚽ Sede del partido inaugural</h3><p>El 11 de junio de 2026 a las 14:00 ART, México y Sudáfrica abren el Mundial en el legendario Azteca, que ya recibió las finales de 1970 y 1986.</p></div>':''}
+    <div class="modal-section">
+      <h3>ℹ️ Sobre este estadio</h3>
+      <p>${s.nota}</p>
+    </div>
+    <div class="modal-links">
+      <a class="modal-link" href="${s.wiki}" target="_blank" rel="noopener">📖 Ver en Wikipedia ↗</a>
+      <a class="modal-link ghost" href="https://www.google.com/maps/search/${encodeURIComponent(s.n+' '+s.c)}" target="_blank" rel="noopener">📍 Ver en mapa ↗</a>
+    </div>
+  </div>`;
+  openModal(h);
+}
+
+// ===== MODAL: Plantel =====
+function openPlantelModal(team){
+  const p=PLANTELES[team];if(!p)return;
+  const wikiUrl=teamWikiUrl(team);
+  const transferUrl='https://www.google.com/search?q=plantel+'+encodeURIComponent(team)+'+mundial+2026';
+  let h=`<div class="modal-head">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <h2><img class="fl" src="https://flagcdn.com/72x54/${FLAG[tname(team)]}.png" alt=""> ${team}</h2>
+    <div class="modal-sub">Grupo ${p.g} · Ranking FIFA #${p.rk||'-'} · ${p.titles?'⭐'.repeat(p.titles)+' Mundiales':'Sin títulos mundialistas'}</div>
+  </div>
+  <div class="modal-body">
+    <div class="modal-stats">
+      <div class="modal-stat"><b>${p.g}</b><span>Grupo</span></div>
+      <div class="modal-stat"><b>#${p.rk||'-'}</b><span>Ranking FIFA</span></div>
+      <div class="modal-stat"><b>${p.titles||0}</b><span>Mundiales</span></div>
+      <div class="modal-stat"><b>${(p.stars||[]).length}</b><span>Figuras</span></div>
+    </div>
+    ${p.nota?`<div class="modal-section"><h3>✨ Dato especial</h3><p style="background:#fffbeb;padding:10px 14px;border-radius:10px;border-left:4px solid var(--sol);font-weight:600">${p.nota}</p></div>`:''}
+    <div class="modal-section">
+      <h3>🧠 Cuerpo técnico</h3>
+      <div class="modal-grid">
+        <span class="mtag cap">🧠 DT: ${p.dt}</span>
+        <span class="mtag cap">🎖️ Capitán: ${p.cap}</span>
+      </div>
+    </div>
+    <div class="modal-section">
+      <h3>⭐ Figuras del plantel</h3>
+      <div class="modal-grid">
+        ${(p.stars||[]).map(s=>`<span class="mtag">⚽ ${s}</span>`).join('')}
+      </div>
+    </div>
+    <div class="modal-section">
+      <h3>📅 Partidos en el grupo</h3>
+      <p style="color:var(--muted);font-size:13px">Mirá los partidos de ${team} en el Fixture filtrando por esta selección.</p>
+      <div style="margin-top:8px"><button class="modal-link sol" onclick="closeModal();setTimeout(()=>{goTab('FIXTURE');setTimeout(()=>{const s=document.getElementById('fx-team');if(s){s.value='${team.replace(/'/g,"\\'")}';s.dispatchEvent(new Event('change'));}},250);},150);">📅 Ver partidos de ${team}</button></div>
+    </div>
+    <div class="modal-links">
+      <a class="modal-link" href="${wikiUrl}" target="_blank" rel="noopener">📖 Ver selección en Wikipedia ↗</a>
+      <a class="modal-link ghost" href="${transferUrl}" target="_blank" rel="noopener">🔍 Plantel completo (Google) ↗</a>
+    </div>
+  </div>`;
+  openModal(h);
+}
+
 // ===== NAV helper =====
-function goTab(id){const b=document.querySelector('[data-tabid="'+id+'"]');if(b)b.click();}
+function goTab(id){const b=document.querySelector('[data-tabid="'+id+'"]');if(b)b.click();else if(typeof activateTabExt==='function')activateTabExt(id);}
+let activateTabExt=null;
 
 function build(){
   const tabs=document.getElementById('agentTabs');
@@ -1164,6 +1337,7 @@ function build(){
     const p=document.createElement('div');p.className='panel';p.id='panel-'+id;p.innerHTML=inner;
     panels.appendChild(p);return p;
   }
+  const LABELS={INICIO:'🏠 Inicio',FIXTURE:'📅 Fixture',LIVE:'🔴 LIVE',PRODE:'🧩 Mi prode',GRUPOS:'👥 Grupos',ZONAS:'🗂️ Zonas',SEDES:'🏟️ Sedes',PLANTELES:'👕 Planteles',HISTORIA:'📜 Historia',Claude:'🤖 Claude',Codex:'🤖 Codex',Gemini:'🤖 Gemini',Kimi:'🤖 Kimi',Maldini:'🤖 Maldini'};
   function activateTab(id){
     document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
     document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
@@ -1171,9 +1345,19 @@ function build(){
     const p=document.getElementById('panel-'+id);
     if(t)t.classList.add('active');
     if(p)p.classList.add('active');
+    // Backbar dinámica (excepto en Inicio)
+    if(p){
+      const existing=p.querySelector(':scope > .backbar');
+      if(id==='INICIO'){if(existing)existing.remove();}
+      else if(!existing){
+        const bb=document.createElement('div');
+        bb.className='backbar';
+        bb.innerHTML=`<button class="back-btn" onclick="goTab('INICIO')">← Inicio</button><span class="crumb">Estás en <b>${LABELS[id]||id}</b></span>`;
+        p.insertBefore(bb,p.firstChild);
+      }
+    }
     if(id==='INICIO')renderInicio();
     else if(id==='FIXTURE')renderFixture();
-    else if(id==='CALENDARIO')renderCalendario();
     else if(id==='ZONAS')renderZonas();
     else if(id==='SEDES')renderSedes();
     else if(id==='PLANTELES')renderPlanteles();
@@ -1181,8 +1365,9 @@ function build(){
     else if(id==='LIVE')loadLive();
     else if(id==='GRUPOS')renderGrupos();
     try{history.replaceState(null,'',location.pathname+location.search+'#'+id);}catch(e){}
-    window.scrollTo({top:document.querySelector('.tabs').offsetTop-10,behavior:'smooth'});
+    window.scrollTo({top:0,behavior:'smooth'});
   }
+  activateTabExt=activateTab;
 
   // INICIO
   addTab('INICIO','🏠 Inicio');
@@ -1191,10 +1376,6 @@ function build(){
   // FIXTURE
   addTab('FIXTURE','📅 Fixture');
   addPanel('FIXTURE',`<div class="champbar" style="background:linear-gradient(135deg,var(--celeste-2),var(--navy))"><span class="crown">📅</span><div><b>FIXTURE COMPLETO</b><br><span>Los 104 partidos del Mundial 2026</span></div></div><div id="fx-content"></div>`);
-
-  // CALENDARIO
-  addTab('CALENDARIO','📆 Calendario');
-  addPanel('CALENDARIO',`<div class="champbar" style="background:linear-gradient(135deg,var(--celeste-2),var(--navy))"><span class="crown">📆</span><div><b>CALENDARIO DÍA POR DÍA</b><br><span>Del 11 de junio al 19 de julio de 2026</span></div></div><div id="cal-content"></div>`);
 
   // LIVE
   addTab('LIVE','LIVE','tab-live');
@@ -1237,8 +1418,10 @@ function build(){
   ORDER.forEach((name)=>{
     const a=DATA[name];
     addTab(name,'🤖 '+name);
+    const iaSwitcher=`<div class="ia-switcher" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;padding:10px 12px;background:#fff;border:1px solid var(--line);border-radius:12px;align-items:center"><span style="font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-right:4px">Comparar →</span>${ORDER.map(n=>`<button class="ia-btn" data-ia="${n}" style="padding:7px 14px;border-radius:9px;border:2px solid ${DATA[n].accent};background:${n===name?DATA[n].accent:'#fff'};color:${n===name?'#fff':DATA[n].accent};font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;transition:.15s">🤖 ${n}</button>`).join('')}</div>`;
     const p=addPanel(name,`
       <h2 class="printonly" style="color:${a.accent}">${name} — Campeón ${a.champ}</h2>
+      ${iaSwitcher}
       <div class="champbar" style="background:${a.accent}">
         <span class="crown">🏆</span>
         <div><b>CAMPEÓN: ${a.champ}</b><br><span>${a.tag}</span></div>
@@ -1257,11 +1440,12 @@ function build(){
         p.querySelector('#sub-'+name+'-'+b.dataset.s).classList.add('active');
       };
     });
+    p.querySelectorAll('.ia-btn').forEach(b=>{b.onclick=()=>goTab(b.dataset.ia);});
   });
 
   // Activar por hash o por contexto
   const hash=(location.hash||'').replace('#','').toUpperCase();
-  const valid=['INICIO','FIXTURE','CALENDARIO','LIVE','PRODE','GRUPOS','ZONAS','SEDES','PLANTELES','HISTORIA'].concat(ORDER.map(x=>x.toUpperCase()));
+  const valid=['INICIO','FIXTURE','LIVE','PRODE','GRUPOS','ZONAS','SEDES','PLANTELES','HISTORIA'].concat(ORDER.map(x=>x.toUpperCase()));
   let initial='INICIO';
   if(grParam())initial='GRUPOS';
   else if(hash){
