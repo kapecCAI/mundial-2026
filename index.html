@@ -866,7 +866,7 @@ const SEDES=[
   {n:"Estadio Akron",c:"Guadalajara",p:"México",pc:"mx",cap:"49.850",partidos:4,inaugurado:2010,nota:"La casa de Chivas, conocido como Estadio Omnilife. Diseño moderno con vista a la sierra. Sede regional del oeste de México.",icon:"⚽",wiki:"https://es.wikipedia.org/wiki/Estadio_Akron"},
   {n:"Estadio BBVA",c:"Monterrey",p:"México",pc:"mx",cap:"53.500",partidos:4,inaugurado:2015,nota:"Apodado 'El Gigante de Acero', casa de Rayados. Una de las construcciones más modernas de Latinoamérica con vista al Cerro de la Silla.",icon:"⚡",wiki:"https://es.wikipedia.org/wiki/Estadio_BBVA"},
   {n:"MetLife Stadium",c:"East Rutherford, NJ",p:"Estados Unidos",pc:"us",cap:"82.500",partidos:8,inaugurado:2010,nota:"SEDE DE LA FINAL. Compartido por los NY Giants y NY Jets. Ya albergó el Super Bowl XLVIII. A 8 km de Manhattan.",icon:"🏆",wiki:"https://es.wikipedia.org/wiki/MetLife_Stadium"},
-  {n:"AT&T Stadium",c:"Arlington, TX",p:"Estados Unidos",pc:"us",cap:"80.000",partidos:9,inaugurado:2009,nota:"Hogar de los Dallas Cowboys. Techo retráctil, una de las pantallas centrales más grandes del mundo. Recibe la mayor cantidad de partidos del Mundial.",icon:"🤠",wiki:"https://es.wikipedia.org/wiki/AT%26T_Stadium"},
+  {n:"AT&T Stadium",c:"Arlington, TX",p:"Estados Unidos",pc:"us",cap:"80.000",partidos:9,inaugurado:2009,nota:"Hogar de los Dallas Cowboys. Techo retráctil, una de las pantallas centrales más grandes del mundo. Recibe la mayor cantidad de partidos del Mundial.",icon:"🤠",wiki:"https://es.wikipedia.org/wiki/AT%26T_Stadium",photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Arlington_June_2020_4_%28AT%26T_Stadium%29.jpg/640px-Arlington_June_2020_4_%28AT%26T_Stadium%29.jpg"},
   {n:"SoFi Stadium",c:"Inglewood (LA), CA",p:"Estados Unidos",pc:"us",cap:"70.240",partidos:8,inaugurado:2020,nota:"Casa de Rams y Chargers, el estadio más caro jamás construido (5.500 M USD). Diseño futurista en Los Ángeles.",icon:"🌴",wiki:"https://es.wikipedia.org/wiki/SoFi_Stadium"},
   {n:"Mercedes-Benz Stadium",c:"Atlanta, GA",p:"Estados Unidos",pc:"us",cap:"71.000",partidos:8,inaugurado:2017,nota:"Techo retráctil con forma de pétalos. Hogar de Atlanta Falcons (NFL) y Atlanta United (MLS). Sede de Semifinal.",icon:"🦅",wiki:"https://es.wikipedia.org/wiki/Mercedes-Benz_Stadium"},
   {n:"NRG Stadium",c:"Houston, TX",p:"Estados Unidos",pc:"us",cap:"72.220",partidos:7,inaugurado:2002,nota:"Primer estadio NFL con techo retráctil. Casa de los Houston Texans. Ya recibió 2 Super Bowls.",icon:"🚀",wiki:"https://es.wikipedia.org/wiki/NRG_Stadium"},
@@ -875,7 +875,7 @@ const SEDES=[
   {n:"Hard Rock Stadium",c:"Miami Gardens, FL",p:"Estados Unidos",pc:"us",cap:"65.326",partidos:7,inaugurado:1987,nota:"Sede del partido por el 3er puesto. Casa de Miami Dolphins. Recibe el GP de Miami de F1 cada año.",icon:"🌊",wiki:"https://es.wikipedia.org/wiki/Hard_Rock_Stadium"},
   {n:"Lumen Field",c:"Seattle, WA",p:"Estados Unidos",pc:"us",cap:"68.740",partidos:6,inaugurado:2002,nota:"Conocido como el estadio más ruidoso del fútbol americano (récord Guinness 137,6 dB). Casa de los Seahawks.",icon:"🌧️",wiki:"https://es.wikipedia.org/wiki/Lumen_Field"},
   {n:"Gillette Stadium",c:"Foxborough (Boston), MA",p:"Estados Unidos",pc:"us",cap:"65.878",partidos:7,inaugurado:2002,nota:"Casa de los New England Patriots y el New England Revolution (MLS). A 30 km de Boston.",icon:"⚓",wiki:"https://es.wikipedia.org/wiki/Gillette_Stadium"},
-  {n:"Arrowhead Stadium",c:"Kansas City, MO",p:"Estados Unidos",pc:"us",cap:"76.416",partidos:6,inaugurado:1972,nota:"Casa de los Kansas City Chiefs. Tiene el récord mundial de ruido en estadio outdoor (142,2 dB).",icon:"🏈",wiki:"https://es.wikipedia.org/wiki/Arrowhead_Stadium"},
+  {n:"Arrowhead Stadium",c:"Kansas City, MO",p:"Estados Unidos",pc:"us",cap:"76.416",partidos:6,inaugurado:1972,nota:"Casa de los Kansas City Chiefs. Tiene el récord mundial de ruido en estadio outdoor (142,2 dB).",icon:"🏈",wiki:"https://es.wikipedia.org/wiki/Arrowhead_Stadium",photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Aerial_view_of_Arrowhead_Stadium_08-31-2013.jpg/640px-Aerial_view_of_Arrowhead_Stadium_08-31-2013.jpg"},
   {n:"BMO Field",c:"Toronto",p:"Canadá",pc:"ca",cap:"45.500",partidos:6,inaugurado:2007,nota:"Casa del Toronto FC (MLS). Primer estadio canadiense diseñado específicamente para fútbol. Expandido para el Mundial.",icon:"🍁",wiki:"https://es.wikipedia.org/wiki/BMO_Field"},
   {n:"BC Place",c:"Vancouver",p:"Canadá",pc:"ca",cap:"54.500",partidos:7,inaugurado:1983,nota:"Único estadio con techo retráctil tipo paraguas en Norteamérica. Casa de Vancouver Whitecaps. Recibe partidos clave de eliminatorias.",icon:"🏔️",wiki:"https://es.wikipedia.org/wiki/BC_Place"}
 ];
@@ -1289,7 +1289,10 @@ function renderZonas(){
 
 // ===== SEDES =====
 const SEDE_PHOTO_CACHE={};
-async function fetchSedePhoto(wikiUrl){
+async function fetchSedePhoto(sede){
+  // Override manual tiene prioridad
+  if(sede.photo)return sede.photo;
+  const wikiUrl=sede.wiki;if(!wikiUrl)return null;
   if(SEDE_PHOTO_CACHE[wikiUrl]!==undefined)return SEDE_PHOTO_CACHE[wikiUrl];
   const m=wikiUrl.match(/\/wiki\/([^?#]+)/);if(!m){SEDE_PHOTO_CACHE[wikiUrl]=null;return null;}
   const title=m[1];
@@ -1298,7 +1301,9 @@ async function fetchSedePhoto(wikiUrl){
     const r=await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${title}`);
     if(!r.ok)throw 0;
     const j=await r.json();
-    const url=j.thumbnail&&j.thumbnail.source||j.originalimage&&j.originalimage.source||null;
+    let url=j.thumbnail&&j.thumbnail.source||j.originalimage&&j.originalimage.source||null;
+    // Si es un logo SVG, descartamos
+    if(url&&/logo/i.test(url))url=null;
     SEDE_PHOTO_CACHE[wikiUrl]=url;return url;
   }catch(e){SEDE_PHOTO_CACHE[wikiUrl]=null;return null;}
 }
@@ -1320,11 +1325,10 @@ function renderSedes(){
       const isOpen=s.n.includes('Azteca');
       h+=`<div class="sede-card" data-sede="${s._i}">
         <div class="sede-cover ${s.pc}" data-photo="${s._i}">
-          <div class="sede-icon">${s.icon}</div>
           <div class="sede-city">${s.c.split(',')[0].toUpperCase()}</div>
           <div class="sede-overlay-name">${s.n}</div>
-          ${isFinal?'<div class="sede-tag-cover">🏆 FINAL</div>':''}
-          ${isOpen?'<div class="sede-tag-cover sol">⚽ INAUGURAL</div>':''}
+          ${isFinal?'<div class="sede-tag-cover">FINAL</div>':''}
+          ${isOpen?'<div class="sede-tag-cover sol">INAUGURAL</div>':''}
         </div>
         <div class="sede-body">
           <div class="sede-stats">
@@ -1341,8 +1345,8 @@ function renderSedes(){
   // Lazy fetch fotos
   cont.querySelectorAll('[data-photo]').forEach(async el=>{
     const idx=+el.dataset.photo;const s=SEDES[idx];
-    const url=await fetchSedePhoto(s.wiki);
-    if(url)el.style.backgroundImage=`linear-gradient(180deg,rgba(11,37,69,.1) 0%,rgba(11,37,69,.7) 100%),url("${url}")`;
+    const url=await fetchSedePhoto(s);
+    if(url)el.style.backgroundImage=`linear-gradient(180deg,rgba(11,37,69,.15) 0%,rgba(11,37,69,.78) 100%),url("${url}")`;
   });
 }
 
@@ -1486,11 +1490,11 @@ async function openSedeModal(idx){
   const s=SEDES[idx];const flag={us:'🇺🇸',mx:'🇲🇽',ca:'🇨🇦'}[s.pc]||'';
   const isFinal=s.n.includes('MetLife');
   const isOpen=s.n.includes('Azteca');
-  const photo=await fetchSedePhoto(s.wiki);
+  const photo=await fetchSedePhoto(s);
   const headBg=photo?`background-image:linear-gradient(180deg,rgba(11,37,69,.4) 0%,rgba(11,37,69,.85) 100%),url("${photo}");background-size:cover;background-position:center;`:'';
   let h=`<div class="modal-head ${isFinal?'sol':''}" style="${headBg};min-height:200px;display:flex;flex-direction:column;justify-content:flex-end">
     <button class="modal-close" onclick="closeModal()">×</button>
-    <h2 style="font-size:30px">${s.icon} ${s.n}</h2>
+    <h2 style="font-size:30px">${s.n}</h2>
     <div class="modal-sub">${flag} ${s.c}, ${s.p}</div>
   </div>
   <div class="modal-body">
