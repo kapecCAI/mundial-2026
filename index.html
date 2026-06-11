@@ -111,6 +111,11 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 .pb-btn:hover{filter:brightness(.95);}
 .pb-btn.alt{background:#475569;}
 .pb-btn.ghost{background:#fff;color:#475569;border:1px solid var(--line);}
+.auth-box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.auth-box .auth-title{font-weight:900;color:var(--navy);font-size:14px;}
+.auth-box .auth-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.auth-box .auth-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.auth-box input{padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;min-width:130px;}
 .pb-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:16px;}
 .pb-card h3{margin:0 0 12px;font-size:16px;}
 .pb-defs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:12px;}
@@ -775,7 +780,7 @@ function makeProde(){
   const bracket=`<div class="pb-card"><h3>🏆 Cuadro de eliminatorias</h3><p style="color:#64748b;font-size:13px;margin:0 0 10px">Se arma con tus clasificados. Tocá el equipo que pasa en cada llave; los ganadores avanzan solos hasta la final y al partido por el 3º puesto. <i>(Terceros asignados por orden de grupo, simplificado.)</i></p><div id="pb-bracket"></div></div>`;
   const actions=`<div class="pb-actions"><button class="pb-btn" id="pb-cons">✨ Cargar sugerencia del consenso</button><button class="pb-btn alt" id="pb-copy">📋 Copiar resumen</button><button class="pb-btn alt" id="pb-dl">⬇️ Descargar .txt</button><button class="pb-btn ghost" id="pb-reset">🗑️ Borrar</button></div>`;
   const intro=`<div class="banner" style="background:#334155">ℹ️ Armá tu propio prode cargando los resultados. Se <b>guarda solo</b> en este navegador. La tabla, los clasificados y el cuadro se <b>autocompletan</b>; después tocás quién pasa en las llaves y <b>copiás o descargás</b> tu resumen.</div>`;
-  return intro+actions+defs+groups+thirds+bracket+`<div class="pb-summary" id="pb-sum"></div>`;
+  return `<div class="auth-slot"></div>`+intro+actions+defs+groups+thirds+bracket+`<div class="pb-summary" id="pb-sum"></div>`;
 }
 function pbVal(id){const e=document.getElementById(id);return e?e.value:'';}
 function pbSet(id,v){const e=document.getElementById(id);if(e)e.value=v||'';}
@@ -825,7 +830,7 @@ function renderBracket(){const cont=document.getElementById('pb-bracket');if(!co
   pbSet('pr-camp',champ||'');pbSet('pr-sub',champ?(fin[0]===champ?fin[1]:fin[0]):'');
   pbSet('pr-ter',third||'');pbSet('pr-cua',third?(tp[0]===third?tp[1]:tp[0]):'');
   cont.querySelectorAll('.bk-team').forEach(el=>el.onclick=()=>{const tm=el.dataset.t;if(!tm)return;PB_KB[el.dataset.m]=tm;prodeSave();});}
-function prodeSave(){renderThirds();renderBracket();try{localStorage.setItem('prode2026',JSON.stringify(fullState()));}catch(e){}prodeSummary();trackProde();}
+function prodeSave(){renderThirds();renderBracket();try{localStorage.setItem('prode2026',JSON.stringify(fullState()));}catch(e){}prodeSummary();trackProde();authSavePicks();}
 function prodeSummary(){const s=prodeRead();const c=document.getElementById('pb-sum');if(!c)return;let h='<h3>📝 Tu prode</h3>';
   h+=`<div class="row">🏆 <b>Campeón:</b> ${s.camp?team(s.camp):'—'}</div>`;
   h+=`<div class="row">🥈 ${s.sub?team(s.sub):'—'} &nbsp;·&nbsp; 🥉 ${s.ter?team(s.ter):'—'} &nbsp;·&nbsp; 4º ${s.cua?team(s.cua):'—'}</div>`;
@@ -854,11 +859,42 @@ function wireProde(panel){
 
 // ===== GRUPOS ENTRE AMIGOS (backend serverless + KV) =====
 const GR_API='/api/groups';
+const AUTH_API='/api/auth';
 function grParam(){return new URLSearchParams(location.search).get('grupo');}
-function grPid(){let p=localStorage.getItem('prode_pid');if(!p){p=Math.random().toString(36).slice(2,10);localStorage.setItem('prode_pid',p);}return p;}
+function authState(){try{return JSON.parse(localStorage.getItem('auth2026')||'null');}catch(e){return null;}}
+function authUser(){const a=authState();return a&&a.user?a.user:null;}
+function authToken(){const a=authState();return a&&a.token?a.token:'';}
+function grPid(){const u=authUser();if(u&&u.id)return u.id;let p=localStorage.getItem('prode_pid');if(!p){p=Math.random().toString(36).slice(2,10);localStorage.setItem('prode_pid',p);}return p;}
 function grName(){return localStorage.getItem('prode_name')||'';}
 function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function currentPicks(){const s=prodeRead();return {ms:PB_MS,kb:PB_KB,camp:s.camp,sub:s.sub,ter:s.ter,cua:s.cua,gol:s.gol,mvp:s.mvp};}
+function authBoxHTML(){const u=authUser();return `<div class="auth-box"><div><div class="auth-title">${u?'Cuenta: '+esc(u.username):'Entrá con tu cuenta'}</div><div class="auth-sub">${u?'Tu prode se guarda para abrirlo en cualquier dispositivo.':'Usuario y contraseña, sin mail. Si olvidás la clave, Joel la resetea desde admin.'}</div></div>${u?`<div class="auth-form"><button class="pb-btn ghost" data-auth-logout="1">Salir</button></div>`:`<div class="auth-form"><input data-auth-user placeholder="Usuario"><input data-auth-pass type="password" placeholder="Contraseña"><button class="pb-btn" data-auth-login="1">Entrar</button><button class="pb-btn alt" data-auth-register="1">Crear cuenta</button></div>`}</div>`;}
+function renderAuthBoxes(){document.querySelectorAll('.auth-slot').forEach(el=>{el.innerHTML=authBoxHTML();wireAuthBox(el);});}
+function wireAuthBox(root){
+  const login=root.querySelector('[data-auth-login]'),reg=root.querySelector('[data-auth-register]'),out=root.querySelector('[data-auth-logout]');
+  if(login)login.onclick=()=>authSubmit(root,'login');
+  if(reg)reg.onclick=()=>authSubmit(root,'register');
+  if(out)out.onclick=()=>authLogout();
+  root.querySelectorAll('[data-auth-user],[data-auth-pass]').forEach(i=>i.addEventListener('keydown',e=>{if(e.key==='Enter')authSubmit(root,'login');}));
+}
+async function authSubmit(root,action){
+  const username=(root.querySelector('[data-auth-user]')||{}).value||'',password=(root.querySelector('[data-auth-pass]')||{}).value||'';
+  if(username.trim().length<3||password.length<4){pbToast('Usuario min. 3 y clave min. 4');return;}
+  try{
+    const r=await fetch(AUTH_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:action,username:username,password:password,picks:currentPicks()})});
+    const j=await r.json();if(!r.ok)throw j;
+    localStorage.setItem('auth2026',JSON.stringify({user:j.user,token:j.token}));
+    localStorage.setItem('prode_name',j.user.username);
+    if(j.picks){prodeWrite(j.picks);renderGroups();prodeSave();}
+    else authSavePicksNow();
+    renderAuthBoxes();renderGrupos();pbToast(action==='register'?'Cuenta creada':'Sesión iniciada');
+  }catch(e){pbToast(e&&e.error==='usuario_existe'?'Ese usuario ya existe':'No se pudo iniciar sesión');}
+}
+function authLogout(){localStorage.removeItem('auth2026');renderAuthBoxes();renderGrupos();pbToast('Sesión cerrada');}
+let _authSaveT=null;
+function authSavePicks(){if(!authToken())return;clearTimeout(_authSaveT);_authSaveT=setTimeout(authSavePicksNow,900);}
+async function authSavePicksNow(){const token=authToken();if(!token)return;try{await fetch(AUTH_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'save_picks',token:token,picks:currentPicks()})});}catch(e){}}
+async function authBoot(){const token=authToken();renderAuthBoxes();if(!token)return;try{const r=await fetch(AUTH_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'me',token:token})});const j=await r.json();if(!r.ok)throw j;localStorage.setItem('auth2026',JSON.stringify({user:j.user,token:token}));localStorage.setItem('prode_name',j.user.username);if(j.picks){prodeWrite(j.picks);renderGroups();prodeSave();}renderAuthBoxes();renderGrupos();}catch(e){localStorage.removeItem('auth2026');renderAuthBoxes();}}
 function grNormName(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 function grIsJoel(s){return grNormName(s).includes('joel');}
 function grPickLabel(v){return ALL48.includes(v)?team(v):esc(v||'');}
@@ -1799,7 +1835,7 @@ function build(){
 
   // GRUPOS
   addTab('GRUPOS','👥 Grupos');
-  addPanel('GRUPOS',`<div class="champbar" style="background:linear-gradient(135deg,#7c3aed,#5b21b6)"><span class="crown">👥</span><div><b>GRUPOS ENTRE AMIGOS</b><br><span>Creá un grupo, compartí el link y jueguen juntos</span></div></div><div id="gr-content"></div>`);
+  addPanel('GRUPOS',`<div class="champbar" style="background:linear-gradient(135deg,#7c3aed,#5b21b6)"><span class="crown">👥</span><div><b>GRUPOS ENTRE AMIGOS</b><br><span>Creá un grupo, compartí el link y jueguen juntos</span></div></div><div class="auth-slot"></div><div id="gr-content"></div>`);
 
   // ZONAS
   addTab('ZONAS','🗂️ Zonas');
@@ -1860,6 +1896,7 @@ function build(){
   // Countdown
   tickCountdown();setInterval(tickCountdown,1000);
 
+  authBoot();
   trackVisit();
 }
 build();

@@ -31,10 +31,48 @@ Es HTML estático (`index.html`) + una función serverless (`api/groups.js`). Im
 3. **Pegarlas en Vercel.** Proyecto → **Settings → Environment Variables**, agregá:
    - `SUPABASE_URL` = el Project URL
    - `SUPABASE_SERVICE_ROLE_KEY` = la clave service_role
+   - `ADMIN_PASSWORD` = contraseña para `/admin.html`
+   - `AUTH_SECRET` = texto secreto largo para firmar sesiones de usuario
 4. **Redeploy** (Deployments → ⋯ → Redeploy).
 
 Listo: ya se pueden crear grupos y compartir el link `…/?grupo=CODIGO`.
 
 > Si la DB no está configurada, el resto del sitio funciona igual; solo los grupos avisan que no se pudo crear.
+
+### Activar login sin mail
+
+En Supabase → **SQL Editor**, ejecutá:
+
+```sql
+create table if not exists usuarios (
+  id text primary key,
+  username text not null,
+  username_norm text generated always as (lower(trim(username))) stored,
+  password_hash text not null,
+  created bigint not null default (extract(epoch from now()) * 1000)::bigint,
+  updated bigint not null default (extract(epoch from now()) * 1000)::bigint,
+  last_login bigint
+);
+
+create unique index if not exists usuarios_username_norm_key
+on usuarios (username_norm);
+
+create index if not exists usuarios_updated_idx
+on usuarios (updated desc);
+
+create table if not exists prodes_usuario (
+  user_id text primary key references usuarios(id) on delete cascade,
+  picks jsonb not null default '{}'::jsonb,
+  updated bigint not null default (extract(epoch from now()) * 1000)::bigint
+);
+
+create index if not exists prodes_usuario_updated_idx
+on prodes_usuario (updated desc);
+
+alter table usuarios enable row level security;
+alter table prodes_usuario enable row level security;
+```
+
+Los usuarios se registran con usuario + contraseña, sin email. Si olvidan la contraseña, el admin la resetea desde `/admin.html`.
 
 Las banderas se cargan desde `flagcdn.com` (requiere conexión).
