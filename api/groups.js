@@ -93,7 +93,7 @@ module.exports = async (req, res) => {
         for (let t = 0; t < 6; t++) { id = id6(); if (!(await getGroup(id))) break; }
         const ownerPid = b.pid ? String(b.pid).slice(0, 24) : '';
         const g = { id: id, name: name, created: Date.now(), ownerPid: ownerPid, entries: {} };
-        if (ownerPid) g.entries[ownerPid] = { name: player, picks: picks, updated: Date.now() };
+        if (ownerPid) g.entries[ownerPid] = { name: player, picks: picks, submittedAt: Date.now(), updated: Date.now() };
         await putGroup(id, g);
         res.status(200).json({ id: id }); return;
       }
@@ -105,7 +105,8 @@ module.exports = async (req, res) => {
         g.entries = g.entries || {};
         const pidk = String(b.pid).slice(0, 24);
         if (!g.entries[pidk] && Object.keys(g.entries).length >= 100) { res.status(403).json({ error: 'grupo_lleno' }); return; }
-        g.entries[pidk] = { name: player, picks: picks, updated: Date.now() };
+        const prev = g.entries[pidk] || {};
+        g.entries[pidk] = { name: player, picks: picks, submittedAt: prev.submittedAt || prev.updated || Date.now(), updated: Date.now() };
         await putGroup(id, g);
         res.status(200).json({ ok: true, count: Object.keys(g.entries).length }); return;
       }
@@ -135,7 +136,7 @@ module.exports = async (req, res) => {
         g.entries = g.entries || {};
         if (!g.entries[pidk]) { res.status(404).json({ error: 'no_participante' }); return; }
         g.entries[pidk].name = player;
-        g.entries[pidk].updated = Date.now();
+        g.entries[pidk].nameUpdated = Date.now();
         await putGroup(id, g);
         res.status(200).json({ ok: true }); return;
       }

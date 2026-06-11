@@ -899,6 +899,7 @@ function grNormName(s){return String(s||'').toLowerCase().normalize('NFD').repla
 function grIsJoel(s){return grNormName(s).includes('joel');}
 function grPickLabel(v){return ALL48.includes(v)?team(v):esc(v||'');}
 function grScoreLabel(sc){return sc&&sc[0]!=null&&sc[1]!=null?esc(sc[0]+'-'+sc[1]):'—';}
+function grTimeLabel(ms){return ms?new Date(ms).toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';}
 function standingsFrom(teams,matches){const m={};teams.forEach(t=>m[t]={t:t,pj:0,pts:0,gf:0,ga:0});
   matches.forEach(x=>{if(!m[x.h]||!m[x.a])return;const H=m[x.h],A=m[x.a];H.pj++;A.pj++;H.gf+=x.hs;H.ga+=x.as;A.gf+=x.as;A.ga+=x.hs;if(x.hs>x.as)H.pts+=3;else if(x.as>x.hs)A.pts+=3;else{H.pts++;A.pts++;}});
   const arr=teams.map(t=>{const z=m[t];z.dg=z.gf-z.ga;return z;});arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.t.localeCompare(b.t,'es'));return arr;}
@@ -907,7 +908,7 @@ function picksStandings(g,ms){return standingsFrom(GRUPOS[g],picksMatches(g,ms))
 function memberChampion(p){return (p&&p.kb&&p.kb['104'])||(p&&p.camp)||'';}
 function esName(n){const t=TEAMS_EN[(n||'').trim()];return t?t[0]:(n||'');}
 async function fetchActual(){try{const r=await fetch(WC_API,{cache:'no-store'});const j=await r.json();const ev=(j&&j.events)||[];const byG={};for(const g in GRUPOS)byG[g]=[];
-  ev.forEach(e=>{if(!isFin(e.strStatus))return;if(e.intHomeScore==null||e.intAwayScore==null||e.intHomeScore==='')return;const h=esName(e.strHomeTeam),a=esName(e.strAwayTeam);for(const g in GRUPOS){if(GRUPOS[g].includes(h)&&GRUPOS[g].includes(a)){byG[g].push({h:h,a:a,hs:+e.intHomeScore,as:+e.intAwayScore});break;}}});
+  ev.forEach(e=>{if(!isLive(e.strStatus)&&!isFin(e.strStatus))return;if(e.intHomeScore==null||e.intAwayScore==null||e.intHomeScore==='')return;const h=esName(e.strHomeTeam),a=esName(e.strAwayTeam);for(const g in GRUPOS){if(GRUPOS[g].includes(h)&&GRUPOS[g].includes(a)){byG[g].push({h:h,a:a,hs:+e.intHomeScore,as:+e.intAwayScore});break;}}});
   const st={};for(const g in GRUPOS)st[g]=byG[g].length?{standings:standingsFrom(GRUPOS[g],byG[g]),matches:byG[g]}:null;return st;}catch(e){return null;}}
 function scoreOutcome(a,b){return a>b?1:(a<b?-1:0);}
 function findActualMatch(matches,home,away){for(const m of (matches||[])){if(m.h===home&&m.a===away)return {hs:m.hs,as:m.as};if(m.h===away&&m.a===home)return {hs:m.as,as:m.hs};}return null;}
@@ -952,7 +953,7 @@ function grOpenProde(m){
   openModal(`<div class="modal-head">
     <button class="modal-close" onclick="closeModal()">×</button>
     <h2>Prode de ${esc(m.name||'Anónimo')}</h2>
-    <div class="modal-sub">${m.pts||0} puntos actuales · actualizado ${m.updated?new Date(m.updated).toLocaleString('es-AR'):'sin fecha'}</div>
+    <div class="modal-sub">${m.pts||0} puntos actuales · última carga ${m.updated?new Date(m.updated).toLocaleString('es-AR'):'sin fecha'}</div>
   </div>
   <div class="modal-body">
     <div class="modal-stats">${defs.map(d=>`<div class="modal-stat"><b style="font-size:15px">${d[1]?grPickLabel(d[1]):'—'}</b><span>${d[0]}</span></div>`).join('')}</div>
@@ -995,7 +996,7 @@ async function loadGroup(id){const cont=document.getElementById('gr-view');if(!c
   const actual=await fetchActual();
   const localPid=grPid();
   const isOwner=!!(g.ownerPid&&g.ownerPid===localPid);
-  const members=Object.entries(g.entries||{}).map(([pid,m])=>({pid:pid,name:m.name,picks:m.picks||{},updated:m.updated||0,pts:scoreMember(m.picks||{},actual)}));
+  const members=Object.entries(g.entries||{}).map(([pid,m])=>({pid:pid,name:m.name,picks:m.picks||{},submittedAt:m.submittedAt||m.updated||0,updated:m.updated||0,pts:scoreMember(m.picks||{},actual)}));
   members.sort((a,b)=>b.pts-a.pts||(a.name||'').localeCompare(b.name||''));
   const link=location.origin+location.pathname+'?grupo='+g.id;
   const localEntry=(g.entries||{})[localPid];
@@ -1005,9 +1006,9 @@ async function loadGroup(id){const cont=document.getElementById('gr-view');if(!c
   h+=`<div class="gr-share">📎 <input readonly id="gr-link" value="${link}"><button class="pb-btn alt" id="gr-copy">Copiar link</button></div>`;
   if(canClaim)h+=`<div class="gr-legacy"><span>Podés pasar el rol de dueño a esta cuenta Joel para administrar el grupo desde tu login.</span><button class="gr-mini" id="gr-claim">Hacer dueño a esta cuenta</button></div>`;
   if(!members.length){h+='<div class="live-empty">Todavía no hay prodes cargados. Armá el tuyo y tocá “Sumar mi prode”.</div>';}
-  else{h+='<table class="gr-table"><tr><th>#</th><th>Jugador</th><th>Campeón</th><th>Pts</th><th>Acciones</th></tr>';
-    members.forEach((m,i)=>{const ownerBadge=(g.ownerPid&&m.pid===g.ownerPid)?' <span class="gr-owner">Dueño</span>':'';h+=`<tr><td>${i+1}</td><td>${esc(m.name)}${ownerBadge}</td><td>${m.picks?grPickLabel(memberChampion(m.picks)):'—'}</td><td><b>${m.pts}</b></td><td><div class="gr-actions"><button class="gr-mini" data-view-prode="${esc(m.pid)}">Ver prode</button>${isOwner&&m.pid!==localPid?`<button class="gr-mini del" data-del-member="${esc(m.pid)}" data-del-name="${esc(m.name)}">Borrar</button>`:''}</div></td></tr>`;});
-    h+='</table><p class="gr-note">Puntos automáticos: posiciones de grupo (3 por 1º, 2 por 2º, 1 por 3º) + partidos de grupo (1 por acertar ganador/empate, 3 por resultado exacto). Hoy están en 0 porque el Mundial no empezó.</p>';}
+  else{h+='<table class="gr-table"><tr><th>#</th><th>Jugador</th><th>Campeón</th><th>Última carga</th><th>Pts</th><th>Acciones</th></tr>';
+    members.forEach((m,i)=>{const ownerBadge=(g.ownerPid&&m.pid===g.ownerPid)?' <span class="gr-owner">Dueño</span>':'';h+=`<tr><td>${i+1}</td><td>${esc(m.name)}${ownerBadge}</td><td>${m.picks?grPickLabel(memberChampion(m.picks)):'—'}</td><td>${grTimeLabel(m.updated)}</td><td><b>${m.pts}</b></td><td><div class="gr-actions"><button class="gr-mini" data-view-prode="${esc(m.pid)}">Ver prode</button>${isOwner&&m.pid!==localPid?`<button class="gr-mini del" data-del-member="${esc(m.pid)}" data-del-name="${esc(m.name)}">Borrar</button>`:''}</div></td></tr>`;});
+    h+='</table><p class="gr-note">Puntos automáticos: posiciones de grupo (3 por 1º, 2 por 2º, 1 por 3º) + partidos de grupo en vivo/finalizados (1 por acertar ganador/empate, 3 por resultado exacto). La hora muestra cuándo se cargó o actualizó el prode.</p>';}
   h+='<p class="gr-note"><a href="'+location.pathname+'" style="color:#7c3aed;font-weight:700">← Crear / entrar a otro grupo</a></p>';
   cont.innerHTML=h;
   const cp=cont.querySelector('#gr-copy');if(cp)cp.onclick=()=>{const i=document.getElementById('gr-link');i.select();try{navigator.clipboard.writeText(i.value);}catch(e){}pbToast('Link copiado 📋');};
