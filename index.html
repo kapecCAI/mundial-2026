@@ -902,15 +902,16 @@ function grScoreLabel(sc){return sc&&sc[0]!=null&&sc[1]!=null?esc(sc[0]+'-'+sc[1
 function standingsFrom(teams,matches){const m={};teams.forEach(t=>m[t]={t:t,pj:0,pts:0,gf:0,ga:0});
   matches.forEach(x=>{if(!m[x.h]||!m[x.a])return;const H=m[x.h],A=m[x.a];H.pj++;A.pj++;H.gf+=x.hs;H.ga+=x.as;A.gf+=x.as;A.ga+=x.hs;if(x.hs>x.as)H.pts+=3;else if(x.as>x.hs)A.pts+=3;else{H.pts++;A.pts++;}});
   const arr=teams.map(t=>{const z=m[t];z.dg=z.gf-z.ga;return z;});arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.t.localeCompare(b.t,'es'));return arr;}
-function picksStandings(g,ms){const matches=GFIX.map((pr,idx)=>{const sc=(ms||{})[g+idx];if(!sc||sc[0]==null||sc[1]==null)return null;return {h:GRUPOS[g][pr[0]],a:GRUPOS[g][pr[1]],hs:+sc[0],as:+sc[1]};}).filter(Boolean);return standingsFrom(GRUPOS[g],matches);}
+function picksMatches(g,ms){return GFIX.map((pr,idx)=>{const sc=(ms||{})[g+idx];if(!sc||sc[0]==null||sc[1]==null)return null;return {h:GRUPOS[g][pr[0]],a:GRUPOS[g][pr[1]],hs:+sc[0],as:+sc[1]};}).filter(Boolean);}
+function picksStandings(g,ms){return standingsFrom(GRUPOS[g],picksMatches(g,ms));}
 function memberChampion(p){return (p&&p.kb&&p.kb['104'])||(p&&p.camp)||'';}
 function esName(n){const t=TEAMS_EN[(n||'').trim()];return t?t[0]:(n||'');}
 async function fetchActual(){try{const r=await fetch(WC_API,{cache:'no-store'});const j=await r.json();const ev=(j&&j.events)||[];const byG={};for(const g in GRUPOS)byG[g]=[];
-  ev.forEach(e=>{if(e.intHomeScore==null||e.intAwayScore==null||e.intHomeScore==='')return;const h=esName(e.strHomeTeam),a=esName(e.strAwayTeam);for(const g in GRUPOS){if(GRUPOS[g].includes(h)&&GRUPOS[g].includes(a)){byG[g].push({h:h,a:a,hs:+e.intHomeScore,as:+e.intAwayScore});break;}}});
+  ev.forEach(e=>{if(!isFin(e.strStatus))return;if(e.intHomeScore==null||e.intAwayScore==null||e.intHomeScore==='')return;const h=esName(e.strHomeTeam),a=esName(e.strAwayTeam);for(const g in GRUPOS){if(GRUPOS[g].includes(h)&&GRUPOS[g].includes(a)){byG[g].push({h:h,a:a,hs:+e.intHomeScore,as:+e.intAwayScore});break;}}});
   const st={};for(const g in GRUPOS)st[g]=byG[g].length?{standings:standingsFrom(GRUPOS[g],byG[g]),matches:byG[g]}:null;return st;}catch(e){return null;}}
 function scoreOutcome(a,b){return a>b?1:(a<b?-1:0);}
 function findActualMatch(matches,home,away){for(const m of (matches||[])){if(m.h===home&&m.a===away)return {hs:m.hs,as:m.as};if(m.h===away&&m.a===home)return {hs:m.as,as:m.hs};}return null;}
-function scoreMember(p,actual){if(!actual||!p)return 0;let pts=0;for(const g in GRUPOS){const real=actual[g];if(!real)continue;const pred=picksStandings(g,p.ms);const realStand=real.standings||real;for(let i=0;i<3;i++){if(pred[i]&&realStand[i]&&pred[i].t===realStand[i].t)pts+=(3-i);}
+function scoreMember(p,actual){if(!actual||!p)return 0;let pts=0;for(const g in GRUPOS){const real=actual[g];if(!real)continue;const predMatches=picksMatches(g,p.ms),pred=standingsFrom(GRUPOS[g],predMatches),realStand=real.standings||real;if((real.matches||[]).length===6&&predMatches.length===6){for(let i=0;i<3;i++){if(pred[i]&&realStand[i]&&pred[i].t===realStand[i].t)pts+=(3-i);}}
     GFIX.forEach((pr,idx)=>{const sc=(p.ms||{})[g+idx];if(!sc||sc[0]==null||sc[1]==null)return;const home=GRUPOS[g][pr[0]],away=GRUPOS[g][pr[1]],m=findActualMatch(real.matches||[],home,away);if(!m)return;const ph=+sc[0],pa=+sc[1];pts+=(ph===m.hs&&pa===m.as)?3:(scoreOutcome(ph,pa)===scoreOutcome(m.hs,m.as)?1:0);});}
   return pts;}
 function grFormHTML(){return `
@@ -998,10 +999,11 @@ async function loadGroup(id){const cont=document.getElementById('gr-view');if(!c
   members.sort((a,b)=>b.pts-a.pts||(a.name||'').localeCompare(b.name||''));
   const link=location.origin+location.pathname+'?grupo='+g.id;
   const localEntry=(g.entries||{})[localPid];
-  const canClaim=!g.ownerPid&&localEntry&&grIsJoel(localEntry.name||grName());
+  const ownerEntry=g.ownerPid&&(g.entries||{})[g.ownerPid];
+  const canClaim=localEntry&&grIsJoel(localEntry.name||grName())&&(!g.ownerPid||(g.ownerPid!==localPid&&grIsJoel(ownerEntry&&ownerEntry.name)));
   let h=`<div class="gr-head"><div><div class="gr-name">👥 ${esc(g.name)} ${isOwner?'<span class="gr-owner">Dueño</span>':''}</div><div class="gr-sub">Código <b>${g.id}</b> · ${members.length} participante(s)</div></div><div class="gr-actions"><button class="pb-btn" id="gr-join">➕ Sumar / actualizar mi prode</button>${localEntry?'<button class="pb-btn alt" id="gr-rename">Cambiar mi nombre</button>':''}</div></div>`;
   h+=`<div class="gr-share">📎 <input readonly id="gr-link" value="${link}"><button class="pb-btn alt" id="gr-copy">Copiar link</button></div>`;
-  if(canClaim)h+=`<div class="gr-legacy"><span>Este grupo fue creado antes de tener dueño. Podés dejar a Joel como administrador para borrar participantes.</span><button class="gr-mini" id="gr-claim">Asignar a Joel como dueño</button></div>`;
+  if(canClaim)h+=`<div class="gr-legacy"><span>Podés pasar el rol de dueño a esta cuenta Joel para administrar el grupo desde tu login.</span><button class="gr-mini" id="gr-claim">Hacer dueño a esta cuenta</button></div>`;
   if(!members.length){h+='<div class="live-empty">Todavía no hay prodes cargados. Armá el tuyo y tocá “Sumar mi prode”.</div>';}
   else{h+='<table class="gr-table"><tr><th>#</th><th>Jugador</th><th>Campeón</th><th>Pts</th><th>Acciones</th></tr>';
     members.forEach((m,i)=>{const ownerBadge=(g.ownerPid&&m.pid===g.ownerPid)?' <span class="gr-owner">Dueño</span>':'';h+=`<tr><td>${i+1}</td><td>${esc(m.name)}${ownerBadge}</td><td>${m.picks?grPickLabel(memberChampion(m.picks)):'—'}</td><td><b>${m.pts}</b></td><td><div class="gr-actions"><button class="gr-mini" data-view-prode="${esc(m.pid)}">Ver prode</button>${isOwner&&m.pid!==localPid?`<button class="gr-mini del" data-del-member="${esc(m.pid)}" data-del-name="${esc(m.name)}">Borrar</button>`:''}</div></td></tr>`;});

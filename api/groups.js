@@ -116,10 +116,12 @@ module.exports = async (req, res) => {
         const g = await getGroup(id);
         if (!g) { res.status(404).json({ error: 'no_existe' }); return; }
         g.entries = g.entries || {};
-        if (g.ownerPid) { res.status(409).json({ error: 'ya_tiene_dueno' }); return; }
         const entry = g.entries[pidk];
         const entryName = String(entry && entry.name || player || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const currentOwner = g.ownerPid && g.entries[g.ownerPid];
+        const ownerName = String(currentOwner && currentOwner.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         if (!entry || entryName.indexOf('joel') === -1) { res.status(403).json({ error: 'solo_joel' }); return; }
+        if (g.ownerPid && g.ownerPid !== pidk && ownerName.indexOf('joel') === -1) { res.status(409).json({ error: 'ya_tiene_dueno' }); return; }
         g.ownerPid = pidk;
         await putGroup(id, g);
         res.status(200).json({ ok: true }); return;
