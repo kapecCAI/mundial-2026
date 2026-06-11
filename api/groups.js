@@ -91,8 +91,9 @@ module.exports = async (req, res) => {
         const name = String(b.name || 'Grupo').slice(0, 40);
         let id;
         for (let t = 0; t < 6; t++) { id = id6(); if (!(await getGroup(id))) break; }
-        const g = { id: id, name: name, created: Date.now(), entries: {} };
-        if (b.pid) g.entries[String(b.pid).slice(0, 24)] = { name: player, picks: picks, updated: Date.now() };
+        const ownerPid = b.pid ? String(b.pid).slice(0, 24) : '';
+        const g = { id: id, name: name, created: Date.now(), ownerPid: ownerPid, entries: {} };
+        if (ownerPid) g.entries[ownerPid] = { name: player, picks: picks, updated: Date.now() };
         await putGroup(id, g);
         res.status(200).json({ id: id }); return;
       }
@@ -105,6 +106,36 @@ module.exports = async (req, res) => {
         const pidk = String(b.pid).slice(0, 24);
         if (!g.entries[pidk] && Object.keys(g.entries).length >= 100) { res.status(403).json({ error: 'grupo_lleno' }); return; }
         g.entries[pidk] = { name: player, picks: picks, updated: Date.now() };
+        await putGroup(id, g);
+        res.status(200).json({ ok: true, count: Object.keys(g.entries).length }); return;
+      }
+      if (b.action === 'claim_owner') {
+        const id = String(b.id || '').toUpperCase().slice(0, 6);
+        const pidk = String(b.pid || '').slice(0, 24);
+        if (!pidk) { res.status(400).json({ error: 'falta_pid' }); return; }
+        const g = await getGroup(id);
+        if (!g) { res.status(404).json({ error: 'no_existe' }); return; }
+        g.entries = g.entries || {};
+        if (g.ownerPid) { res.status(409).json({ error: 'ya_tiene_dueno' }); return; }
+        const entry = g.entries[pidk];
+        const entryName = String(entry && entry.name || player || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if (!entry || entryName.indexOf('joel') === -1) { res.status(403).json({ error: 'solo_joel' }); return; }
+        g.ownerPid = pidk;
+        await putGroup(id, g);
+        res.status(200).json({ ok: true }); return;
+      }
+      if (b.action === 'delete_member') {
+        const id = String(b.id || '').toUpperCase().slice(0, 6);
+        const ownerPid = String(b.ownerPid || '').slice(0, 24);
+        const targetPid = String(b.targetPid || '').slice(0, 24);
+        if (!ownerPid || !targetPid) { res.status(400).json({ error: 'faltan_datos' }); return; }
+        const g = await getGroup(id);
+        if (!g) { res.status(404).json({ error: 'no_existe' }); return; }
+        g.entries = g.entries || {};
+        if (!g.ownerPid || g.ownerPid !== ownerPid) { res.status(403).json({ error: 'no_dueno' }); return; }
+        if (targetPid === g.ownerPid) { res.status(403).json({ error: 'no_borrar_dueno' }); return; }
+        if (!g.entries[targetPid]) { res.status(404).json({ error: 'no_participante' }); return; }
+        delete g.entries[targetPid];
         await putGroup(id, g);
         res.status(200).json({ ok: true, count: Object.keys(g.entries).length }); return;
       }

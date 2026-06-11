@@ -171,6 +171,15 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 .gr-table th{background:#7c3aed;color:#fff;font-size:12px;}
 .gr-table tr:first-child td{font-weight:700;}
 .gr-note{color:#64748b;font-size:12px;margin-top:10px;}
+.gr-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.gr-mini{border:none;border-radius:8px;background:#e0f2fe;color:#075985;padding:6px 9px;font-weight:800;font-size:12px;cursor:pointer;font-family:inherit;}
+.gr-mini:hover{filter:brightness(.97);}
+.gr-mini.del{background:#fee2e2;color:#991b1b;}
+.gr-owner{display:inline-flex;align-items:center;gap:5px;margin-left:6px;background:#fffbeb;color:#92400e;border:1px solid #fde68a;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:900;vertical-align:middle;}
+.gr-legacy{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 12px;margin-bottom:14px;color:#92400e;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.gr-prode-table{width:100%;border-collapse:collapse;font-size:13px;}
+.gr-prode-table th,.gr-prode-table td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;}
+.gr-prode-table th{color:var(--muted);font-size:11px;text-transform:uppercase;}
 #gr-code,#gr-newname,#gr-newplayer{padding:9px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;}
 .fl{width:24px;height:18px;border-radius:2px;vertical-align:middle;margin-right:6px;box-shadow:0 0 1px rgba(0,0,0,.5);object-fit:cover;}
 .kotable .away .fl{margin-right:6px;}
@@ -838,6 +847,9 @@ function grPid(){let p=localStorage.getItem('prode_pid');if(!p){p=Math.random().
 function grName(){return localStorage.getItem('prode_name')||'';}
 function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function currentPicks(){const s=prodeRead();return {ms:PB_MS,kb:PB_KB,camp:s.camp,sub:s.sub,ter:s.ter,cua:s.cua,gol:s.gol,mvp:s.mvp};}
+function grNormName(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+function grIsJoel(s){return grNormName(s).includes('joel');}
+function grPickLabel(v){return ALL48.includes(v)?team(v):esc(v||'');}
 function standingsFrom(teams,matches){const m={};teams.forEach(t=>m[t]={t:t,pj:0,pts:0,gf:0,ga:0});
   matches.forEach(x=>{if(!m[x.h]||!m[x.a])return;const H=m[x.h],A=m[x.a];H.pj++;A.pj++;H.gf+=x.hs;H.ga+=x.as;A.gf+=x.as;A.ga+=x.hs;if(x.hs>x.as)H.pts+=3;else if(x.as>x.hs)A.pts+=3;else{H.pts++;A.pts++;}});
   const arr=teams.map(t=>{const z=m[t];z.dg=z.gf-z.ga;return z;});arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.t.localeCompare(b.t,'es'));return arr;}
@@ -864,21 +876,71 @@ async function createGroup(){const gn=document.getElementById('gr-newname').valu
   try{const r=await fetch(GR_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'create',name:gn,pid:grPid(),player:nm,picks:currentPicks()})});const j=await r.json();if(!j.id)throw 0;history.replaceState(null,'',location.pathname+'?grupo='+j.id);renderGrupos();pbToast('Grupo creado 🎉');}catch(e){pbToast('No se pudo crear (¿DB conectada?)');}}
 async function joinGroup(id){let nm=grName()||prompt('Tu nombre para el grupo:');if(nm===null)return;nm=(nm||'Anónimo').slice(0,30);localStorage.setItem('prode_name',nm);
   try{const r=await fetch(GR_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'submit',id:id,pid:grPid(),player:nm,picks:currentPicks()})});if(!r.ok)throw 0;pbToast('¡Prode cargado al grupo! ✅');loadGroup(id);}catch(e){pbToast('No se pudo guardar');}}
+function grOpenProde(m){
+  const p=m.picks||{};
+  const defs=[
+    ['Campeón',p.camp||memberChampion(p)||''],
+    ['Subcampeón',p.sub||''],
+    ['Tercero',p.ter||''],
+    ['Cuarto',p.cua||''],
+    ['Goleador',p.gol||''],
+    ['Mejor jugador',p.mvp||'']
+  ];
+  let groups='<table class="gr-prode-table"><tr><th>Grupo</th><th>1º</th><th>2º</th><th>3º</th><th>4º</th></tr>';
+  for(const g in GRUPOS){const st=picksStandings(g,p.ms||{});groups+=`<tr><td><b>${g}</b></td>${[0,1,2,3].map(i=>`<td>${st[i]?team(st[i].t):'—'}</td>`).join('')}</tr>`;}
+  groups+='</table>';
+  const ko=(ROUNDS||[]).map(rd=>{const ws=rd[1].map(x=>(p.kb||{})[x[0]]).filter(Boolean);return ws.length?`<div class="mtag"><b>${rd[0]}:</b> ${ws.map(grPickLabel).join(', ')}</div>`:'';}).filter(Boolean).join('');
+  openModal(`<div class="modal-head">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <h2>Prode de ${esc(m.name||'Anónimo')}</h2>
+    <div class="modal-sub">${m.pts||0} puntos actuales · actualizado ${m.updated?new Date(m.updated).toLocaleString('es-AR'):'sin fecha'}</div>
+  </div>
+  <div class="modal-body">
+    <div class="modal-stats">${defs.map(d=>`<div class="modal-stat"><b style="font-size:15px">${d[1]?grPickLabel(d[1]):'—'}</b><span>${d[0]}</span></div>`).join('')}</div>
+    <div class="modal-section"><h3>Fase de grupos</h3>${groups}</div>
+    <div class="modal-section"><h3>Eliminatorias</h3><div class="modal-grid">${ko||'<div class="mtag">Todavía no cargó ganadores de eliminatorias.</div>'}</div></div>
+  </div>`);
+}
+async function claimGroupOwner(id){
+  try{
+    const r=await fetch(GR_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'claim_owner',id:id,pid:grPid(),player:grName()||'Joel'})});
+    if(!r.ok)throw 0;
+    pbToast('Joel quedó como dueño');
+    loadGroup(id);
+  }catch(e){pbToast('No pude asignar dueño');}
+}
+async function deleteGroupMember(id,targetPid,name){
+  if(!confirm('¿Borrar a '+(name||'este participante')+' del grupo?'))return;
+  try{
+    const r=await fetch(GR_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete_member',id:id,ownerPid:grPid(),targetPid:targetPid})});
+    if(!r.ok)throw 0;
+    pbToast('Participante borrado');
+    loadGroup(id);
+  }catch(e){pbToast('No se pudo borrar');}
+}
 async function loadGroup(id){const cont=document.getElementById('gr-view');if(!cont)return;cont.innerHTML='<div class="live-empty">Cargando grupo…</div>';
   let g;try{const r=await fetch(GR_API+'?id='+encodeURIComponent(id));if(!r.ok)throw 0;g=await r.json();}catch(e){cont.innerHTML='<div class="live-empty">No se encontró el grupo, o estás abriendo el archivo local. Los grupos funcionan en el sitio publicado (Vercel).<br><br><a href="'+location.pathname+'" style="color:#7c3aed;font-weight:700">← Volver</a></div>';return;}
   const actual=await fetchActual();
-  const members=Object.values(g.entries||{}).map(m=>({name:m.name,picks:m.picks||{},pts:scoreMember(m.picks||{},actual)}));
+  const localPid=grPid();
+  const isOwner=!!(g.ownerPid&&g.ownerPid===localPid);
+  const members=Object.entries(g.entries||{}).map(([pid,m])=>({pid:pid,name:m.name,picks:m.picks||{},updated:m.updated||0,pts:scoreMember(m.picks||{},actual)}));
   members.sort((a,b)=>b.pts-a.pts||(a.name||'').localeCompare(b.name||''));
   const link=location.origin+location.pathname+'?grupo='+g.id;
-  let h=`<div class="gr-head"><div><div class="gr-name">👥 ${esc(g.name)}</div><div class="gr-sub">Código <b>${g.id}</b> · ${members.length} participante(s)</div></div><button class="pb-btn" id="gr-join">➕ Sumar / actualizar mi prode</button></div>`;
+  const localEntry=(g.entries||{})[localPid];
+  const canClaim=!g.ownerPid&&localEntry&&grIsJoel(localEntry.name||grName());
+  let h=`<div class="gr-head"><div><div class="gr-name">👥 ${esc(g.name)} ${isOwner?'<span class="gr-owner">Dueño</span>':''}</div><div class="gr-sub">Código <b>${g.id}</b> · ${members.length} participante(s)</div></div><button class="pb-btn" id="gr-join">➕ Sumar / actualizar mi prode</button></div>`;
   h+=`<div class="gr-share">📎 <input readonly id="gr-link" value="${link}"><button class="pb-btn alt" id="gr-copy">Copiar link</button></div>`;
+  if(canClaim)h+=`<div class="gr-legacy"><span>Este grupo fue creado antes de tener dueño. Podés dejar a Joel como administrador para borrar participantes.</span><button class="gr-mini" id="gr-claim">Asignar a Joel como dueño</button></div>`;
   if(!members.length){h+='<div class="live-empty">Todavía no hay prodes cargados. Armá el tuyo y tocá “Sumar mi prode”.</div>';}
-  else{h+='<table class="gr-table"><tr><th>#</th><th>Jugador</th><th>Campeón</th><th>Pts</th></tr>';
-    members.forEach((m,i)=>{h+=`<tr><td>${i+1}</td><td>${esc(m.name)}</td><td>${m.picks?team(memberChampion(m.picks)):'—'}</td><td><b>${m.pts}</b></td></tr>`;});
+  else{h+='<table class="gr-table"><tr><th>#</th><th>Jugador</th><th>Campeón</th><th>Pts</th><th>Acciones</th></tr>';
+    members.forEach((m,i)=>{const ownerBadge=(g.ownerPid&&m.pid===g.ownerPid)?' <span class="gr-owner">Dueño</span>':'';h+=`<tr><td>${i+1}</td><td>${esc(m.name)}${ownerBadge}</td><td>${m.picks?grPickLabel(memberChampion(m.picks)):'—'}</td><td><b>${m.pts}</b></td><td><div class="gr-actions"><button class="gr-mini" data-view-prode="${esc(m.pid)}">Ver prode</button>${isOwner&&m.pid!==localPid?`<button class="gr-mini del" data-del-member="${esc(m.pid)}" data-del-name="${esc(m.name)}">Borrar</button>`:''}</div></td></tr>`;});
     h+='</table><p class="gr-note">Puntos automáticos con los resultados reales: 3 por 1º de grupo, 2 por 2º, 1 por 3º. Hoy están en 0 porque el Mundial no empezó.</p>';}
   h+='<p class="gr-note"><a href="'+location.pathname+'" style="color:#7c3aed;font-weight:700">← Crear / entrar a otro grupo</a></p>';
   cont.innerHTML=h;
   const cp=cont.querySelector('#gr-copy');if(cp)cp.onclick=()=>{const i=document.getElementById('gr-link');i.select();try{navigator.clipboard.writeText(i.value);}catch(e){}pbToast('Link copiado 📋');};
+  const claim=cont.querySelector('#gr-claim');if(claim)claim.onclick=()=>claimGroupOwner(g.id);
+  cont.querySelectorAll('[data-view-prode]').forEach(b=>b.onclick=()=>{const m=members.find(x=>x.pid===b.dataset.viewProde);if(m)grOpenProde(m);});
+  cont.querySelectorAll('[data-del-member]').forEach(b=>b.onclick=()=>deleteGroupMember(g.id,b.dataset.delMember,b.dataset.delName));
   cont.querySelector('#gr-join').onclick=()=>joinGroup(g.id);}
 
 // ===== SEDES (16 estadios) =====
