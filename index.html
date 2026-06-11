@@ -155,6 +155,7 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 .gm{display:grid;grid-template-columns:1fr auto auto 1fr;align-items:center;gap:6px;padding:7px 0;border-bottom:1px dashed #eef2f7;}
 .gm .gm-t{font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:5px;}
 .gm .gm-t.r{justify-content:flex-end;text-align:right;}
+.gm-day{margin:8px 0 2px;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.4px;}
 .stp{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
 .st-b{border:none;background:#f1f5f9;color:#0ea5e9;font-weight:900;font-size:15px;width:24px;height:28px;cursor:pointer;line-height:1;}
 .st-b:hover{background:#e0f2fe;}
@@ -770,6 +771,16 @@ let PB_MS={}, PB_KB={};
 const CONSENSO_ORDER={A:["México","Corea del Sur","Rep. Checa","Sudáfrica"],B:["Suiza","Canadá","Bosnia","Qatar"],C:["Brasil","Marruecos","Escocia","Haití"],D:["Estados Unidos","Turquía","Paraguay","Australia"],E:["Alemania","Ecuador","Costa de Marfil","Curazao"],F:["Países Bajos","Japón","Suecia","Túnez"],G:["Bélgica","Egipto","Irán","Nueva Zelanda"],H:["España","Uruguay","Arabia Saudita","Cabo Verde"],I:["Francia","Noruega","Senegal","Irak"],J:["Argentina","Austria","Argelia","Jordania"],K:["Portugal","Colombia","RD Congo","Uzbekistán"],L:["Inglaterra","Croacia","Ghana","Panamá"]};
 const CONSENSO_KB={"73":"Canadá","74":"Alemania","75":"Países Bajos","76":"Brasil","77":"Francia","78":"Noruega","79":"México","80":"Inglaterra","81":"Estados Unidos","82":"Bélgica","83":"Colombia","84":"España","85":"Suiza","86":"Argentina","87":"Portugal","88":"Turquía","89":"Francia","90":"Países Bajos","91":"Brasil","92":"Inglaterra","93":"España","94":"Bélgica","95":"Argentina","96":"Portugal","97":"Francia","98":"España","99":"Brasil","100":"Argentina","101":"España","102":"Argentina","103":"Francia","104":"España"};
 function pbOpts(arr){return '<option value="">— elegí —</option>'+arr.map(t=>`<option value="${t}">${t}</option>`).join('');}
+// Orden cronológico de los partidos de cada grupo según el fixture FIFA confirmado.
+// Las claves de PB_MS siguen siendo g+idx (idx original de GFIX): no rompe prodes guardados.
+const PRODE_TEAM_ALIAS={'rep. checa':'chequia'};
+function prodeCanon(n){const s=tname(n).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');return PRODE_TEAM_ALIAS[s]||s;}
+let _GFIX_ORD=null;
+function gfixOrder(g){
+  if(!_GFIX_ORD){_GFIX_ORD={};for(const gg in GRUPOS){_GFIX_ORD[gg]=GFIX.map((pr,idx)=>{const a=prodeCanon(GRUPOS[gg][pr[0]]),b=prodeCanon(GRUPOS[gg][pr[1]]);const f=CONFIRMED_FIXTURES.find(e=>{const h=canonicalTeam(e.strHomeTeam),w=canonicalTeam(e.strAwayTeam);return (h===a&&w===b)||(h===b&&w===a);});return {idx:idx,pr:pr,date:f?f.dateEvent:'9999-12-31'};}).sort((x,y)=>x.date.localeCompare(y.date)||x.idx-y.idx);}}
+  return _GFIX_ORD[g]||GFIX.map((pr,idx)=>({idx:idx,pr:pr,date:''}));
+}
+function gmDateLabel(d){if(!d||d==='9999-12-31')return '';try{return new Date(d+'T12:00:00').toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});}catch(e){return '';}}
 function makeProde(){
   const defs=`<div class="pb-card"><h3>🏆 Definiciones del torneo</h3><div class="pb-defs">`+
     [['camp','🏆 Campeón (auto)'],['sub','🥈 Subcampeón (auto)'],['ter','🥉 Tercer puesto (auto)'],['cua','4º puesto (auto)']].map(d=>`<label class="pb-field">${d[1]}<select id="pr-${d[0]}" disabled>${pbOpts(ALL48)}</select></label>`).join('')+
@@ -786,7 +797,7 @@ function pbVal(id){const e=document.getElementById(id);return e?e.value:'';}
 function pbSet(id,v){const e=document.getElementById(id);if(e)e.value=v||'';}
 function prodeRead(){return {camp:pbVal('pr-camp'),sub:pbVal('pr-sub'),ter:pbVal('pr-ter'),cua:pbVal('pr-cua'),gol:pbVal('pr-gol'),mvp:pbVal('pr-mvp')};}
 function fullState(){const s=prodeRead();s.ms=PB_MS;s.kb=PB_KB;return s;}
-function prodeWrite(s){if(!s)return;pbSet('pr-camp',s.camp);pbSet('pr-sub',s.sub);pbSet('pr-ter',s.ter);pbSet('pr-cua',s.cua);pbSet('pr-gol',s.gol);pbSet('pr-mvp',s.mvp);PB_MS=Object.assign({},s.ms||{});PB_KB=Object.assign({},s.kb||{});}
+function prodeWrite(s){if(!s)return;pbSet('pr-camp',s.camp);pbSet('pr-sub',s.sub);pbSet('pr-ter',s.ter);pbSet('pr-cua',s.cua);pbSet('pr-gol',s.gol);pbSet('pr-mvp',s.mvp);PB_MS=Object.assign({},s.ms||{});PB_KB=Object.assign({},s.kb||{});if(s.grupos)mergeGroups(s.grupos);}
 function computeStandings(g){const ts=GRUPOS[g];const m={};ts.forEach(t=>m[t]={t:t,pj:0,pts:0,gf:0,ga:0});
   GFIX.forEach((pr,idx)=>{const sc=PB_MS[g+idx];if(!sc||sc[0]===null||sc[0]===undefined||sc[1]===null||sc[1]===undefined)return;const H=m[ts[pr[0]]],A=m[ts[pr[1]]];const h=+sc[0],a=+sc[1];H.pj++;A.pj++;H.gf+=h;H.ga+=a;A.gf+=a;A.ga+=h;if(h>a)H.pts+=3;else if(a>h)A.pts+=3;else{H.pts++;A.pts++;}});
   const arr=ts.map(t=>{const x=m[t];x.dg=x.gf-x.ga;return x;});
@@ -801,7 +812,9 @@ function standHTML(g){const st=computeStandings(g);let h='<table><tr><th>#</th><
   return h+'</table>';}
 function renderGroups(){const cont=document.getElementById('pb-groups');if(!cont)return;let h='';
   for(const g in GRUPOS){h+=`<div class="pb-g"><h4><span class="gl">${g}</span>Grupo ${g}</h4>`;
-    GFIX.forEach((pr,idx)=>{const k=g+idx;const home=GRUPOS[g][pr[0]],away=GRUPOS[g][pr[1]];const sc=PB_MS[k]||[null,null];
+    let lastDay='';
+    gfixOrder(g).forEach(o=>{const pr=o.pr,idx=o.idx;const k=g+idx;const home=GRUPOS[g][pr[0]],away=GRUPOS[g][pr[1]];const sc=PB_MS[k]||[null,null];
+      const day=gmDateLabel(o.date);if(day&&day!==lastDay){h+=`<div class="gm-day">📅 ${day}</div>`;lastDay=day;}
       h+=`<div class="gm"><span class="gm-t r">${team(home)}</span>${stepHTML(k,0,sc[0])}${stepHTML(k,1,sc[1])}<span class="gm-t">${team(away)}</span></div>`;});
     h+=`<div class="gstand" id="stand-${g}">${standHTML(g)}</div></div>`;}
   cont.innerHTML=h;}
@@ -866,8 +879,13 @@ function authUser(){const a=authState();return a&&a.user?a.user:null;}
 function authToken(){const a=authState();return a&&a.token?a.token:'';}
 function grPid(){const u=authUser();if(u&&u.id)return u.id;let p=localStorage.getItem('prode_pid');if(!p){p=Math.random().toString(36).slice(2,10);localStorage.setItem('prode_pid',p);}return p;}
 function grName(){return localStorage.getItem('prode_name')||'';}
+// Mis grupos: se guardan en este navegador y, si hay sesión, también en la cuenta (dentro de picks).
+function myGroups(){try{const l=JSON.parse(localStorage.getItem('mis_grupos')||'[]');return Array.isArray(l)?l:[];}catch(e){return [];}}
+function rememberGroup(id,name){if(!id)return;const l=myGroups().filter(x=>x&&x.id!==id);l.unshift({id:id,name:String(name||id).slice(0,40)});try{localStorage.setItem('mis_grupos',JSON.stringify(l.slice(0,12)));}catch(e){}authSavePicks();}
+function mergeGroups(arr){if(!Array.isArray(arr))return;const cur=myGroups();const ids=new Set(cur.map(x=>x.id));arr.forEach(x=>{if(x&&x.id&&!ids.has(x.id)){cur.push({id:String(x.id).slice(0,6),name:String(x.name||x.id).slice(0,40)});ids.add(x.id);}});try{localStorage.setItem('mis_grupos',JSON.stringify(cur.slice(0,12)));}catch(e){}}
 function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function currentPicks(){const s=prodeRead();return {ms:PB_MS,kb:PB_KB,camp:s.camp,sub:s.sub,ter:s.ter,cua:s.cua,gol:s.gol,mvp:s.mvp};}
+function authPicksPayload(){const p=currentPicks();p.grupos=myGroups();return p;}
 function authBoxHTML(){const u=authUser();return `<div class="auth-box"><div><div class="auth-title">${u?'Cuenta: '+esc(u.username):'Entrá con tu cuenta'}</div><div class="auth-sub">${u?'Tu prode se guarda para abrirlo en cualquier dispositivo.':'Usuario y contraseña, sin mail. Si olvidás la clave, Joel la resetea desde admin.'}</div></div>${u?`<div class="auth-form"><button class="pb-btn ghost" data-auth-logout="1">Salir</button></div>`:`<div class="auth-form"><input data-auth-user placeholder="Usuario"><input data-auth-pass type="password" placeholder="Contraseña"><button class="pb-btn" data-auth-login="1">Entrar</button><button class="pb-btn alt" data-auth-register="1">Crear cuenta</button></div>`}</div>`;}
 function renderAuthBoxes(){document.querySelectorAll('.auth-slot').forEach(el=>{el.innerHTML=authBoxHTML();wireAuthBox(el);});}
 function wireAuthBox(root){
@@ -881,7 +899,7 @@ async function authSubmit(root,action){
   const username=(root.querySelector('[data-auth-user]')||{}).value||'',password=(root.querySelector('[data-auth-pass]')||{}).value||'';
   if(username.trim().length<3||password.length<4){pbToast('Usuario min. 3 y clave min. 4');return;}
   try{
-    const r=await fetch(AUTH_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:action,username:username,password:password,picks:currentPicks()})});
+    const r=await fetch(AUTH_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:action,username:username,password:password,picks:authPicksPayload()})});
     const j=await r.json();if(!r.ok)throw j;
     localStorage.setItem('auth2026',JSON.stringify({user:j.user,token:j.token}));
     localStorage.setItem('prode_name',j.user.username);
@@ -893,7 +911,7 @@ async function authSubmit(root,action){
 function authLogout(){localStorage.removeItem('auth2026');renderAuthBoxes();renderGrupos();pbToast('Sesión cerrada');}
 let _authSaveT=null;
 function authSavePicks(){if(!authToken())return;clearTimeout(_authSaveT);_authSaveT=setTimeout(authSavePicksNow,900);}
-async function authSavePicksNow(){const token=authToken();if(!token)return;try{await fetch(AUTH_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'save_picks',token:token,picks:currentPicks()})});}catch(e){}}
+async function authSavePicksNow(){const token=authToken();if(!token)return;try{await fetch(AUTH_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'save_picks',token:token,picks:authPicksPayload()})});}catch(e){}}
 async function authBoot(){const token=authToken();renderAuthBoxes();if(!token)return;try{const r=await fetch(AUTH_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'me',token:token})});const j=await r.json();if(!r.ok)throw j;localStorage.setItem('auth2026',JSON.stringify({user:j.user,token:token}));localStorage.setItem('prode_name',j.user.username);if(j.picks){prodeWrite(j.picks);renderGroups();prodeSave();}renderAuthBoxes();renderGrupos();}catch(e){localStorage.removeItem('auth2026');renderAuthBoxes();}}
 function grNormName(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 function grIsJoel(s){return grNormName(s).includes('joel');}
@@ -922,11 +940,17 @@ function grFormHTML(){return `
     <div class="pb-actions"><button class="pb-btn" id="gr-create">Crear grupo y sumar mi prode</button></div></div>
   <div class="pb-card"><h3>🔑 Entrar a un grupo</h3>
     <div class="pb-actions"><input id="gr-code" placeholder="Código (ej: AB12CD)"><button class="pb-btn alt" id="gr-go">Entrar</button></div></div>`;}
+function myGroupsHTML(){const l=myGroups();if(!l.length)return '';const u=authUser();
+  return `<div class="pb-card"><h3>📌 Mis grupos</h3><p style="color:#64748b;font-size:13px;margin:0 0 10px">${u?'Grupos guardados en tu cuenta <b>'+esc(u.username)+'</b>.':'Grupos guardados en este navegador. Iniciá sesión para verlos desde cualquier dispositivo.'}</p><div class="pb-actions">${l.map(x=>`<button class="pb-btn alt" data-open-group="${esc(x.id)}">👥 ${esc(x.name)} <span style="opacity:.7">(${esc(x.id)})</span></button>`).join('')}</div></div>`;}
 function renderGrupos(){const cont=document.getElementById('gr-content');if(!cont)return;const p=grParam();
   if(p){cont.innerHTML='<div id="gr-view"></div>';loadGroup(p);return;}
-  cont.innerHTML=grFormHTML();
+  cont.innerHTML='<div class="auth-slot"></div>'+myGroupsHTML()+grFormHTML();
+  renderAuthBoxes();
+  cont.querySelectorAll('[data-open-group]').forEach(b=>b.onclick=()=>{history.replaceState(null,'',location.pathname+'?grupo='+b.dataset.openGroup);renderGrupos();});
   cont.querySelector('#gr-create').onclick=createGroup;
-  cont.querySelector('#gr-go').onclick=()=>{const c=cont.querySelector('#gr-code').value.trim().toUpperCase();if(c){history.replaceState(null,'',location.pathname+'?grupo='+c);renderGrupos();}};}
+  const goCode=()=>{const c=cont.querySelector('#gr-code').value.trim().toUpperCase().replace(/\s+/g,'');if(c){history.replaceState(null,'',location.pathname+'?grupo='+c);renderGrupos();}};
+  cont.querySelector('#gr-go').onclick=goCode;
+  cont.querySelector('#gr-code').addEventListener('keydown',e=>{if(e.key==='Enter')goCode();});}
 async function createGroup(){const gn=document.getElementById('gr-newname').value.trim()||'Mi grupo';let nm=document.getElementById('gr-newplayer').value.trim()||grName()||'Anónimo';nm=nm.slice(0,30);localStorage.setItem('prode_name',nm);
   try{const r=await fetch(GR_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'create',name:gn,pid:grPid(),player:nm,picks:currentPicks()})});const j=await r.json();if(!j.id)throw 0;history.replaceState(null,'',location.pathname+'?grupo='+j.id);renderGrupos();pbToast('Grupo creado 🎉');}catch(e){pbToast('No se pudo crear (¿DB conectada?)');}}
 async function joinGroup(id){let nm=grName()||prompt('Tu nombre para el grupo:');if(nm===null)return;nm=(nm||'Anónimo').slice(0,30);localStorage.setItem('prode_name',nm);
@@ -945,7 +969,7 @@ function grOpenProde(m){
   for(const g in GRUPOS){
     const st=picksStandings(g,p.ms||{});
     groups+=`<div class="gr-prode-group"><div class="gr-prode-gh"><span>Grupo ${g}</span><span>${st[0]?team(st[0].t):'—'}</span></div>`;
-    GFIX.forEach((pr,idx)=>{const home=GRUPOS[g][pr[0]],away=GRUPOS[g][pr[1]],sc=(p.ms||{})[g+idx];const empty=!(sc&&sc[0]!=null&&sc[1]!=null);groups+=`<div class="gr-match-row"><span class="gr-match-team r">${team(home)}</span><span class="gr-score ${empty?'empty':''}">${grScoreLabel(sc)}</span><span class="gr-match-team">${team(away)}</span></div>`;});
+    gfixOrder(g).forEach(o=>{const pr=o.pr,idx=o.idx;const home=GRUPOS[g][pr[0]],away=GRUPOS[g][pr[1]],sc=(p.ms||{})[g+idx];const empty=!(sc&&sc[0]!=null&&sc[1]!=null);groups+=`<div class="gr-match-row"><span class="gr-match-team r">${team(home)}</span><span class="gr-score ${empty?'empty':''}">${grScoreLabel(sc)}</span><span class="gr-match-team">${team(away)}</span></div>`;});
     groups+=`<table class="gr-prode-table"><tr><th>#</th><th>Equipo</th><th>Pts</th><th>DG</th></tr>${[0,1,2,3].map(i=>`<tr><td>${i+1}</td><td>${st[i]?team(st[i].t):'—'}</td><td>${st[i]?st[i].pts:0}</td><td>${st[i]?(st[i].dg>0?'+':'')+st[i].dg:'0'}</td></tr>`).join('')}</table></div>`;
   }
   groups+='</div>';
@@ -1000,6 +1024,7 @@ async function loadGroup(id){const cont=document.getElementById('gr-view');if(!c
   members.sort((a,b)=>b.pts-a.pts||(a.name||'').localeCompare(b.name||''));
   const link=location.origin+location.pathname+'?grupo='+g.id;
   const localEntry=(g.entries||{})[localPid];
+  if(localEntry)rememberGroup(g.id,g.name);
   const ownerEntry=g.ownerPid&&(g.entries||{})[g.ownerPid];
   const canClaim=localEntry&&grIsJoel(localEntry.name||grName())&&(!g.ownerPid||(g.ownerPid!==localPid&&grIsJoel(ownerEntry&&ownerEntry.name)));
   let h=`<div class="gr-head"><div><div class="gr-name">👥 ${esc(g.name)} ${isOwner?'<span class="gr-owner">Dueño</span>':''}</div><div class="gr-sub">Código <b>${g.id}</b> · ${members.length} participante(s)</div></div><div class="gr-actions"><button class="pb-btn" id="gr-join">➕ Sumar / actualizar mi prode</button>${localEntry?'<button class="pb-btn alt" id="gr-rename">Cambiar mi nombre</button>':''}</div></div>`;
@@ -1808,7 +1833,6 @@ function build(){
     // sync bottom nav
     document.querySelectorAll('.bn-btn').forEach(b=>{b.classList.toggle('active',b.dataset.bn===id);});
     try{history.replaceState(null,'',location.pathname+location.search+'#'+id);}catch(e){}
-    window.scrollTo({top:0,behavior:'smooth'});
   }
   activateTabExt=activateTab;
   document.querySelectorAll('.bn-btn').forEach(b=>{b.onclick=()=>activateTab(b.dataset.bn);});
