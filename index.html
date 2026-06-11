@@ -180,6 +180,15 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 .gr-prode-table{width:100%;border-collapse:collapse;font-size:13px;}
 .gr-prode-table th,.gr-prode-table td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;}
 .gr-prode-table th{color:var(--muted);font-size:11px;text-transform:uppercase;}
+.gr-prode-groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:12px;}
+.gr-prode-group{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden;}
+.gr-prode-gh{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#f8fafc;border-bottom:1px solid var(--line);padding:9px 11px;font-weight:900;color:var(--navy);font-size:13px;}
+.gr-match-row{display:grid;grid-template-columns:minmax(0,1fr) 54px minmax(0,1fr);gap:6px;align-items:center;padding:7px 10px;border-bottom:1px dashed #eef2f7;font-size:12px;}
+.gr-match-row:last-child{border-bottom:none;}
+.gr-match-team{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:650;}
+.gr-match-team.r{text-align:right;}
+.gr-score{display:inline-flex;align-items:center;justify-content:center;min-height:28px;border-radius:8px;background:#0f172a;color:#fff;font-weight:900;font-variant-numeric:tabular-nums;}
+.gr-score.empty{background:#f1f5f9;color:#94a3b8;}
 #gr-code,#gr-newname,#gr-newplayer{padding:9px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;}
 .fl{width:24px;height:18px;border-radius:2px;vertical-align:middle;margin-right:6px;box-shadow:0 0 1px rgba(0,0,0,.5);object-fit:cover;}
 .kotable .away .fl{margin-right:6px;}
@@ -850,6 +859,7 @@ function currentPicks(){const s=prodeRead();return {ms:PB_MS,kb:PB_KB,camp:s.cam
 function grNormName(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 function grIsJoel(s){return grNormName(s).includes('joel');}
 function grPickLabel(v){return ALL48.includes(v)?team(v):esc(v||'');}
+function grScoreLabel(sc){return sc&&sc[0]!=null&&sc[1]!=null?esc(sc[0]+'-'+sc[1]):'—';}
 function standingsFrom(teams,matches){const m={};teams.forEach(t=>m[t]={t:t,pj:0,pts:0,gf:0,ga:0});
   matches.forEach(x=>{if(!m[x.h]||!m[x.a])return;const H=m[x.h],A=m[x.a];H.pj++;A.pj++;H.gf+=x.hs;H.ga+=x.as;A.gf+=x.as;A.ga+=x.hs;if(x.hs>x.as)H.pts+=3;else if(x.as>x.hs)A.pts+=3;else{H.pts++;A.pts++;}});
   const arr=teams.map(t=>{const z=m[t];z.dg=z.gf-z.ga;return z;});arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.t.localeCompare(b.t,'es'));return arr;}
@@ -886,9 +896,14 @@ function grOpenProde(m){
     ['Goleador',p.gol||''],
     ['Mejor jugador',p.mvp||'']
   ];
-  let groups='<table class="gr-prode-table"><tr><th>Grupo</th><th>1º</th><th>2º</th><th>3º</th><th>4º</th></tr>';
-  for(const g in GRUPOS){const st=picksStandings(g,p.ms||{});groups+=`<tr><td><b>${g}</b></td>${[0,1,2,3].map(i=>`<td>${st[i]?team(st[i].t):'—'}</td>`).join('')}</tr>`;}
-  groups+='</table>';
+  let groups='<div class="gr-prode-groups">';
+  for(const g in GRUPOS){
+    const st=picksStandings(g,p.ms||{});
+    groups+=`<div class="gr-prode-group"><div class="gr-prode-gh"><span>Grupo ${g}</span><span>${st[0]?team(st[0].t):'—'}</span></div>`;
+    GFIX.forEach((pr,idx)=>{const home=GRUPOS[g][pr[0]],away=GRUPOS[g][pr[1]],sc=(p.ms||{})[g+idx];const empty=!(sc&&sc[0]!=null&&sc[1]!=null);groups+=`<div class="gr-match-row"><span class="gr-match-team r">${team(home)}</span><span class="gr-score ${empty?'empty':''}">${grScoreLabel(sc)}</span><span class="gr-match-team">${team(away)}</span></div>`;});
+    groups+=`<table class="gr-prode-table"><tr><th>#</th><th>Equipo</th><th>Pts</th><th>DG</th></tr>${[0,1,2,3].map(i=>`<tr><td>${i+1}</td><td>${st[i]?team(st[i].t):'—'}</td><td>${st[i]?st[i].pts:0}</td><td>${st[i]?(st[i].dg>0?'+':'')+st[i].dg:'0'}</td></tr>`).join('')}</table></div>`;
+  }
+  groups+='</div>';
   const ko=(ROUNDS||[]).map(rd=>{const ws=rd[1].map(x=>(p.kb||{})[x[0]]).filter(Boolean);return ws.length?`<div class="mtag"><b>${rd[0]}:</b> ${ws.map(grPickLabel).join(', ')}</div>`:'';}).filter(Boolean).join('');
   openModal(`<div class="modal-head">
     <button class="modal-close" onclick="closeModal()">×</button>
@@ -909,6 +924,19 @@ async function claimGroupOwner(id){
     loadGroup(id);
   }catch(e){pbToast('No pude asignar dueño');}
 }
+async function renameGroupMember(id){
+  const current=grName()||'';
+  let nm=prompt('Nuevo nombre para mostrar en el grupo:',current);
+  if(nm===null)return;
+  nm=(nm||'Anónimo').trim().slice(0,30)||'Anónimo';
+  localStorage.setItem('prode_name',nm);
+  try{
+    const r=await fetch(GR_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'rename_member',id:id,pid:grPid(),player:nm})});
+    if(!r.ok)throw 0;
+    pbToast('Nombre actualizado');
+    loadGroup(id);
+  }catch(e){pbToast('No se pudo cambiar el nombre');}
+}
 async function deleteGroupMember(id,targetPid,name){
   if(!confirm('¿Borrar a '+(name||'este participante')+' del grupo?'))return;
   try{
@@ -928,7 +956,7 @@ async function loadGroup(id){const cont=document.getElementById('gr-view');if(!c
   const link=location.origin+location.pathname+'?grupo='+g.id;
   const localEntry=(g.entries||{})[localPid];
   const canClaim=!g.ownerPid&&localEntry&&grIsJoel(localEntry.name||grName());
-  let h=`<div class="gr-head"><div><div class="gr-name">👥 ${esc(g.name)} ${isOwner?'<span class="gr-owner">Dueño</span>':''}</div><div class="gr-sub">Código <b>${g.id}</b> · ${members.length} participante(s)</div></div><button class="pb-btn" id="gr-join">➕ Sumar / actualizar mi prode</button></div>`;
+  let h=`<div class="gr-head"><div><div class="gr-name">👥 ${esc(g.name)} ${isOwner?'<span class="gr-owner">Dueño</span>':''}</div><div class="gr-sub">Código <b>${g.id}</b> · ${members.length} participante(s)</div></div><div class="gr-actions"><button class="pb-btn" id="gr-join">➕ Sumar / actualizar mi prode</button>${localEntry?'<button class="pb-btn alt" id="gr-rename">Cambiar mi nombre</button>':''}</div></div>`;
   h+=`<div class="gr-share">📎 <input readonly id="gr-link" value="${link}"><button class="pb-btn alt" id="gr-copy">Copiar link</button></div>`;
   if(canClaim)h+=`<div class="gr-legacy"><span>Este grupo fue creado antes de tener dueño. Podés dejar a Joel como administrador para borrar participantes.</span><button class="gr-mini" id="gr-claim">Asignar a Joel como dueño</button></div>`;
   if(!members.length){h+='<div class="live-empty">Todavía no hay prodes cargados. Armá el tuyo y tocá “Sumar mi prode”.</div>';}
@@ -939,6 +967,7 @@ async function loadGroup(id){const cont=document.getElementById('gr-view');if(!c
   cont.innerHTML=h;
   const cp=cont.querySelector('#gr-copy');if(cp)cp.onclick=()=>{const i=document.getElementById('gr-link');i.select();try{navigator.clipboard.writeText(i.value);}catch(e){}pbToast('Link copiado 📋');};
   const claim=cont.querySelector('#gr-claim');if(claim)claim.onclick=()=>claimGroupOwner(g.id);
+  const rename=cont.querySelector('#gr-rename');if(rename)rename.onclick=()=>renameGroupMember(g.id);
   cont.querySelectorAll('[data-view-prode]').forEach(b=>b.onclick=()=>{const m=members.find(x=>x.pid===b.dataset.viewProde);if(m)grOpenProde(m);});
   cont.querySelectorAll('[data-del-member]').forEach(b=>b.onclick=()=>deleteGroupMember(g.id,b.dataset.delMember,b.dataset.delName));
   cont.querySelector('#gr-join').onclick=()=>joinGroup(g.id);}
