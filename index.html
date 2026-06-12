@@ -131,6 +131,11 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 .my-group-empty{color:var(--muted);font-size:13px;background:#f8fafc;border:1px dashed var(--line);border-radius:10px;padding:12px;}
 .pb-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:16px;}
 .pb-card h3{margin:0 0 12px;font-size:16px;}
+.pb-card-groups{padding:18px;background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);}
+.pb-card-groups .pb-help{color:#64748b;font-size:13px;margin:0 0 14px;line-height:1.45;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.pb-legend{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;background:#f8fafc;border:1px solid #e2e8f0;color:#475569;font-size:12px;font-weight:800;}
+.pb-dot{width:8px;height:8px;border-radius:999px;display:inline-block;background:#22c55e;}
+.pb-dot.third{background:#eab308;}
 .pb-defs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:12px;}
 .pb-field{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#475569;}
 .pb-field select,.pb-field input{padding:8px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;background:#fff;}
@@ -164,22 +169,47 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 .bk-team:disabled{color:#cbd5e1;cursor:default;}
 .bk-team .fl{width:18px;height:13px;}
 .bk-champ{text-align:center;font-size:20px;font-weight:900;padding:14px;margin-top:6px;background:#fffbeb;border-radius:12px;}
-#pb-groups{grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));}
-.gm{display:grid;grid-template-columns:1fr auto auto 1fr;align-items:center;gap:6px;padding:7px 0;border-bottom:1px dashed #eef2f7;}
-.gm .gm-t{font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:5px;}
+#pb-groups{grid-template-columns:repeat(auto-fill,minmax(min(390px,100%),1fr));gap:14px;align-items:start;}
+#pb-groups .pb-g{padding:0;overflow:hidden;border-color:#d8e2ef;box-shadow:0 10px 24px rgba(15,23,42,.05);}
+#pb-groups .pb-g h4{margin:0;padding:12px 14px;background:linear-gradient(180deg,#f8fbff 0%,#eef7ff 100%);border-bottom:1px solid #dbeafe;justify-content:space-between;gap:10px;}
+#pb-groups .pb-g h4 .g-title{display:flex;align-items:center;gap:8px;min-width:0;}
+#pb-groups .pb-g h4 .g-start{font-size:11px;font-weight:900;color:#2563eb;background:#fff;border:1px solid #bfdbfe;border-radius:999px;padding:4px 8px;white-space:nowrap;}
+.gm-list{padding:8px 12px 4px;}
+.gm{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #eef2f7;}
+.gm:last-child{border-bottom:none;}
+.gm .gm-t{min-width:0;font-size:13px;font-weight:750;display:flex;align-items:center;gap:6px;line-height:1.2;color:#1e293b;}
 .gm .gm-t.r{justify-content:flex-end;text-align:right;}
-.gm-day{margin:8px 0 2px;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.4px;}
-.stp{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
-.st-b{border:none;background:#f1f5f9;color:#0ea5e9;font-weight:900;font-size:15px;width:24px;height:28px;cursor:pointer;line-height:1;}
-.st-b:hover{background:#e0f2fe;}
-.st-v{min-width:22px;text-align:center;font-weight:800;font-size:14px;}
-.gstand{margin-top:10px;}
+.gm .gm-t .fl{flex:0 0 auto;}
+.gm-score{display:flex;align-items:center;gap:4px;padding:3px;border:1px solid #dbeafe;background:#f8fbff;border-radius:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.75);}
+.gm-sep{font-size:13px;color:#94a3b8;font-weight:900;padding:0 1px;}
+.gm-day{display:flex;align-items:center;gap:8px;margin:12px 0 2px;font-size:11px;font-weight:900;color:#334155;text-transform:uppercase;letter-spacing:.35px;}
+.gm-day::after{content:"";height:1px;background:#e2e8f0;flex:1;}
+.stp{display:inline-flex;align-items:center;border:1px solid #dbeafe;border-radius:9px;overflow:hidden;background:#fff;}
+.st-b{border:none;background:#eff6ff;color:#0284c7;font-weight:900;font-size:16px;width:30px;height:32px;cursor:pointer;line-height:1;touch-action:manipulation;}
+.st-b:hover{background:#dbeafe;}
+.st-b:focus-visible{outline:3px solid rgba(14,165,233,.35);outline-offset:2px;position:relative;z-index:1;}
+.st-v{min-width:28px;text-align:center;font-weight:900;font-size:15px;color:#0f172a;font-variant-numeric:tabular-nums;}
+.gstand{margin:8px 12px 12px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#fff;}
 .gstand table{width:100%;border-collapse:collapse;font-size:12px;}
-.gstand td,.gstand th{padding:3px 5px;border-bottom:1px solid #f1f5f9;text-align:center;}
-.gstand th{color:#94a3b8;font-size:10px;text-transform:uppercase;font-weight:600;}
-.gstand td.tn{text-align:left;font-weight:600;}
+.gstand td,.gstand th{padding:5px 7px;border-bottom:1px solid #eef2f7;text-align:center;font-variant-numeric:tabular-nums;}
+.gstand tr:last-child td{border-bottom:none;}
+.gstand th{color:#64748b;background:#f8fafc;font-size:10px;text-transform:uppercase;font-weight:900;}
+.gstand td.tn{text-align:left;font-weight:750;}
 .gstand tr.q td{background:#dcfce7;}
+.gstand tr.q td:first-child{box-shadow:inset 3px 0 #22c55e;}
 .gstand tr.q3 td{background:#fef9c3;}
+.gstand tr.q3 td:first-child{box-shadow:inset 3px 0 #eab308;}
+@media(max-width:520px){
+  .pb-card-groups{padding:14px 12px;}
+  #pb-groups{grid-template-columns:1fr;}
+  #pb-groups .pb-g h4{align-items:flex-start;flex-direction:column;}
+  #pb-groups .pb-g h4 .g-start{white-space:normal;}
+  .gm{grid-template-columns:1fr;gap:6px;padding:11px 0;}
+  .gm .gm-t,.gm .gm-t.r{justify-content:flex-start;text-align:left;}
+  .gm-score{justify-content:center;width:100%;}
+  .st-b{width:40px;height:38px;}
+  .st-v{min-width:34px;}
+}
 .gr-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
 .gr-name{font-size:20px;font-weight:800;}
 .gr-sub{color:#64748b;font-size:13px;}
@@ -797,12 +827,13 @@ function gfixOrder(g){
 }
 function prodeGroupOrder(){return Object.keys(GRUPOS).sort((a,b)=>{const ga=gfixOrder(a)[0],gb=gfixOrder(b)[0];return (ga&&ga.kickoff||'9999-12-31T99:99').localeCompare(gb&&gb.kickoff||'9999-12-31T99:99')||a.localeCompare(b);});}
 function gmDateLabel(d){if(!d||d==='9999-12-31')return '';try{return new Date(d+'T12:00:00').toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});}catch(e){return '';}}
+function gmStartLabel(o){if(!o||!o.date||o.date==='9999-12-31')return '';const d=gmDateLabel(o.date).replace('.', ''),time=(o.kickoff&&o.kickoff.slice(11,16)!=='99:99')?o.kickoff.slice(11,16):'';return d+(time?' · '+time:'');}
 function makeProde(){
   const defs=`<div class="pb-card"><h3>🏆 Definiciones del torneo</h3><div class="pb-defs">`+
     [['camp','🏆 Campeón (auto)'],['sub','🥈 Subcampeón (auto)'],['ter','🥉 Tercer puesto (auto)'],['cua','4º puesto (auto)']].map(d=>`<label class="pb-field">${d[1]}<select id="pr-${d[0]}" disabled>${pbOpts(ALL48)}</select></label>`).join('')+
     `<label class="pb-field">👟 Goleador<input id="pr-gol" placeholder="Ej: Kylian Mbappé"></label>`+
     `<label class="pb-field">⭐ Mejor jugador<input id="pr-mvp" placeholder="Ej: Lamine Yamal"></label></div></div>`;
-  const groups=`<div class="pb-card"><h3>📋 Fase de grupos — cargá los resultados</h3><p style="color:#64748b;font-size:13px;margin:0 0 10px">Tocá <b>−</b> / <b>+</b> para el marcador de cada partido. La tabla (puntos, DG, clasificados) se calcula sola. 🟢 1º-2º pasan · 🟡 3º puede entrar.</p><div class="pb-grid" id="pb-groups"></div></div>`;
+  const groups=`<div class="pb-card pb-card-groups"><h3>📋 Fase de grupos — cargá los resultados</h3><p class="pb-help"><span>Marcadores ordenados por fixture.</span><span class="pb-legend"><span class="pb-dot"></span>1º-2º clasifican</span><span class="pb-legend"><span class="pb-dot third"></span>3º pelea cupo</span></p><div class="pb-grid" id="pb-groups"></div></div>`;
   const thirds=`<div class="pb-card"><h3>🎟️ Mejores 8 terceros (automático)</h3><p style="color:#64748b;font-size:13px;margin:0 0 10px">Se eligen solos según puntos y diferencia de gol de tus resultados.</p><div id="pb-thirds"></div></div>`;
   const bracket=`<div class="pb-card"><h3>🏆 Cuadro de eliminatorias</h3><p style="color:#64748b;font-size:13px;margin:0 0 10px">Se arma con tus clasificados. Tocá el equipo que pasa en cada llave; los ganadores avanzan solos hasta la final y al partido por el 3º puesto. <i>(Terceros asignados por orden de grupo, simplificado.)</i></p><div id="pb-bracket"></div></div>`;
   const actions=`<div class="pb-actions"><button class="pb-btn" id="pb-cons">✨ Cargar sugerencia del consenso</button><button class="pb-btn alt" id="pb-copy">📋 Copiar resumen</button><button class="pb-btn alt" id="pb-dl">⬇️ Descargar .txt</button><button class="pb-btn ghost" id="pb-reset">🗑️ Borrar</button></div>`;
@@ -822,17 +853,17 @@ function computeStandings(g){const ts=GRUPOS[g];const m={};ts.forEach(t=>m[t]={t
 function bestThirds(ST){const arr=Object.keys(GRUPOS).map(g=>{const o=ST[g][2];return {g:g,t:o.t,pts:o.pts,dg:o.dg,gf:o.gf,pj:o.pj};});
   arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.g.localeCompare(b.g));return arr;}
 function thirdSlots(ST){return bestThirds(ST).slice(0,8).map(x=>x.g).sort().map(g=>ST[g][2].t);}
-function stepHTML(k,side,v){const t=(v===null||v===undefined)?'–':v;return `<span class="stp"><button class="st-b" data-k="${k}" data-s="${side}" data-d="-1">−</button><span class="st-v" id="v-${k}-${side}">${t}</span><button class="st-b" data-k="${k}" data-s="${side}" data-d="1">+</button></span>`;}
+function stepHTML(k,side,v){const t=(v===null||v===undefined)?'–':v;return `<span class="stp"><button class="st-b" data-k="${k}" data-s="${side}" data-d="-1" aria-label="Bajar gol">−</button><span class="st-v" id="v-${k}-${side}">${t}</span><button class="st-b" data-k="${k}" data-s="${side}" data-d="1" aria-label="Subir gol">+</button></span>`;}
 function standHTML(g){const st=computeStandings(g);let h='<table><tr><th>#</th><th style="text-align:left">Equipo</th><th>PJ</th><th>Pts</th><th>DG</th></tr>';
   st.forEach((x,i)=>{const cls=i<2?'q':(i===2?'q3':'');h+=`<tr class="${cls}"><td>${i+1}</td><td class="tn">${team(x.t)}</td><td>${x.pj}</td><td><b>${x.pts}</b></td><td>${x.dg>0?'+':''}${x.dg}</td></tr>`;});
   return h+'</table>';}
 function renderGroups(){const cont=document.getElementById('pb-groups');if(!cont)return;let h='';
-  for(const g of prodeGroupOrder()){h+=`<div class="pb-g"><h4><span class="gl">${g}</span>Grupo ${g}</h4>`;
+  for(const g of prodeGroupOrder()){const order=gfixOrder(g),first=gmStartLabel(order[0]);h+=`<div class="pb-g"><h4><span class="g-title"><span class="gl">${g}</span>Grupo ${g}</span>${first?`<span class="g-start">${first}</span>`:''}</h4><div class="gm-list">`;
     let lastDay='';
-    gfixOrder(g).forEach(o=>{const pr=o.pr,idx=o.idx;const k=g+idx;const home=GRUPOS[g][pr[0]],away=GRUPOS[g][pr[1]];const sc=PB_MS[k]||[null,null];
+    order.forEach(o=>{const pr=o.pr,idx=o.idx;const k=g+idx;const home=GRUPOS[g][pr[0]],away=GRUPOS[g][pr[1]];const sc=PB_MS[k]||[null,null];
       const day=gmDateLabel(o.date);if(day&&day!==lastDay){h+=`<div class="gm-day">📅 ${day}</div>`;lastDay=day;}
-      h+=`<div class="gm"><span class="gm-t r">${team(home)}</span>${stepHTML(k,0,sc[0])}${stepHTML(k,1,sc[1])}<span class="gm-t">${team(away)}</span></div>`;});
-    h+=`<div class="gstand" id="stand-${g}">${standHTML(g)}</div></div>`;}
+      h+=`<div class="gm"><span class="gm-t r">${team(home)}</span><span class="gm-score">${stepHTML(k,0,sc[0])}<span class="gm-sep">:</span>${stepHTML(k,1,sc[1])}</span><span class="gm-t">${team(away)}</span></div>`;});
+    h+=`</div><div class="gstand" id="stand-${g}">${standHTML(g)}</div></div>`;}
   cont.innerHTML=h;}
 function pbStep(k,side,d){const cur=(PB_MS[k]||[null,null]).slice();let v=cur[side];v=(v===null||v===undefined)?(d>0?0:null):v+d;if(v!==null&&v<0)v=null;if(v!==null&&v>20)v=20;cur[side]=v;PB_MS[k]=cur;
   const el=document.getElementById('v-'+k+'-'+side);if(el)el.textContent=(v===null?'–':v);
