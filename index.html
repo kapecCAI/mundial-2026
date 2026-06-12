@@ -124,12 +124,8 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 .prode-status[data-tone="err"] .status-dot{background:#ef4444;box-shadow:0 0 0 4px rgba(239,68,68,.15);}
 .prode-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;}
 .prode-actions .pb-btn{margin:0;min-height:40px;}
-.prode-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start;}
+.prode-layout{display:block;}
 .prode-main{min-width:0;}
-.prode-side{position:sticky;top:128px;display:flex;flex-direction:column;gap:12px;}
-.prode-side .pb-card,.prode-side .pb-summary{margin:0;}
-.prode-side .pb-card{padding:14px;}
-.prode-side .pb-card h3{font-size:15px;}
 .auth-box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
 .auth-box .auth-title{font-weight:900;color:var(--navy);font-size:14px;}
 .auth-box .auth-sub{font-size:12px;color:var(--muted);margin-top:2px;}
@@ -233,8 +229,6 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
   .prode-toolbar{position:static;align-items:stretch;flex-direction:column;}
   .prode-actions{justify-content:flex-start;}
   .prode-actions .pb-btn{flex:1 1 150px;}
-  .prode-layout{grid-template-columns:1fr;}
-  .prode-side{position:static;}
 }
 .gr-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
 .gr-name{font-size:20px;font-weight:800;}
@@ -860,11 +854,10 @@ function makeProde(){
     `<label class="pb-field">👟 Goleador<input id="pr-gol" placeholder="Ej: Kylian Mbappé"></label>`+
     `<label class="pb-field">⭐ Mejor jugador<input id="pr-mvp" placeholder="Ej: Lamine Yamal"></label></div></div>`;
   const groups=`<div class="pb-card pb-card-groups"><h3>📋 Fase de grupos — cargá los resultados</h3><p class="pb-help"><span>Marcadores ordenados por fixture.</span><span class="pb-legend"><span class="pb-dot"></span>1º-2º clasifican</span><span class="pb-legend"><span class="pb-dot third"></span>3º pelea cupo</span></p><div class="pb-grid" id="pb-groups"></div></div>`;
-  const thirds=`<div class="pb-card"><h3>🎟️ Mejores 8 terceros (automático)</h3><p style="color:#64748b;font-size:13px;margin:0 0 10px">Se eligen solos según puntos y diferencia de gol de tus resultados.</p><div id="pb-thirds"></div></div>`;
   const bracket=`<div class="pb-card"><h3>🏆 Cuadro de eliminatorias</h3><p style="color:#64748b;font-size:13px;margin:0 0 10px">Se arma con tus clasificados. Tocá el equipo que pasa en cada llave; los ganadores avanzan solos hasta la final y al partido por el 3º puesto. <i>(Terceros asignados por orden de grupo, simplificado.)</i></p><div id="pb-bracket"></div></div>`;
   const actions=`<div class="prode-toolbar"><div class="prode-status" data-tone="idle"><span class="status-dot"></span><div><b data-save-status data-tone="idle">Guardado local</b><span class="status-sub">Los grupos se sincronizan solos.</span></div></div><div class="prode-actions"><button class="pb-btn" id="pb-cons">✨ Consenso</button><button class="pb-btn alt" id="pb-copy">📋 Copiar</button><button class="pb-btn alt" id="pb-dl">⬇️ Descargar</button><button class="pb-btn ghost" id="pb-reset">🗑️ Borrar</button></div></div>`;
   const intro=`<div class="banner" style="background:#334155">ℹ️ Armá tu propio prode cargando los resultados. Se <b>guarda solo</b> en este navegador. La tabla, los clasificados y el cuadro se <b>autocompletan</b>; después tocás quién pasa en las llaves y <b>copiás o descargás</b> tu resumen.</div>`;
-  return `<div class="auth-slot"></div>`+intro+actions+`<div class="prode-layout"><div class="prode-main">`+defs+groups+bracket+`</div><aside class="prode-side">`+`<div class="pb-summary" id="pb-sum"></div>`+thirds+`</aside></div>`;
+  return `<div class="auth-slot"></div>`+intro+actions+`<div class="prode-layout"><div class="prode-main">`+defs+groups+bracket+`</div></div>`;
 }
 function pbVal(id){const e=document.getElementById(id);return e?e.value:'';}
 function pbSet(id,v){const e=document.getElementById(id);if(e)e.value=v||'';}
