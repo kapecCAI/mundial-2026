@@ -200,9 +200,11 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 .gm-day{display:flex;align-items:center;gap:8px;margin:12px 0 2px;font-size:11px;font-weight:900;color:#334155;text-transform:uppercase;letter-spacing:.35px;}
 .gm-day::after{content:"";height:1px;background:#e2e8f0;flex:1;}
 .stp{display:inline-flex;align-items:center;border:1px solid #dbeafe;border-radius:9px;overflow:hidden;background:#fff;}
+.stp.locked{background:#f8fafc;border-color:#e2e8f0;}
 .st-b{border:none;background:#eff6ff;color:#0284c7;font-weight:900;font-size:16px;width:30px;height:32px;cursor:pointer;line-height:1;touch-action:manipulation;}
 .st-b:hover{background:#dbeafe;}
 .st-b:focus-visible{outline:3px solid rgba(14,165,233,.35);outline-offset:2px;position:relative;z-index:1;}
+.st-b:disabled{color:#94a3b8;background:#f1f5f9;cursor:not-allowed;}
 .st-v{min-width:28px;text-align:center;font-weight:900;font-size:15px;color:#0f172a;font-variant-numeric:tabular-nums;}
 .gstand{margin:8px 12px 12px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#fff;}
 .gstand table{width:100%;border-collapse:collapse;font-size:12px;}
@@ -219,12 +221,14 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
   #pb-groups{grid-template-columns:1fr;}
   #pb-groups .pb-g h4{align-items:flex-start;flex-direction:column;}
   #pb-groups .pb-g h4 .g-start{white-space:normal;}
-  .gm{grid-template-columns:1fr;gap:6px;padding:11px 0;}
+.gm{grid-template-columns:1fr;gap:6px;padding:11px 0;}
   .gm .gm-t,.gm .gm-t.r{justify-content:flex-start;text-align:left;}
   .gm-score{justify-content:center;width:100%;}
   .st-b{width:40px;height:38px;}
   .st-v{min-width:34px;}
 }
+.gm.locked{background:linear-gradient(90deg,transparent,#f8fafc 12%,#f8fafc 88%,transparent);border-radius:10px;}
+.gm-lock{display:inline-flex;align-items:center;gap:4px;margin-left:auto;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;border-radius:999px;padding:2px 7px;font-size:10px;font-weight:900;text-transform:uppercase;}
 @media(max-width:900px){
   .prode-toolbar{position:static;align-items:stretch;flex-direction:column;}
   .prode-actions{justify-content:flex-start;}
@@ -340,6 +344,14 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 .fx-card2-teams .fx-team-r .fl,.fx-card2-teams .fx-team-l .fl{flex-shrink:0;width:28px;height:21px;}
 .fx-card2-teams .fx-vs{color:var(--muted);font-size:13px;font-weight:700;letter-spacing:2px;}
 .fx-card2-tv{display:flex;align-items:center;gap:6px;padding-top:10px;border-top:1px dashed var(--line);margin-top:6px;flex-wrap:wrap;}
+.fx-prode{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding:9px 10px;border:1px solid #dbeafe;background:#f8fbff;border-radius:10px;flex-wrap:wrap;}
+.fx-prode-main{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap;}
+.fx-prode-label{font-size:11px;font-weight:900;color:#2563eb;text-transform:uppercase;letter-spacing:.6px;}
+.fx-prode-pick{font-weight:900;color:#0f172a;font-variant-numeric:tabular-nums;}
+.fx-prode-points{display:inline-flex;align-items:center;justify-content:center;min-width:38px;height:28px;border-radius:999px;background:#e2e8f0;color:#475569;font-weight:950;font-size:13px;font-variant-numeric:tabular-nums;}
+.fx-prode-points.good{background:#dcfce7;color:#047857;}
+.fx-prode-points.exact{background:#fef3c7;color:#92400e;}
+.fx-prode.locked{background:#f8fafc;border-color:#e2e8f0;}
 .tv-label{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-right:4px;}
 .tv-chip{font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px;letter-spacing:.3px;color:#fff;}
 .tv-dsports{background:#16a34a;}
@@ -848,6 +860,11 @@ function gfixOrder(g){
 function prodeGroupOrder(){return Object.keys(GRUPOS).sort((a,b)=>{const ga=gfixOrder(a)[0],gb=gfixOrder(b)[0];return (ga&&ga.kickoff||'9999-12-31T99:99').localeCompare(gb&&gb.kickoff||'9999-12-31T99:99')||a.localeCompare(b);});}
 function gmDateLabel(d){if(!d||d==='9999-12-31')return '';try{return new Date(d+'T12:00:00').toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});}catch(e){return '';}}
 function gmStartLabel(o){if(!o||!o.date||o.date==='9999-12-31')return '';const d=gmDateLabel(o.date).replace('.', ''),time=(o.kickoff&&o.kickoff.slice(11,16)!=='99:99')?o.kickoff.slice(11,16):'';return d+(time?' · '+time:'');}
+function kickoffTimeMs(k){if(!k||k.indexOf('9999')===0)return Infinity;return new Date(k+':00-03:00').getTime();}
+function prodeRefForTeams(home,away){for(const g in GRUPOS){const teams=GRUPOS[g];for(let idx=0;idx<GFIX.length;idx++){const pr=GFIX[idx],h=teams[pr[0]],a=teams[pr[1]];if((h===home&&a===away)||(h===away&&a===home))return {g:g,idx:idx,k:g+idx};}}return null;}
+function fixtureForProdeKey(k){return (ALL_FX||[]).find(x=>x.pkey===k)||null;}
+function prodeMatchLocked(g,idx,o){const k=g+idx,fx=fixtureForProdeKey(k);if(fx&&(isLive(fx.realStatus)||isFin(fx.realStatus)))return true;if(fx&&fx.realHomeScore!==null&&fx.realHomeScore!==undefined&&fx.realHomeScore!=='')return true;const ko=(o&&o.kickoff)||(fx?fx.date+'T'+fx.time:'');return Number.isFinite(kickoffTimeMs(ko))&&Date.now()>=kickoffTimeMs(ko);}
+function matchPickPoints(sc,x){if(!x||!sc||sc[0]==null||sc[1]==null)return null;const hs=x.realHomeScore,as=x.realAwayScore;if(hs===null||hs===undefined||hs===''||as===null||as===undefined||as==='')return null;const ph=+sc[0],pa=+sc[1],rh=+hs,ra=+as;return (ph===rh&&pa===ra)?3:(scoreOutcome(ph,pa)===scoreOutcome(rh,ra)?1:0);}
 function makeProde(){
   const defs=`<div class="pb-card"><h3>🏆 Definiciones del torneo</h3><div class="pb-defs">`+
     [['camp','🏆 Campeón (auto)'],['sub','🥈 Subcampeón (auto)'],['ter','🥉 Tercer puesto (auto)'],['cua','4º puesto (auto)']].map(d=>`<label class="pb-field">${d[1]}<select id="pr-${d[0]}" disabled>${pbOpts(ALL48)}</select></label>`).join('')+
@@ -872,22 +889,22 @@ function computeStandings(g){const ts=GRUPOS[g];const m={};ts.forEach(t=>m[t]={t
 function bestThirds(ST){const arr=Object.keys(GRUPOS).map(g=>{const o=ST[g][2];return {g:g,t:o.t,pts:o.pts,dg:o.dg,gf:o.gf,pj:o.pj};});
   arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.g.localeCompare(b.g));return arr;}
 function thirdSlots(ST){return bestThirds(ST).slice(0,8).map(x=>x.g).sort().map(g=>ST[g][2].t);}
-function stepHTML(k,side,v){const t=(v===null||v===undefined)?'–':v;return `<span class="stp"><button class="st-b" data-k="${k}" data-s="${side}" data-d="-1" aria-label="Bajar gol">−</button><span class="st-v" id="v-${k}-${side}">${t}</span><button class="st-b" data-k="${k}" data-s="${side}" data-d="1" aria-label="Subir gol">+</button></span>`;}
+function stepHTML(k,side,v,locked){const t=(v===null||v===undefined)?'–':v;const dis=locked?' disabled':'';return `<span class="stp ${locked?'locked':''}"><button class="st-b" data-k="${k}" data-s="${side}" data-d="-1" aria-label="Bajar gol"${dis}>−</button><span class="st-v" data-score-view="${k}-${side}">${t}</span><button class="st-b" data-k="${k}" data-s="${side}" data-d="1" aria-label="Subir gol"${dis}>+</button></span>`;}
 function standHTML(g){const st=computeStandings(g);let h='<table><tr><th>#</th><th style="text-align:left">Equipo</th><th>PJ</th><th>Pts</th><th>DG</th></tr>';
   st.forEach((x,i)=>{const cls=i<2?'q':(i===2?'q3':'');h+=`<tr class="${cls}"><td>${i+1}</td><td class="tn">${team(x.t)}</td><td>${x.pj}</td><td><b>${x.pts}</b></td><td>${x.dg>0?'+':''}${x.dg}</td></tr>`;});
   return h+'</table>';}
 function renderGroups(){const cont=document.getElementById('pb-groups');if(!cont)return;let h='';
   for(const g of prodeGroupOrder()){const order=gfixOrder(g),first=gmStartLabel(order[0]);h+=`<div class="pb-g"><h4><span class="g-title"><span class="gl">${g}</span>Grupo ${g}</span>${first?`<span class="g-start">${first}</span>`:''}</h4><div class="gm-list">`;
     let lastDay='';
-    order.forEach(o=>{const pr=o.pr,idx=o.idx;const k=g+idx;const home=GRUPOS[g][pr[0]],away=GRUPOS[g][pr[1]];const sc=PB_MS[k]||[null,null];
+    order.forEach(o=>{const pr=o.pr,idx=o.idx;const k=g+idx;const home=GRUPOS[g][pr[0]],away=GRUPOS[g][pr[1]];const sc=PB_MS[k]||[null,null],locked=prodeMatchLocked(g,idx,o);
       const day=gmDateLabel(o.date);if(day&&day!==lastDay){h+=`<div class="gm-day">📅 ${day}</div>`;lastDay=day;}
-      h+=`<div class="gm"><span class="gm-t r">${team(home)}</span><span class="gm-score">${stepHTML(k,0,sc[0])}<span class="gm-sep">:</span>${stepHTML(k,1,sc[1])}</span><span class="gm-t">${team(away)}</span></div>`;});
+      h+=`<div class="gm ${locked?'locked':''}"><span class="gm-t r">${team(home)}</span><span class="gm-score">${stepHTML(k,0,sc[0],locked)}<span class="gm-sep">:</span>${stepHTML(k,1,sc[1],locked)}</span><span class="gm-t">${team(away)}${locked?'<span class="gm-lock">Cerrado</span>':''}</span></div>`;});
     h+=`</div><div class="gstand" id="stand-${g}">${standHTML(g)}</div></div>`;}
   cont.innerHTML=h;}
-function pbStep(k,side,d){const cur=(PB_MS[k]||[null,null]).slice();let v=cur[side];v=(v===null||v===undefined)?(d>0?0:null):v+d;if(v!==null&&v<0)v=null;if(v!==null&&v>20)v=20;cur[side]=v;PB_MS[k]=cur;
-  const el=document.getElementById('v-'+k+'-'+side);if(el)el.textContent=(v===null?'–':v);
+function pbStep(k,side,d){if(prodeMatchLocked(k[0],k.slice(1))){pbToast('Ese partido ya está cerrado');return;}const cur=(PB_MS[k]||[null,null]).slice();let v=cur[side];v=(v===null||v===undefined)?(d>0?0:null):v+d;if(v!==null&&v<0)v=null;if(v!==null&&v>20)v=20;cur[side]=v;PB_MS[k]=cur;
+  document.querySelectorAll(`[data-score-view="${k}-${side}"]`).forEach(el=>{el.textContent=(v===null?'–':v);});
   const sd=document.getElementById('stand-'+k[0]);if(sd)sd.innerHTML=standHTML(k[0]);
-  prodeSave();}
+  prodeSave();if(document.getElementById('fx-render'))filterFixture();}
 function renderThirds(){const cont=document.getElementById('pb-thirds');if(!cont)return;const ST={};for(const g in GRUPOS)ST[g]=computeStandings(g);
   const b=bestThirds(ST).slice(0,8);
   cont.innerHTML='<div class="pb-tc">'+b.map((x,i)=>`<div class="pb-tk">${i+1}. ${team(x.t)} <span style="color:#94a3b8">(${x.g}·${x.pts}pt)</span></div>`).join('')+'</div>';}
@@ -1443,7 +1460,8 @@ function buildAllFixture(){
     const k=f.dateEvent+'|'+f.strHomeTeam+'|'+f.strAwayTeam;
     const info=MATCH_INFO[k]||['14:00',0];
     const sede=SEDES[info[1]];
-    arr.push({date:f.dateEvent,time:info[0],home:spName(f.strHomeTeam),away:spName(f.strAwayTeam),grp:f.strGroup,sede:sede,kind:'group'});
+    const home=spName(f.strHomeTeam),away=spName(f.strAwayTeam),ref=prodeRefForTeams(home,away);
+    arr.push({date:f.dateEvent,time:info[0],home:home,away:away,grp:f.strGroup,sede:sede,kind:'group',pkey:ref?ref.k:'',pg:ref?ref.g:'',pidx:ref?ref.idx:null});
   });
   // knockouts (sin equipos asignados)
   KO_MATCHES.forEach(k=>{
@@ -1510,6 +1528,21 @@ function tvChannels(m){
 function tvChips(m){
   return tvChannels(m).map(c=>`<span class="tv-chip tv-${c.toLowerCase().replace(/[^a-z]/g,'')}">${c}</span>`).join('');
 }
+function fxProdeHTML(x){
+  if(x.kind!=='group'||!x.pkey)return '';
+  const sc=PB_MS[x.pkey]||[null,null],locked=prodeMatchLocked(x.pg,x.pidx),pts=matchPickPoints(sc,x);
+  const hasPick=sc&&sc[0]!=null&&sc[1]!=null;
+  const ptsCls=pts===3?' exact':(pts===1?' good':'');
+  const ptsLabel=pts==null?(locked?'+0':'Pendiente'):'+'+pts;
+  const pickLabel=hasPick?`${sc[0]}-${sc[1]}`:(locked?'Sin prode':'Cargá tu resultado');
+  return `<div class="fx-prode ${locked?'locked':''}">
+    <div class="fx-prode-main">
+      <span class="fx-prode-label">Tu prode</span>
+      ${locked?`<span class="fx-prode-pick">${esc(pickLabel)}</span>`:`<span class="gm-score">${stepHTML(x.pkey,0,sc[0],false)}<span class="gm-sep">:</span>${stepHTML(x.pkey,1,sc[1],false)}</span>`}
+    </div>
+    <span class="fx-prode-points${ptsCls}">${esc(ptsLabel)}</span>
+  </div>`;
+}
 function fxCardHTML(x){
   const stadiumName=x.sede?x.sede.n.toUpperCase():'';
   const isPD=x.home==='Por definir';
@@ -1530,6 +1563,7 @@ function fxCardHTML(x){
     <div class="fx-card2-tv">
       <span class="tv-label">TV AR</span>${tvChips(x)}
     </div>
+    ${fxProdeHTML(x)}
   </div>`;
 }
 function filterFixture(){
@@ -1552,7 +1586,9 @@ function filterFixture(){
     byDate[d].forEach(x=>{h+=fxCardHTML(x);});
     h+='</div></div>';
   });
-  document.getElementById('fx-render').innerHTML=h||'<div class="live-empty">Sin partidos para esos filtros.</div>';
+  const render=document.getElementById('fx-render');
+  render.innerHTML=h||'<div class="live-empty">Sin partidos para esos filtros.</div>';
+  render.querySelectorAll('.st-b').forEach(b=>b.onclick=()=>pbStep(b.dataset.k,+b.dataset.s,+b.dataset.d));
 }
 
 // ===== CALENDARIO (grilla mensual + .ics export) =====
