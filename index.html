@@ -790,10 +790,12 @@ function pbOpts(arr){return '<option value="">— elegí —</option>'+arr.map(t
 const PRODE_TEAM_ALIAS={'rep. checa':'chequia'};
 function prodeCanon(n){const s=tname(n).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');return PRODE_TEAM_ALIAS[s]||s;}
 let _GFIX_ORD=null;
+function fixtureKickoffKey(f){if(!f)return '9999-12-31T99:99';const key=f.dateEvent+'|'+f.strHomeTeam+'|'+f.strAwayTeam,mi=(typeof MATCH_INFO!=='undefined'&&MATCH_INFO[key])?MATCH_INFO[key]:null;return f.dateEvent+'T'+(mi?mi[0]:'99:99');}
 function gfixOrder(g){
-  if(!_GFIX_ORD){_GFIX_ORD={};for(const gg in GRUPOS){_GFIX_ORD[gg]=GFIX.map((pr,idx)=>{const a=prodeCanon(GRUPOS[gg][pr[0]]),b=prodeCanon(GRUPOS[gg][pr[1]]);const f=CONFIRMED_FIXTURES.find(e=>{const h=canonicalTeam(e.strHomeTeam),w=canonicalTeam(e.strAwayTeam);return (h===a&&w===b)||(h===b&&w===a);});return {idx:idx,pr:pr,date:f?f.dateEvent:'9999-12-31'};}).sort((x,y)=>x.date.localeCompare(y.date)||x.idx-y.idx);}}
+  if(!_GFIX_ORD){_GFIX_ORD={};for(const gg in GRUPOS){_GFIX_ORD[gg]=GFIX.map((pr,idx)=>{const a=prodeCanon(GRUPOS[gg][pr[0]]),b=prodeCanon(GRUPOS[gg][pr[1]]);const f=CONFIRMED_FIXTURES.find(e=>{const h=canonicalTeam(e.strHomeTeam),w=canonicalTeam(e.strAwayTeam);return (h===a&&w===b)||(h===b&&w===a);});return {idx:idx,pr:pr,date:f?f.dateEvent:'9999-12-31',kickoff:fixtureKickoffKey(f)};}).sort((x,y)=>x.kickoff.localeCompare(y.kickoff)||x.idx-y.idx);}}
   return _GFIX_ORD[g]||GFIX.map((pr,idx)=>({idx:idx,pr:pr,date:''}));
 }
+function prodeGroupOrder(){return Object.keys(GRUPOS).sort((a,b)=>{const ga=gfixOrder(a)[0],gb=gfixOrder(b)[0];return (ga&&ga.kickoff||'9999-12-31T99:99').localeCompare(gb&&gb.kickoff||'9999-12-31T99:99')||a.localeCompare(b);});}
 function gmDateLabel(d){if(!d||d==='9999-12-31')return '';try{return new Date(d+'T12:00:00').toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});}catch(e){return '';}}
 function makeProde(){
   const defs=`<div class="pb-card"><h3>🏆 Definiciones del torneo</h3><div class="pb-defs">`+
@@ -825,7 +827,7 @@ function standHTML(g){const st=computeStandings(g);let h='<table><tr><th>#</th><
   st.forEach((x,i)=>{const cls=i<2?'q':(i===2?'q3':'');h+=`<tr class="${cls}"><td>${i+1}</td><td class="tn">${team(x.t)}</td><td>${x.pj}</td><td><b>${x.pts}</b></td><td>${x.dg>0?'+':''}${x.dg}</td></tr>`;});
   return h+'</table>';}
 function renderGroups(){const cont=document.getElementById('pb-groups');if(!cont)return;let h='';
-  for(const g in GRUPOS){h+=`<div class="pb-g"><h4><span class="gl">${g}</span>Grupo ${g}</h4>`;
+  for(const g of prodeGroupOrder()){h+=`<div class="pb-g"><h4><span class="gl">${g}</span>Grupo ${g}</h4>`;
     let lastDay='';
     gfixOrder(g).forEach(o=>{const pr=o.pr,idx=o.idx;const k=g+idx;const home=GRUPOS[g][pr[0]],away=GRUPOS[g][pr[1]];const sc=PB_MS[k]||[null,null];
       const day=gmDateLabel(o.date);if(day&&day!==lastDay){h+=`<div class="gm-day">📅 ${day}</div>`;lastDay=day;}
