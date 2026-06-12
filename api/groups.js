@@ -22,6 +22,30 @@ async function getGroup(id) {
   const a = await r.json();
   return (a && a[0]) ? a[0].data : null;
 }
+async function listGroupsForPids(pids) {
+  const wanted = new Set((pids || []).map(x => String(x || '').slice(0, 24)).filter(Boolean));
+  if (!wanted.size) return [];
+  const r = await fetch(URL_ + '/rest/v1/grupos?select=id,data&order=id.desc&limit=500', { headers: H() });
+  if (!r.ok) throw new Error('LIST ' + r.status + ' ' + (await r.text()));
+  const rows = await r.json();
+  return (rows || []).map(row => {
+    const g = row.data || {};
+    const entries = g.entries || {};
+    const pid = Array.from(wanted).find(x => entries[x]);
+    if (!pid) return null;
+    const e = entries[pid] || {};
+    return {
+      id: g.id || row.id,
+      name: g.name || 'Grupo',
+      created: g.created || 0,
+      ownerPid: g.ownerPid || '',
+      memberCount: Object.keys(entries).length,
+      myPid: pid,
+      myName: e.name || '',
+      updated: e.updated || e.submittedAt || 0
+    };
+  }).filter(Boolean).sort((a, b) => (b.updated || b.created || 0) - (a.updated || a.created || 0));
+}
 async function putGroup(id, data) {
   const r = await fetch(URL_ + '/rest/v1/grupos', {
     method: 'POST',
@@ -65,6 +89,11 @@ module.exports = async (req, res) => {
   if (!URL_ || !KEY) { res.status(500).json({ error: 'DB_NO_CONFIG' }); return; }
   try {
     if (req.method === 'GET') {
+      const pid = String(req.query.pid || '').slice(0, 24);
+      const legacyPid = String(req.query.legacyPid || '').slice(0, 24);
+      if (pid || legacyPid) {
+        res.status(200).json({ ok: true, groups: await listGroupsForPids([pid, legacyPid]) }); return;
+      }
       const id = String(req.query.id || '').toUpperCase().slice(0, 6);
       if (!id) { res.status(400).json({ error: 'falta id' }); return; }
       const data = await getGroup(id);

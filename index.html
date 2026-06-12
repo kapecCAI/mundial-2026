@@ -116,6 +116,19 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 .auth-box .auth-sub{font-size:12px;color:var(--muted);margin-top:2px;}
 .auth-box .auth-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
 .auth-box input{padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;min-width:130px;}
+.account-widget{position:fixed;top:14px;right:14px;z-index:90;}
+.account-btn{width:46px;height:46px;border-radius:999px;border:1px solid rgba(255,255,255,.55);background:linear-gradient(135deg,#f8fafc,#dbeafe);color:var(--navy);box-shadow:0 10px 28px rgba(0,0,0,.24);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;cursor:pointer;font-family:inherit;}
+.account-btn.logged{background:linear-gradient(135deg,var(--sol),#fde68a);border-color:#fff;}
+.account-pop{position:absolute;right:0;top:56px;width:min(360px,calc(100vw - 28px));display:none;}
+.account-pop.open{display:block;}
+.account-pop .auth-box{box-shadow:0 18px 45px rgba(8,23,43,.28);margin:0;}
+.my-groups{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:16px;}
+.my-groups h3{margin:0 0 10px;font-size:16px;color:var(--navy);}
+.my-group-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr));gap:10px;}
+.my-group-card{border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:#f8fafc;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.my-group-name{font-weight:900;color:var(--navy);margin-bottom:3px;}
+.my-group-meta{color:var(--muted);font-size:12px;}
+.my-group-empty{color:var(--muted);font-size:13px;background:#f8fafc;border:1px dashed var(--line);border-radius:10px;padding:12px;}
 .pb-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:16px;}
 .pb-card h3{margin:0 0 12px;font-size:16px;}
 .pb-defs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:12px;}
@@ -507,6 +520,7 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 </style>
 </head>
 <body>
+<div class="account-widget" id="accountWidget"></div>
 <header>
 <div class="hero">
 <div class="trophy">🏆</div>
@@ -877,6 +891,7 @@ function grParam(){return new URLSearchParams(location.search).get('grupo');}
 function authState(){try{return JSON.parse(localStorage.getItem('auth2026')||'null');}catch(e){return null;}}
 function authUser(){const a=authState();return a&&a.user?a.user:null;}
 function authToken(){const a=authState();return a&&a.token?a.token:'';}
+function grLegacyPid(){return localStorage.getItem('prode_pid')||'';}
 function grPid(){const u=authUser();if(u&&u.id)return u.id;let p=localStorage.getItem('prode_pid');if(!p){p=Math.random().toString(36).slice(2,10);localStorage.setItem('prode_pid',p);}return p;}
 function grName(){return localStorage.getItem('prode_name')||'';}
 // Mis grupos: se guardan en este navegador y, si hay sesión, también en la cuenta (dentro de picks).
@@ -887,7 +902,15 @@ function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>'
 function currentPicks(){const s=prodeRead();return {ms:PB_MS,kb:PB_KB,camp:s.camp,sub:s.sub,ter:s.ter,cua:s.cua,gol:s.gol,mvp:s.mvp};}
 function authPicksPayload(){const p=currentPicks();p.grupos=myGroups();return p;}
 function authBoxHTML(){const u=authUser();return `<div class="auth-box"><div><div class="auth-title">${u?'Cuenta: '+esc(u.username):'Entrá con tu cuenta'}</div><div class="auth-sub">${u?'Tu prode se guarda para abrirlo en cualquier dispositivo.':'Usuario y contraseña, sin mail. Si olvidás la clave, Joel la resetea desde admin.'}</div></div>${u?`<div class="auth-form"><button class="pb-btn ghost" data-auth-logout="1">Salir</button></div>`:`<div class="auth-form"><input data-auth-user placeholder="Usuario"><input data-auth-pass type="password" placeholder="Contraseña"><button class="pb-btn" data-auth-login="1">Entrar</button><button class="pb-btn alt" data-auth-register="1">Crear cuenta</button></div>`}</div>`;}
-function renderAuthBoxes(){document.querySelectorAll('.auth-slot').forEach(el=>{el.innerHTML=authBoxHTML();wireAuthBox(el);});}
+function renderAuthBoxes(){document.querySelectorAll('.auth-slot').forEach(el=>{el.innerHTML=authBoxHTML();wireAuthBox(el);});renderAccountWidget();}
+function renderAccountWidget(){
+  const root=document.getElementById('accountWidget');if(!root)return;
+  const u=authUser(),initial=u&&u.username?u.username.slice(0,1).toUpperCase():'';
+  root.innerHTML=`<button class="account-btn ${u?'logged':''}" id="accountBtn" title="${u?'Cuenta '+esc(u.username):'Entrar'}" aria-label="${u?'Cuenta '+esc(u.username):'Entrar'}">${initial||'👤'}</button><div class="account-pop" id="accountPop">${authBoxHTML()}</div>`;
+  const pop=root.querySelector('#accountPop');
+  root.querySelector('#accountBtn').onclick=()=>pop.classList.toggle('open');
+  wireAuthBox(pop);
+}
 function wireAuthBox(root){
   const login=root.querySelector('[data-auth-login]'),reg=root.querySelector('[data-auth-register]'),out=root.querySelector('[data-auth-logout]');
   if(login)login.onclick=()=>authSubmit(root,'login');
@@ -933,7 +956,28 @@ function findActualMatch(matches,home,away){for(const m of (matches||[])){if(m.h
 function scoreMember(p,actual){if(!actual||!p)return 0;let pts=0;for(const g in GRUPOS){const real=actual[g];if(!real)continue;const predMatches=picksMatches(g,p.ms),pred=standingsFrom(GRUPOS[g],predMatches),realStand=real.standings||real;if((real.matches||[]).length===6&&predMatches.length===6){for(let i=0;i<3;i++){if(pred[i]&&realStand[i]&&pred[i].t===realStand[i].t)pts+=(3-i);}}
     GFIX.forEach((pr,idx)=>{const sc=(p.ms||{})[g+idx];if(!sc||sc[0]==null||sc[1]==null)return;const home=GRUPOS[g][pr[0]],away=GRUPOS[g][pr[1]],m=findActualMatch(real.matches||[],home,away);if(!m)return;const ph=+sc[0],pa=+sc[1];pts+=(ph===m.hs&&pa===m.as)?3:(scoreOutcome(ph,pa)===scoreOutcome(m.hs,m.as)?1:0);});}
   return pts;}
+function myGroupsShellHTML(){
+  const u=authUser();
+  if(!u)return `<div class="my-groups"><h3>Mis grupos</h3><div class="my-group-empty">Entrá con el botón de usuario de arriba para ver tus grupos en cualquier dispositivo.</div></div>`;
+  return `<div class="my-groups"><h3>Mis grupos de ${esc(u.username)}</h3><div id="my-groups-list" class="my-group-empty">Buscando tus grupos...</div></div>`;
+}
+function openGroup(id){history.replaceState(null,'',location.pathname+'?grupo='+id+'#GRUPOS');renderGrupos();}
+async function loadMyGroups(){
+  const box=document.getElementById('my-groups-list');if(!box||!authUser())return;
+  try{
+    const qs=new URLSearchParams({pid:grPid()});
+    const legacy=grLegacyPid();if(legacy&&legacy!==grPid())qs.set('legacyPid',legacy);
+    const r=await fetch(GR_API+'?'+qs.toString(),{cache:'no-store'});
+    const j=await r.json();if(!r.ok)throw j;
+    const groups=j.groups||[];
+    if(!groups.length){box.className='my-group-empty';box.textContent='Todavía no aparece ningún grupo para esta cuenta. Entrá con un código o sumá tu prode a un grupo.';return;}
+    box.className='my-group-list';
+    box.innerHTML=groups.map(g=>`<div class="my-group-card"><div><div class="my-group-name">👥 ${esc(g.name)}</div><div class="my-group-meta">Código ${esc(g.id)} · ${g.memberCount||0} participante(s)${g.updated?' · última carga '+grTimeLabel(g.updated):''}</div></div><button class="gr-mini" data-open-group="${esc(g.id)}">Abrir</button></div>`).join('');
+    box.querySelectorAll('[data-open-group]').forEach(b=>b.onclick=()=>openGroup(b.dataset.openGroup));
+  }catch(e){box.className='my-group-empty';box.textContent='No pude cargar tus grupos. Probá de nuevo en unos segundos.';}
+}
 function grFormHTML(){return `
+  ${myGroupsShellHTML()}
   <div class="pb-card"><h3>➕ Crear un grupo</h3>
     <p style="color:#64748b;font-size:13px;margin:0 0 10px">Primero armá tu prode en la pestaña <b>🧩 Armá tu prode</b>. Al crear el grupo se guarda tu prode y obtenés un link para mandarles a tus amigos.</p>
     <div class="pb-defs"><label class="pb-field">Nombre del grupo<input id="gr-newname" placeholder="Ej: Los del asado"></label><label class="pb-field">Tu nombre<input id="gr-newplayer" placeholder="Tu nombre" value="${esc(grName())}"></label></div>
@@ -944,15 +988,14 @@ function myGroupsHTML(){const l=myGroups();if(!l.length)return '';const u=authUs
   return `<div class="pb-card"><h3>📌 Mis grupos</h3><p style="color:#64748b;font-size:13px;margin:0 0 10px">${u?'Grupos guardados en tu cuenta <b>'+esc(u.username)+'</b>.':'Grupos guardados en este navegador. Iniciá sesión para verlos desde cualquier dispositivo.'}</p><div class="pb-actions">${l.map(x=>`<button class="pb-btn alt" data-open-group="${esc(x.id)}">👥 ${esc(x.name)} <span style="opacity:.7">(${esc(x.id)})</span></button>`).join('')}</div></div>`;}
 function renderGrupos(){const cont=document.getElementById('gr-content');if(!cont)return;const p=grParam();
   if(p){cont.innerHTML='<div id="gr-view"></div>';loadGroup(p);return;}
-  cont.innerHTML='<div class="auth-slot"></div>'+myGroupsHTML()+grFormHTML();
-  renderAuthBoxes();
-  cont.querySelectorAll('[data-open-group]').forEach(b=>b.onclick=()=>{history.replaceState(null,'',location.pathname+'?grupo='+b.dataset.openGroup);renderGrupos();});
+  cont.innerHTML=grFormHTML();
+  loadMyGroups();
   cont.querySelector('#gr-create').onclick=createGroup;
-  const goCode=()=>{const c=cont.querySelector('#gr-code').value.trim().toUpperCase().replace(/\s+/g,'');if(c){history.replaceState(null,'',location.pathname+'?grupo='+c);renderGrupos();}};
+  const goCode=()=>{const c=cont.querySelector('#gr-code').value.trim().toUpperCase().replace(/\s+/g,'');if(c)openGroup(c);};
   cont.querySelector('#gr-go').onclick=goCode;
   cont.querySelector('#gr-code').addEventListener('keydown',e=>{if(e.key==='Enter')goCode();});}
 async function createGroup(){const gn=document.getElementById('gr-newname').value.trim()||'Mi grupo';let nm=document.getElementById('gr-newplayer').value.trim()||grName()||'Anónimo';nm=nm.slice(0,30);localStorage.setItem('prode_name',nm);
-  try{const r=await fetch(GR_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'create',name:gn,pid:grPid(),player:nm,picks:currentPicks()})});const j=await r.json();if(!j.id)throw 0;history.replaceState(null,'',location.pathname+'?grupo='+j.id);renderGrupos();pbToast('Grupo creado 🎉');}catch(e){pbToast('No se pudo crear (¿DB conectada?)');}}
+  try{const r=await fetch(GR_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'create',name:gn,pid:grPid(),player:nm,picks:currentPicks()})});const j=await r.json();if(!j.id)throw 0;openGroup(j.id);pbToast('Grupo creado 🎉');}catch(e){pbToast('No se pudo crear (¿DB conectada?)');}}
 async function joinGroup(id){let nm=grName()||prompt('Tu nombre para el grupo:');if(nm===null)return;nm=(nm||'Anónimo').slice(0,30);localStorage.setItem('prode_name',nm);
   try{const r=await fetch(GR_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'submit',id:id,pid:grPid(),player:nm,picks:currentPicks()})});if(!r.ok)throw 0;pbToast('¡Prode cargado al grupo! ✅');loadGroup(id);}catch(e){pbToast('No se pudo guardar');}}
 function grOpenProde(m){
