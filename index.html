@@ -898,6 +898,7 @@ function grName(){return localStorage.getItem('prode_name')||'';}
 function myGroups(){try{const l=JSON.parse(localStorage.getItem('mis_grupos')||'[]');return Array.isArray(l)?l:[];}catch(e){return [];}}
 function rememberGroup(id,name){if(!id)return;const l=myGroups().filter(x=>x&&x.id!==id);l.unshift({id:id,name:String(name||id).slice(0,40)});try{localStorage.setItem('mis_grupos',JSON.stringify(l.slice(0,12)));}catch(e){}authSavePicks();}
 function mergeGroups(arr){if(!Array.isArray(arr))return;const cur=myGroups();const ids=new Set(cur.map(x=>x.id));arr.forEach(x=>{if(x&&x.id&&!ids.has(x.id)){cur.push({id:String(x.id).slice(0,6),name:String(x.name||x.id).slice(0,40)});ids.add(x.id);}});try{localStorage.setItem('mis_grupos',JSON.stringify(cur.slice(0,12)));}catch(e){}}
+function forgetGroup(id){try{localStorage.setItem('mis_grupos',JSON.stringify(myGroups().filter(x=>x&&x.id!==id)));}catch(e){}authSavePicks();}
 function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function currentPicks(){const s=prodeRead();return {ms:PB_MS,kb:PB_KB,camp:s.camp,sub:s.sub,ter:s.ter,cua:s.cua,gol:s.gol,mvp:s.mvp};}
 function authPicksPayload(){const p=currentPicks();p.grupos=myGroups();return p;}
@@ -1058,6 +1059,19 @@ async function deleteGroupMember(id,targetPid,name){
     loadGroup(id);
   }catch(e){pbToast('No se pudo borrar');}
 }
+async function leaveGroup(id,isOwner,memberCount){
+  if(isOwner&&memberCount>1){pbToast('Sos dueño: primero borrá participantes o pasá el grupo');return;}
+  if(!confirm('¿Salir de este grupo? Tu prode se borra solo de este grupo.'))return;
+  try{
+    const r=await fetch(GR_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'leave_member',id:id,pid:grPid()})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok)throw j;
+    forgetGroup(id);
+    pbToast('Saliste del grupo');
+    history.replaceState(null,'',location.pathname+'#GRUPOS');
+    renderGrupos();
+  }catch(e){pbToast(e&&e.error==='dueno_con_participantes'?'Como dueño no podés salir si hay participantes':'No se pudo salir del grupo');}
+}
 async function loadGroup(id){const cont=document.getElementById('gr-view');if(!cont)return;cont.innerHTML='<div class="live-empty">Cargando grupo…</div>';
   let g;try{const r=await fetch(GR_API+'?id='+encodeURIComponent(id));if(!r.ok)throw 0;g=await r.json();}catch(e){cont.innerHTML='<div class="live-empty">No se encontró el grupo, o estás abriendo el archivo local. Los grupos funcionan en el sitio publicado (Vercel).<br><br><a href="'+location.pathname+'" style="color:#7c3aed;font-weight:700">← Volver</a></div>';return;}
   const actual=await fetchActual();
@@ -1070,7 +1084,7 @@ async function loadGroup(id){const cont=document.getElementById('gr-view');if(!c
   if(localEntry)rememberGroup(g.id,g.name);
   const ownerEntry=g.ownerPid&&(g.entries||{})[g.ownerPid];
   const canClaim=localEntry&&grIsJoel(localEntry.name||grName())&&(!g.ownerPid||(g.ownerPid!==localPid&&grIsJoel(ownerEntry&&ownerEntry.name)));
-  let h=`<div class="gr-head"><div><div class="gr-name">👥 ${esc(g.name)} ${isOwner?'<span class="gr-owner">Dueño</span>':''}</div><div class="gr-sub">Código <b>${g.id}</b> · ${members.length} participante(s)</div></div><div class="gr-actions"><button class="pb-btn" id="gr-join">➕ Sumar / actualizar mi prode</button>${localEntry?'<button class="pb-btn alt" id="gr-rename">Cambiar mi nombre</button>':''}</div></div>`;
+  let h=`<div class="gr-head"><div><div class="gr-name">👥 ${esc(g.name)} ${isOwner?'<span class="gr-owner">Dueño</span>':''}</div><div class="gr-sub">Código <b>${g.id}</b> · ${members.length} participante(s)</div></div><div class="gr-actions"><button class="pb-btn" id="gr-join">➕ Sumar / actualizar mi prode</button>${localEntry?'<button class="pb-btn alt" id="gr-rename">Cambiar mi nombre</button><button class="pb-btn ghost" id="gr-leave">Salir del grupo</button>':''}</div></div>`;
   h+=`<div class="gr-share">📎 <input readonly id="gr-link" value="${link}"><button class="pb-btn alt" id="gr-copy">Copiar link</button></div>`;
   if(canClaim)h+=`<div class="gr-legacy"><span>Podés pasar el rol de dueño a esta cuenta Joel para administrar el grupo desde tu login.</span><button class="gr-mini" id="gr-claim">Hacer dueño a esta cuenta</button></div>`;
   if(!members.length){h+='<div class="live-empty">Todavía no hay prodes cargados. Armá el tuyo y tocá “Sumar mi prode”.</div>';}
@@ -1082,6 +1096,7 @@ async function loadGroup(id){const cont=document.getElementById('gr-view');if(!c
   const cp=cont.querySelector('#gr-copy');if(cp)cp.onclick=()=>{const i=document.getElementById('gr-link');i.select();try{navigator.clipboard.writeText(i.value);}catch(e){}pbToast('Link copiado 📋');};
   const claim=cont.querySelector('#gr-claim');if(claim)claim.onclick=()=>claimGroupOwner(g.id);
   const rename=cont.querySelector('#gr-rename');if(rename)rename.onclick=()=>renameGroupMember(g.id);
+  const leave=cont.querySelector('#gr-leave');if(leave)leave.onclick=()=>leaveGroup(g.id,isOwner,members.length);
   cont.querySelectorAll('[data-view-prode]').forEach(b=>b.onclick=()=>{const m=members.find(x=>x.pid===b.dataset.viewProde);if(m)grOpenProde(m);});
   cont.querySelectorAll('[data-del-member]').forEach(b=>b.onclick=()=>deleteGroupMember(g.id,b.dataset.delMember,b.dataset.delName));
   cont.querySelector('#gr-join').onclick=()=>joinGroup(g.id);}
@@ -1337,6 +1352,28 @@ function buildAllFixture(){
   return arr.sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
 }
 let ALL_FX=null;
+let FX_RESULTS_LOADED=false;
+async function loadFixtureResults(){
+  if(FX_RESULTS_LOADED)return;
+  FX_RESULTS_LOADED=true;
+  try{
+    const r=await fetch(WC_API,{cache:'no-store'});
+    const j=await r.json();
+    const byKey=new Map();
+    (j.events||[]).forEach(e=>byKey.set(teamsKey(e),e));
+    if(!ALL_FX)ALL_FX=buildAllFixture();
+    ALL_FX.forEach(x=>{
+      if(x.kind!=='group')return;
+      const e=byKey.get([canonicalTeam(x.home),canonicalTeam(x.away)].join('|'));
+      if(!e)return;
+      x.realStatus=e.strStatus||'';
+      x.realProgress=e.strProgress||'';
+      x.realHomeScore=e.intHomeScore;
+      x.realAwayScore=e.intAwayScore;
+    });
+    filterFixture();
+  }catch(e){}
+}
 function renderFixture(){
   const cont=document.getElementById('fx-content');if(!cont)return;
   if(!ALL_FX)ALL_FX=buildAllFixture();
@@ -1352,6 +1389,7 @@ function renderFixture(){
   cont.querySelector('#fx-grp').onchange=f;cont.querySelector('#fx-team').onchange=f;
   cont.querySelector('#fx-q').oninput=f;
   filterFixture();
+  loadFixtureResults();
 }
 function tvChannels(m){
   const ch=['DSports'];
@@ -1375,14 +1413,18 @@ function tvChips(m){
 function fxCardHTML(x){
   const stadiumName=x.sede?x.sede.n.toUpperCase():'';
   const isPD=x.home==='Por definir';
+  const hasScore=x.realHomeScore!==null&&x.realHomeScore!==undefined&&x.realHomeScore!==''&&x.realAwayScore!==null&&x.realAwayScore!==undefined&&x.realAwayScore!=='';
+  const live=isLive(x.realStatus),fin=isFin(x.realStatus);
+  const status=live?`<span class="lbadge badge-live">EN VIVO ${esc(x.realProgress&&x.realProgress!=='null'?x.realProgress:x.realStatus)}</span>`:(fin?'<span class="lbadge badge-ft">FINAL</span>':'');
+  const middle=hasScore?`<span class="fx-vs fx-score">${esc(x.realHomeScore+'-'+x.realAwayScore)}</span>`:'<span class="fx-vs">VS</span>';
   return `<div class="fx-card2 ${x.kind==='ko'?'knockout':''}">
     <div class="fx-card2-head">
       <span class="fx-stadium">${stadiumName||(x.grp||'').toUpperCase()}</span>
-      <span class="fx-time-chip">${x.time} HS</span>
+      <span class="fx-time-chip">${status||x.time+' HS'}</span>
     </div>
     <div class="fx-card2-teams">
       <span class="fx-team-r">${isPD?'— Por definir —':x.home} ${isPD?'':flagImg(x.home,'28x21')}</span>
-      <span class="fx-vs">VS</span>
+      ${middle}
       <span class="fx-team-l">${isPD?flagImg('—','28x21'):flagImg(x.away,'28x21')} ${isPD?'— Por definir —':x.away}</span>
     </div>
     <div class="fx-card2-tv">

@@ -169,6 +169,20 @@ module.exports = async (req, res) => {
         await putGroup(id, g);
         res.status(200).json({ ok: true }); return;
       }
+      if (b.action === 'leave_member') {
+        const id = String(b.id || '').toUpperCase().slice(0, 6);
+        const pidk = String(b.pid || '').slice(0, 24);
+        if (!pidk) { res.status(400).json({ error: 'falta_pid' }); return; }
+        const g = await getGroup(id);
+        if (!g) { res.status(404).json({ error: 'no_existe' }); return; }
+        g.entries = g.entries || {};
+        if (!g.entries[pidk]) { res.status(404).json({ error: 'no_participante' }); return; }
+        if (g.ownerPid === pidk && Object.keys(g.entries).length > 1) { res.status(403).json({ error: 'dueno_con_participantes' }); return; }
+        delete g.entries[pidk];
+        if (g.ownerPid === pidk) g.ownerPid = '';
+        await putGroup(id, g);
+        res.status(200).json({ ok: true, count: Object.keys(g.entries).length }); return;
+      }
       if (b.action === 'delete_member') {
         const id = String(b.id || '').toUpperCase().slice(0, 6);
         const ownerPid = String(b.ownerPid || '').slice(0, 24);
