@@ -699,7 +699,7 @@ const CONFIRMED_FIXTURES=[
 ];
 const TEAMS_EN={
 "Mexico":["México","mx"],"South Africa":["Sudáfrica","za"],"South Korea":["Corea del Sur","kr"],"Korea Republic":["Corea del Sur","kr"],
-"Czech Republic":["Chequia","cz"],"Czechia":["Chequia","cz"],"Switzerland":["Suiza","ch"],"Canada":["Canadá","ca"],
+"Czech Republic":["Rep. Checa","cz"],"Czechia":["Rep. Checa","cz"],"Chequia":["Rep. Checa","cz"],"Rep. Checa":["Rep. Checa","cz"],"Switzerland":["Suiza","ch"],"Canada":["Canadá","ca"],
 "Bosnia-Herzegovina":["Bosnia","ba"],"Bosnia and Herzegovina":["Bosnia","ba"],"Qatar":["Qatar","qa"],"Brazil":["Brasil","br"],
 "Morocco":["Marruecos","ma"],"Haiti":["Haití","ht"],"Scotland":["Escocia","gb-sct"],"USA":["Estados Unidos","us"],"United States":["Estados Unidos","us"],
 "Paraguay":["Paraguay","py"],"Australia":["Australia","au"],"Turkey":["Turquía","tr"],"Turkiye":["Turquía","tr"],"Türkiye":["Turquía","tr"],
@@ -1162,7 +1162,7 @@ const PLANTELES={
 "RD Congo":{g:"K",rk:55,dt:"Sébastien Desabre",cap:"Chancel Mbemba",stars:["Yoane Wissa","Cédric Bakambu","Chancel Mbemba"],titles:0},
 "Noruega":{g:"I",rk:33,dt:"Ståle Solbakken",cap:"Martin Ødegaard",stars:["Erling Haaland","Martin Ødegaard","Alexander Sørloth","Antonio Nusa"],titles:0,nota:"Vuelve tras 28 años"},
 "Austria":{g:"J",rk:28,dt:"Ralf Rangnick",cap:"David Alaba",stars:["David Alaba","Marcel Sabitzer","Christoph Baumgartner","Konrad Laimer"],titles:0},
-"Chequia":{g:"A",rk:36,dt:"Ivan Hašek",cap:"Tomáš Souček",stars:["Tomáš Souček","Patrik Schick","Vladimír Coufal"],titles:0},
+"Rep. Checa":{g:"A",rk:36,dt:"Ivan Hašek",cap:"Tomáš Souček",stars:["Tomáš Souček","Patrik Schick","Vladimír Coufal"],titles:0},
 "Escocia":{g:"C",rk:40,dt:"Steve Clarke",cap:"Andrew Robertson",stars:["Andrew Robertson","Scott McTominay","John McGinn"],titles:0,nota:"Vuelve tras 28 años"},
 "Bosnia":{g:"B",rk:74,dt:"Sergej Barbarez",cap:"Edin Džeko",stars:["Edin Džeko","Sead Kolašinac","Amer Gojak"],titles:0,nota:"Mundial #2"},
 "Curazao":{g:"E",rk:90,dt:"Dick Advocaat",cap:"Leandro Bacuna",stars:["Leandro Bacuna","Tahith Chong","Juninho Bacuna"],titles:0,nota:"¡Debut histórico!"},
@@ -1686,7 +1686,7 @@ function renderHistoria(){
 }
 
 // ===== MAPEO EN↔ES y SQUADS LAZY-LOAD =====
-const TEAM_EN_TO_ES={"Czech Republic":"Chequia","Mexico":"México","South Africa":"Sudáfrica","South Korea":"Corea del Sur","Bosnia and Herzegovina":"Bosnia","Canada":"Canadá","Qatar":"Qatar","Switzerland":"Suiza","Brazil":"Brasil","Haiti":"Haití","Morocco":"Marruecos","Scotland":"Escocia","Australia":"Australia","Paraguay":"Paraguay","Turkey":"Turquía","United States":"Estados Unidos","Curaçao":"Curazao","Ecuador":"Ecuador","Germany":"Alemania","Ivory Coast":"Costa de Marfil","Japan":"Japón","Netherlands":"Países Bajos","Sweden":"Suecia","Tunisia":"Túnez","Belgium":"Bélgica","Egypt":"Egipto","Iran":"Irán","New Zealand":"Nueva Zelanda","Cape Verde":"Cabo Verde","Saudi Arabia":"Arabia Saudita","Spain":"España","Uruguay":"Uruguay","France":"Francia","Iraq":"Irak","Norway":"Noruega","Senegal":"Senegal","Algeria":"Argelia","Argentina":"Argentina","Austria":"Austria","Jordan":"Jordania","Colombia":"Colombia","DR Congo":"RD Congo","Portugal":"Portugal","Uzbekistan":"Uzbekistán","Croatia":"Croacia","England":"Inglaterra","Ghana":"Ghana","Panama":"Panamá"};
+const TEAM_EN_TO_ES={"Czech Republic":"Rep. Checa","Mexico":"México","South Africa":"Sudáfrica","South Korea":"Corea del Sur","Bosnia and Herzegovina":"Bosnia","Canada":"Canadá","Qatar":"Qatar","Switzerland":"Suiza","Brazil":"Brasil","Haiti":"Haití","Morocco":"Marruecos","Scotland":"Escocia","Australia":"Australia","Paraguay":"Paraguay","Turkey":"Turquía","United States":"Estados Unidos","Curaçao":"Curazao","Ecuador":"Ecuador","Germany":"Alemania","Ivory Coast":"Costa de Marfil","Japan":"Japón","Netherlands":"Países Bajos","Sweden":"Suecia","Tunisia":"Túnez","Belgium":"Bélgica","Egypt":"Egipto","Iran":"Irán","New Zealand":"Nueva Zelanda","Cape Verde":"Cabo Verde","Saudi Arabia":"Arabia Saudita","Spain":"España","Uruguay":"Uruguay","France":"Francia","Iraq":"Irak","Norway":"Noruega","Senegal":"Senegal","Algeria":"Argelia","Argentina":"Argentina","Austria":"Austria","Jordan":"Jordania","Colombia":"Colombia","DR Congo":"RD Congo","Portugal":"Portugal","Uzbekistan":"Uzbekistán","Croatia":"Croacia","England":"Inglaterra","Ghana":"Ghana","Panama":"Panamá"};
 const TEAM_ES_TO_EN={};for(const k in TEAM_EN_TO_ES)TEAM_ES_TO_EN[TEAM_EN_TO_ES[k]]=k;
 let SQUADS=null,SQUADS_PROMISE=null;
 function loadSquads(){
@@ -1746,7 +1746,7 @@ const TEAM_WIKI={
 "RD Congo":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_la_Rep%C3%BAblica_Democr%C3%A1tica_del_Congo",
 "Noruega":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Noruega",
 "Austria":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Austria",
-"Chequia":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_la_Rep%C3%BAblica_Checa",
+"Rep. Checa":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_la_Rep%C3%BAblica_Checa",
 "Escocia":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Escocia",
 "Bosnia":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Bosnia_y_Herzegovina",
 "Curazao":"https://es.wikipedia.org/wiki/Selecci%C3%B3n_de_f%C3%BAtbol_de_Curazao",
