@@ -282,7 +282,7 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 @media(max-width:600px){.kotable .home,.kotable .away{font-size:12px;}}
 
 /* ===== INICIO ===== */
-.home-hero{display:grid;grid-template-columns:1.2fr 1fr;gap:18px;margin-bottom:20px;}
+.home-hero{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-bottom:20px;}
 .home-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;position:relative;overflow:hidden;}
 .home-card.dark{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);color:#fff;border:none;}
 .home-card.dark .hc-title{color:var(--sol-2);}
@@ -837,7 +837,7 @@ const CONSENSO_KB={"73":"Canadá","74":"Alemania","75":"Países Bajos","76":"Bra
 function pbOpts(arr){return '<option value="">— elegí —</option>'+arr.map(t=>`<option value="${t}">${t}</option>`).join('');}
 // Orden cronológico de los partidos de cada grupo según el fixture FIFA confirmado.
 // Las claves de PB_MS siguen siendo g+idx (idx original de GFIX): no rompe prodes guardados.
-const PRODE_TEAM_ALIAS={'rep. checa':'chequia'};
+const PRODE_TEAM_ALIAS={};
 function prodeCanon(n){const s=tname(n).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');return PRODE_TEAM_ALIAS[s]||s;}
 let _GFIX_ORD=null;
 function fixtureKickoffKey(f){if(!f)return '9999-12-31T99:99';const key=f.dateEvent+'|'+f.strHomeTeam+'|'+f.strAwayTeam,mi=(typeof MATCH_INFO!=='undefined'&&MATCH_INFO[key])?MATCH_INFO[key]:null;return f.dateEvent+'T'+(mi?mi[0]:'99:99');}
@@ -1409,21 +1409,25 @@ function renderInicio(){
       <button class="hc-cta" data-go="PRODE">🧩 Armar mi prode →</button>
     </div>
     <div class="home-card dark">
-      <div class="hc-title">⚡ Resultados en vivo</div>
-      <h2 class="hc-big">Live + clasificación</h2>
-      <p class="hc-desc">Cuando arranque el Mundial, vas a ver todos los partidos en tiempo real, tabla de cada zona y el camino al título.</p>
-      <button class="hc-cta" data-go="LIVE">🔴 Ver LIVE →</button>
+      <div class="hc-title">📅 Fixture</div>
+      <h2 class="hc-big">Partidos y horarios</h2>
+      <p class="hc-desc">Mirá el calendario completo del Mundial 2026, con sedes, horarios de Argentina y filtros por selección.</p>
+      <button class="hc-cta" data-go="FIXTURE">📅 Ver fixture →</button>
+    </div>
+    <div class="home-card">
+      <div class="hc-title">👥 Grupos</div>
+      <h2 class="hc-big">Jugá con amigos</h2>
+      <p class="hc-desc">Entrá a tus grupos, compartí el link y compará los prodes de cada participante resultado por resultado.</p>
+      <button class="hc-cta" data-go="GRUPOS">👥 Ver grupos →</button>
     </div>
   </div>`;
   h+=`<div class="hc-title" style="margin:18px 0 10px">📍 Explorá el sitio</div>`;
   const quick=[
-    ["FIXTURE","📅","Fixture","104 partidos"],
     ["CALENDARIO","📆","Calendario","Vista mensual"],
     ["ZONAS","🗂️","Zonas","12 grupos"],
     ["SEDES","🏟️","Sedes","16 estadios"],
     ["PLANTELES","👕","Planteles","48 selecciones"],
     ["HISTORIA","📜","Historia","22 mundiales"],
-    ["GRUPOS","👥","Grupos","Jugá con amigos"],
     ["Claude","🤖","Comparativa","5 análisis IA"]
   ];
   h+='<div class="quick-grid">'+quick.map(q=>`<div class="quick-link" data-go="${q[0]}"><div class="ql-icon">${q[1]}</div><div class="ql-name">${q[2]}</div><div class="ql-sub">${q[3]}</div></div>`).join('')+'</div>';
