@@ -111,6 +111,25 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 .pb-btn:hover{filter:brightness(.95);}
 .pb-btn.alt{background:#475569;}
 .pb-btn.ghost{background:#fff;color:#475569;border:1px solid var(--line);}
+.prode-toolbar{position:sticky;top:52px;z-index:35;display:flex;align-items:center;justify-content:space-between;gap:14px;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border:1px solid #dbeafe;border-radius:14px;padding:12px 14px;margin:0 0 16px;box-shadow:0 12px 26px rgba(15,23,42,.08);}
+.prode-status{display:flex;align-items:center;gap:10px;min-width:190px;}
+.prode-status .status-dot{width:12px;height:12px;border-radius:999px;background:#94a3b8;box-shadow:0 0 0 4px rgba(148,163,184,.14);flex:0 0 auto;}
+.prode-status b{display:block;color:var(--navy);font-size:14px;}
+.prode-status b[data-tone="saving"]+.status-sub,.prode-status b[data-tone="idle"]+.status-sub{color:#64748b;}
+.prode-status b[data-tone="ok"]{color:#047857;}
+.prode-status b[data-tone="err"]{color:#b91c1c;}
+.status-sub{display:block;color:#64748b;font-size:12px;margin-top:1px;}
+.prode-status[data-tone="ok"] .status-dot{background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.14);}
+.prode-status[data-tone="saving"] .status-dot{background:#0ea5e9;box-shadow:0 0 0 4px rgba(14,165,233,.16);}
+.prode-status[data-tone="err"] .status-dot{background:#ef4444;box-shadow:0 0 0 4px rgba(239,68,68,.15);}
+.prode-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;}
+.prode-actions .pb-btn{margin:0;min-height:40px;}
+.prode-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start;}
+.prode-main{min-width:0;}
+.prode-side{position:sticky;top:128px;display:flex;flex-direction:column;gap:12px;}
+.prode-side .pb-card,.prode-side .pb-summary{margin:0;}
+.prode-side .pb-card{padding:14px;}
+.prode-side .pb-card h3{font-size:15px;}
 .auth-box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
 .auth-box .auth-title{font-weight:900;color:var(--navy);font-size:14px;}
 .auth-box .auth-sub{font-size:12px;color:var(--muted);margin-top:2px;}
@@ -209,6 +228,13 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
   .gm-score{justify-content:center;width:100%;}
   .st-b{width:40px;height:38px;}
   .st-v{min-width:34px;}
+}
+@media(max-width:900px){
+  .prode-toolbar{position:static;align-items:stretch;flex-direction:column;}
+  .prode-actions{justify-content:flex-start;}
+  .prode-actions .pb-btn{flex:1 1 150px;}
+  .prode-layout{grid-template-columns:1fr;}
+  .prode-side{position:static;}
 }
 .gr-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
 .gr-name{font-size:20px;font-weight:800;}
@@ -836,9 +862,9 @@ function makeProde(){
   const groups=`<div class="pb-card pb-card-groups"><h3>📋 Fase de grupos — cargá los resultados</h3><p class="pb-help"><span>Marcadores ordenados por fixture.</span><span class="pb-legend"><span class="pb-dot"></span>1º-2º clasifican</span><span class="pb-legend"><span class="pb-dot third"></span>3º pelea cupo</span></p><div class="pb-grid" id="pb-groups"></div></div>`;
   const thirds=`<div class="pb-card"><h3>🎟️ Mejores 8 terceros (automático)</h3><p style="color:#64748b;font-size:13px;margin:0 0 10px">Se eligen solos según puntos y diferencia de gol de tus resultados.</p><div id="pb-thirds"></div></div>`;
   const bracket=`<div class="pb-card"><h3>🏆 Cuadro de eliminatorias</h3><p style="color:#64748b;font-size:13px;margin:0 0 10px">Se arma con tus clasificados. Tocá el equipo que pasa en cada llave; los ganadores avanzan solos hasta la final y al partido por el 3º puesto. <i>(Terceros asignados por orden de grupo, simplificado.)</i></p><div id="pb-bracket"></div></div>`;
-  const actions=`<div class="pb-actions"><button class="pb-btn" id="pb-cons">✨ Cargar sugerencia del consenso</button><button class="pb-btn alt" id="pb-copy">📋 Copiar resumen</button><button class="pb-btn alt" id="pb-dl">⬇️ Descargar .txt</button><button class="pb-btn ghost" id="pb-reset">🗑️ Borrar</button></div>`;
+  const actions=`<div class="prode-toolbar"><div class="prode-status" data-tone="idle"><span class="status-dot"></span><div><b data-save-status data-tone="idle">Guardado local</b><span class="status-sub">Los grupos se sincronizan solos.</span></div></div><div class="prode-actions"><button class="pb-btn" id="pb-cons">✨ Consenso</button><button class="pb-btn alt" id="pb-copy">📋 Copiar</button><button class="pb-btn alt" id="pb-dl">⬇️ Descargar</button><button class="pb-btn ghost" id="pb-reset">🗑️ Borrar</button></div></div>`;
   const intro=`<div class="banner" style="background:#334155">ℹ️ Armá tu propio prode cargando los resultados. Se <b>guarda solo</b> en este navegador. La tabla, los clasificados y el cuadro se <b>autocompletan</b>; después tocás quién pasa en las llaves y <b>copiás o descargás</b> tu resumen.</div>`;
-  return `<div class="auth-slot"></div>`+intro+actions+defs+groups+thirds+bracket+`<div class="pb-summary" id="pb-sum"></div>`;
+  return `<div class="auth-slot"></div>`+intro+actions+`<div class="prode-layout"><div class="prode-main">`+defs+groups+bracket+`</div><aside class="prode-side">`+`<div class="pb-summary" id="pb-sum"></div>`+thirds+`</aside></div>`;
 }
 function pbVal(id){const e=document.getElementById(id);return e?e.value:'';}
 function pbSet(id,v){const e=document.getElementById(id);if(e)e.value=v||'';}
@@ -890,7 +916,7 @@ function renderBracket(){const cont=document.getElementById('pb-bracket');if(!co
   pbSet('pr-camp',champ||'');pbSet('pr-sub',champ?(fin[0]===champ?fin[1]:fin[0]):'');
   pbSet('pr-ter',third||'');pbSet('pr-cua',third?(tp[0]===third?tp[1]:tp[0]):'');
   cont.querySelectorAll('.bk-team').forEach(el=>el.onclick=()=>{const tm=el.dataset.t;if(!tm)return;PB_KB[el.dataset.m]=tm;prodeSave();});}
-function prodeSave(){renderThirds();renderBracket();try{localStorage.setItem('prode2026',JSON.stringify(fullState()));}catch(e){}prodeSummary();trackProde();authSavePicks();}
+function prodeSave(){renderThirds();renderBracket();try{localStorage.setItem('prode2026',JSON.stringify(fullState()));}catch(e){}prodeSummary();trackProde();authSavePicks();scheduleGroupSync();}
 function prodeSummary(){const s=prodeRead();const c=document.getElementById('pb-sum');if(!c)return;let h='<h3>📝 Tu prode</h3>';
   h+=`<div class="row">🏆 <b>Campeón:</b> ${s.camp?team(s.camp):'—'}</div>`;
   h+=`<div class="row">🥈 ${s.sub?team(s.sub):'—'} &nbsp;·&nbsp; 🥉 ${s.ter?team(s.ter):'—'} &nbsp;·&nbsp; 4º ${s.cua?team(s.cua):'—'}</div>`;
@@ -935,6 +961,50 @@ function forgetGroup(id){try{localStorage.setItem('mis_grupos',JSON.stringify(my
 function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function currentPicks(){const s=prodeRead();return {ms:PB_MS,kb:PB_KB,camp:s.camp,sub:s.sub,ter:s.ter,cua:s.cua,gol:s.gol,mvp:s.mvp};}
 function authPicksPayload(){const p=currentPicks();p.grupos=myGroups();return p;}
+function setSaveStatus(text,tone){document.querySelectorAll('[data-save-status]').forEach(el=>{const t=tone||'idle';el.textContent=text||'Guardado local';el.dataset.tone=t;const box=el.closest('.prode-status');if(box)box.dataset.tone=t;});}
+function syncPids(){const pids=[grPid()],legacy=grLegacyPid();if(legacy&&legacy!==pids[0])pids.push(legacy);return pids;}
+let _groupSyncT=null,_groupSyncBusy=false,_groupSyncSig='';
+function groupSyncSignature(){try{return JSON.stringify({pid:grPid(),name:grName(),picks:currentPicks(),groups:myGroups().map(x=>x&&x.id).filter(Boolean).sort()});}catch(e){return String(Date.now());}}
+function scheduleGroupSync(){clearTimeout(_groupSyncT);setSaveStatus('Guardando cambios...', 'saving');_groupSyncT=setTimeout(syncGroupsNow,1600);}
+async function groupsForAutoSync(){
+  const found=new Map(),fallback=new Map();
+  myGroups().forEach(g=>{if(g&&g.id)fallback.set(String(g.id).toUpperCase().slice(0,6),g.name||g.id);});
+  let apiOk=false;
+  for(const pid of syncPids()){
+    if(!pid)continue;
+    try{
+      const r=await fetch(GR_API+'?pid='+encodeURIComponent(pid),{cache:'no-store'});
+      const j=await r.json();if(!r.ok)continue;
+      apiOk=true;
+      (j.groups||[]).forEach(g=>{if(g&&g.id)found.set(String(g.id).toUpperCase().slice(0,6),g.name||g.id);});
+    }catch(e){}
+  }
+  const src=apiOk?found:fallback;
+  return [...src.entries()].map(([id,name])=>({id:id,name:name}));
+}
+async function syncGroupsNow(){
+  if(_groupSyncBusy)return;
+  const sig=groupSyncSignature();
+  if(sig===_groupSyncSig){setSaveStatus('Sincronizado', 'ok');return;}
+  const nm=(grName()||'').trim();
+  if(!nm){setSaveStatus('Guardado local', 'idle');return;}
+  _groupSyncBusy=true;
+  try{
+    const groups=await groupsForAutoSync();
+    if(!groups.length){_groupSyncSig=sig;setSaveStatus(authToken()?'Guardado en tu cuenta':'Guardado local','ok');return;}
+    const picks=currentPicks();
+    let ok=0;
+    for(const g of groups){
+      try{
+        const r=await fetch(GR_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'submit',id:g.id,pid:grPid(),player:nm,picks:picks})});
+        if(r.ok){ok++;rememberGroup(g.id,g.name);}
+      }catch(e){}
+    }
+    _groupSyncSig=groupSyncSignature();
+    setSaveStatus(ok?`Sincronizado en ${ok} grupo${ok===1?'':'s'}`:'Guardado, sin grupos para sync',ok?'ok':'idle');
+  }catch(e){setSaveStatus('No se pudo sincronizar grupos','err');}
+  finally{_groupSyncBusy=false;}
+}
 function authBoxHTML(){const u=authUser();return `<div class="auth-box"><div><div class="auth-title">${u?'Cuenta: '+esc(u.username):'Entrá con tu cuenta'}</div><div class="auth-sub">${u?'Tu prode se guarda para abrirlo en cualquier dispositivo.':'Usuario y contraseña, sin mail. Si olvidás la clave, Joel la resetea desde admin.'}</div></div>${u?`<div class="auth-form"><button class="pb-btn ghost" data-auth-logout="1">Salir</button></div>`:`<div class="auth-form"><input data-auth-user placeholder="Usuario"><input data-auth-pass type="password" placeholder="Contraseña"><button class="pb-btn" data-auth-login="1">Entrar</button><button class="pb-btn alt" data-auth-register="1">Crear cuenta</button></div>`}</div>`;}
 function renderAuthBoxes(){document.querySelectorAll('.auth-slot').forEach(el=>{el.innerHTML=authBoxHTML();wireAuthBox(el);});renderAccountWidget();}
 function renderAccountWidget(){
