@@ -855,10 +855,10 @@ function prodeGroupOrder(){return Object.keys(GRUPOS).sort((a,b)=>{const ga=gfix
 function gmDateLabel(d){if(!d||d==='9999-12-31')return '';try{return new Date(d+'T12:00:00').toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});}catch(e){return '';}}
 function gmStartLabel(o){if(!o||!o.date||o.date==='9999-12-31')return '';const d=gmDateLabel(o.date).replace('.', ''),time=(o.kickoff&&o.kickoff.slice(11,16)!=='99:99')?o.kickoff.slice(11,16):'';return d+(time?' · '+time:'');}
 function kickoffTimeMs(k){if(!k||k.indexOf('9999')===0)return Infinity;return new Date(k+':00-03:00').getTime();}
-function prodeRefForTeams(home,away){for(const g in GRUPOS){const teams=GRUPOS[g];for(let idx=0;idx<GFIX.length;idx++){const pr=GFIX[idx],h=teams[pr[0]],a=teams[pr[1]];if((h===home&&a===away)||(h===away&&a===home))return {g:g,idx:idx,k:g+idx};}}return null;}
+function prodeRefForTeams(home,away){for(const g in GRUPOS){const teams=GRUPOS[g];for(let idx=0;idx<GFIX.length;idx++){const pr=GFIX[idx],h=teams[pr[0]],a=teams[pr[1]];if(h===home&&a===away)return {g:g,idx:idx,k:g+idx,flip:false};if(h===away&&a===home)return {g:g,idx:idx,k:g+idx,flip:true};}}return null;}
 function fixtureForProdeKey(k){return (ALL_FX||[]).find(x=>x.pkey===k)||null;}
 function prodeMatchLocked(g,idx,o){const k=g+idx,fx=fixtureForProdeKey(k);if(fx&&(isLive(fx.realStatus)||isFin(fx.realStatus)))return true;if(fx&&fx.realHomeScore!==null&&fx.realHomeScore!==undefined&&fx.realHomeScore!=='')return true;const ko=(o&&o.kickoff)||(fx?fx.date+'T'+fx.time:'');return Number.isFinite(kickoffTimeMs(ko))&&Date.now()>=kickoffTimeMs(ko);}
-function matchPickPoints(sc,x){if(!x||!sc||sc[0]==null||sc[1]==null)return null;const hs=x.realHomeScore,as=x.realAwayScore;if(hs===null||hs===undefined||hs===''||as===null||as===undefined||as==='')return null;const ph=+sc[0],pa=+sc[1],rh=+hs,ra=+as;return (ph===rh&&pa===ra)?3:(scoreOutcome(ph,pa)===scoreOutcome(rh,ra)?1:0);}
+function matchPickPoints(sc,x){if(!x||!sc||sc[0]==null||sc[1]==null)return null;const hs=x.realHomeScore,as=x.realAwayScore;if(hs===null||hs===undefined||hs===''||as===null||as===undefined||as==='')return null;const ph=+(x.pflip?sc[1]:sc[0]),pa=+(x.pflip?sc[0]:sc[1]),rh=+hs,ra=+as;return (ph===rh&&pa===ra)?3:(scoreOutcome(ph,pa)===scoreOutcome(rh,ra)?1:0);}
 function makeProde(){
   const defs=`<div class="pb-card"><h3>🏆 Definiciones del torneo</h3><div class="pb-defs">`+
     [['camp','🏆 Campeón (auto)'],['sub','🥈 Subcampeón (auto)'],['ter','🥉 Tercer puesto (auto)'],['cua','4º puesto (auto)']].map(d=>`<label class="pb-field">${d[1]}<select id="pr-${d[0]}" disabled>${pbOpts(ALL48)}</select></label>`).join('')+
@@ -1455,7 +1455,7 @@ function buildAllFixture(){
     const info=MATCH_INFO[k]||['14:00',0];
     const sede=SEDES[info[1]];
     const home=spName(f.strHomeTeam),away=spName(f.strAwayTeam),ref=prodeRefForTeams(home,away);
-    arr.push({date:f.dateEvent,time:info[0],home:home,away:away,grp:f.strGroup,sede:sede,kind:'group',pkey:ref?ref.k:'',pg:ref?ref.g:'',pidx:ref?ref.idx:null});
+    arr.push({date:f.dateEvent,time:info[0],home:home,away:away,grp:f.strGroup,sede:sede,kind:'group',pkey:ref?ref.k:'',pg:ref?ref.g:'',pidx:ref?ref.idx:null,pflip:ref?ref.flip:false});
   });
   // knockouts (sin equipos asignados)
   KO_MATCHES.forEach(k=>{
@@ -1525,14 +1525,15 @@ function tvChips(m){
 function fxProdeHTML(x){
   if(x.kind!=='group'||!x.pkey)return '';
   const sc=PB_MS[x.pkey]||[null,null],locked=prodeMatchLocked(x.pg,x.pidx),pts=matchPickPoints(sc,x);
-  const hasPick=sc&&sc[0]!=null&&sc[1]!=null;
+  const leftSide=x.pflip?1:0,rightSide=x.pflip?0:1,left=sc[leftSide],right=sc[rightSide];
+  const hasPick=sc&&left!=null&&right!=null;
   const ptsCls=pts===3?' exact':(pts===1?' good':'');
   const ptsLabel=pts==null?(locked?'+0':'Pendiente'):'+'+pts;
-  const pickLabel=hasPick?`${sc[0]}-${sc[1]}`:(locked?'Sin prode':'Cargá tu resultado');
+  const pickLabel=hasPick?`${left}-${right}`:(locked?'Sin prode':'Cargá tu resultado');
   return `<div class="fx-prode ${locked?'locked':''}">
     <div class="fx-prode-main">
       <span class="fx-prode-label">Tu prode</span>
-      ${locked?`<span class="fx-prode-pick">${esc(pickLabel)}</span>`:`<span class="gm-score">${stepHTML(x.pkey,0,sc[0],false)}<span class="gm-sep">:</span>${stepHTML(x.pkey,1,sc[1],false)}</span>`}
+      ${locked?`<span class="fx-prode-pick">${esc(pickLabel)}</span>`:`<span class="gm-score">${stepHTML(x.pkey,leftSide,left,false)}<span class="gm-sep">:</span>${stepHTML(x.pkey,rightSide,right,false)}</span>`}
     </div>
     <span class="fx-prode-points${ptsCls}">${esc(ptsLabel)}</span>
   </div>`;
