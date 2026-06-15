@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Prode Mundial 2026 — Fixture, Sedes, Planteles, Historia + 5 IAs</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='50' font-size='52'%3E%E2%9A%BD%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://flagcdn.com">
 <style>
 :root{
@@ -910,7 +911,8 @@ function computeStandings(g){const ts=GRUPOS[g];const m={};ts.forEach(t=>m[t]={t
   const arr=ts.map(t=>{const x=m[t];x.dg=x.gf-x.ga;return x;});
   arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.t.localeCompare(b.t,'es'));
   return arr;}
-function bestThirds(ST){const arr=Object.keys(GRUPOS).map(g=>{const o=ST[g][2];return {g:g,t:o.t,pts:o.pts,dg:o.dg,gf:o.gf,pj:o.pj};});
+function groupComplete(g){return GFIX.every((pr,idx)=>{const sc=PB_MS[g+idx];return sc&&sc[0]!==null&&sc[0]!==undefined&&sc[1]!==null&&sc[1]!==undefined;});}
+function bestThirds(ST){const arr=Object.keys(GRUPOS).filter(groupComplete).map(g=>{const o=ST[g][2];return {g:g,t:o.t,pts:o.pts,dg:o.dg,gf:o.gf,pj:o.pj};});
   arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.g.localeCompare(b.g));return arr;}
 function thirdSlots(ST){return bestThirds(ST).slice(0,8).map(x=>x.g).sort().map(g=>ST[g][2].t);}
 function stepHTML(k,side,v,locked){const t=(v===null||v===undefined)?'–':v;const dis=locked?' disabled':'';return `<span class="stp ${locked?'locked':''}"><button class="st-b" data-k="${k}" data-s="${side}" data-d="-1" aria-label="Bajar gol"${dis}>−</button><span class="st-v" data-score-view="${k}-${side}">${t}</span><button class="st-b" data-k="${k}" data-s="${side}" data-d="1" aria-label="Subir gol"${dis}>+</button></span>`;}
@@ -936,7 +938,7 @@ function bkBtn(mn,t,w){const sel=(t&&w===t)?'sel':'';return `<button class="bk-t
 function renderBracket(){const cont=document.getElementById('pb-bracket');if(!cont)return;
   const ST={};for(const g in GRUPOS)ST[g]=computeStandings(g);const ts=thirdSlots(ST);
   const teams={};
-  function rref(ref){if(ref[0]==='W')return PB_KB[ref.slice(1)]||'';if(ref[0]==='L'){const mn=ref.slice(1),tm=teams[mn]||[],w=PB_KB[mn]||'';return w&&tm[0]&&tm[1]?(tm[0]===w?tm[1]:tm[0]):'';}if(ref[0]==='T')return ts[parseInt(ref.slice(1))-1]||'';const pos=(+ref[0])-1,g=ref.slice(1);return (ST[g][pos]&&ST[g][pos].t)||'';}
+  function rref(ref){if(ref[0]==='W')return PB_KB[ref.slice(1)]||'';if(ref[0]==='L'){const mn=ref.slice(1),tm=teams[mn]||[],w=PB_KB[mn]||'';return w&&tm[0]&&tm[1]?(tm[0]===w?tm[1]:tm[0]):'';}if(ref[0]==='T')return ts[parseInt(ref.slice(1))-1]||'';const pos=(+ref[0])-1,g=ref.slice(1);return groupComplete(g)&&ST[g][pos]?ST[g][pos].t:'';}
   const order=[...R32,...R16,...QFR,...SFR,...TPR,...FNR];
   order.forEach(m=>{const a=rref(m[1]),b=rref(m[2]);teams[m[0]]=[a,b];if(PB_KB[m[0]]&&PB_KB[m[0]]!==a&&PB_KB[m[0]]!==b)delete PB_KB[m[0]];});
   let h='<div class="bk-rounds">';
@@ -959,7 +961,7 @@ function prodeSummary(){const s=prodeRead();const c=document.getElementById('pb-
   if(gl)h+=`<div class="row" style="color:#94a3b8;font-size:13px;margin-top:8px">Clasificados (1º/2º): ${gl}</div>`;
   c.innerHTML=h;}
 function prodeText(){const s=prodeRead();const L=['PRODE MUNDIAL 2026','','CAMPEON: '+(s.camp||'-'),'SUBCAMPEON: '+(s.sub||'-'),'TERCERO: '+(s.ter||'-'),'CUARTO: '+(s.cua||'-'),'GOLEADOR: '+(s.gol||'-'),'MEJOR JUGADOR: '+(s.mvp||'-'),'','FASE DE GRUPOS (posiciones):'];
-  for(const g in GRUPOS){const st=computeStandings(g);L.push('Grupo '+g+': 1) '+st[0].t+'  2) '+st[1].t+'  3) '+st[2].t+'  4) '+st[3].t);}
+  for(const g in GRUPOS){const st=computeStandings(g);L.push(groupComplete(g)?('Grupo '+g+': 1) '+st[0].t+'  2) '+st[1].t+'  3) '+st[2].t+'  4) '+st[3].t):('Grupo '+g+': sin completar'));}
   const any=ROUNDS.some(rd=>rd[1].some(m=>PB_KB[m[0]]));
   if(any){L.push('','CUADRO (ganadores):');ROUNDS.forEach(rd=>{const ws=rd[1].map(m=>PB_KB[m[0]]).filter(Boolean);if(ws.length)L.push(rd[0]+': '+ws.join(', '));});}
   return L.join('\n');}
