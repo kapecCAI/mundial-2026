@@ -753,6 +753,20 @@ const CONFIRMED_FIXTURES=[
 {dateEvent:"2026-06-28",strHomeTeam:"Algeria",strAwayTeam:"Austria",strGroup:"Grupo J",strStatus:"NS"},
 {dateEvent:"2026-06-28",strHomeTeam:"Jordan",strAwayTeam:"Argentina",strGroup:"Grupo J",strStatus:"NS"}
 ];
+const CONFIRMED_RESULTS=[
+{dateEvent:"2026-06-11",strHomeTeam:"Mexico",strAwayTeam:"South Africa",strGroup:"Grupo A",intHomeScore:"2",intAwayScore:"0",strStatus:"FT"},
+{dateEvent:"2026-06-11",strHomeTeam:"South Korea",strAwayTeam:"Czech Republic",strGroup:"Grupo A",intHomeScore:"2",intAwayScore:"1",strStatus:"FT"},
+{dateEvent:"2026-06-12",strHomeTeam:"Canada",strAwayTeam:"Bosnia-Herzegovina",strGroup:"Grupo B",intHomeScore:"1",intAwayScore:"1",strStatus:"FT"},
+{dateEvent:"2026-06-12",strHomeTeam:"USA",strAwayTeam:"Paraguay",strGroup:"Grupo D",intHomeScore:"4",intAwayScore:"1",strStatus:"FT"},
+{dateEvent:"2026-06-13",strHomeTeam:"Qatar",strAwayTeam:"Switzerland",strGroup:"Grupo B",intHomeScore:"1",intAwayScore:"1",strStatus:"FT"},
+{dateEvent:"2026-06-13",strHomeTeam:"Brazil",strAwayTeam:"Morocco",strGroup:"Grupo C",intHomeScore:"1",intAwayScore:"1",strStatus:"FT"},
+{dateEvent:"2026-06-13",strHomeTeam:"Haiti",strAwayTeam:"Scotland",strGroup:"Grupo C",intHomeScore:"0",intAwayScore:"1",strStatus:"FT"},
+{dateEvent:"2026-06-14",strHomeTeam:"Australia",strAwayTeam:"Turkey",strGroup:"Grupo D",intHomeScore:"2",intAwayScore:"0",strStatus:"FT"},
+{dateEvent:"2026-06-14",strHomeTeam:"Germany",strAwayTeam:"Curacao",strGroup:"Grupo E",intHomeScore:"7",intAwayScore:"1",strStatus:"FT"},
+{dateEvent:"2026-06-14",strHomeTeam:"Netherlands",strAwayTeam:"Japan",strGroup:"Grupo F",intHomeScore:"2",intAwayScore:"2",strStatus:"FT"},
+{dateEvent:"2026-06-14",strHomeTeam:"Ivory Coast",strAwayTeam:"Ecuador",strGroup:"Grupo E",intHomeScore:"1",intAwayScore:"0",strStatus:"FT"},
+{dateEvent:"2026-06-14",strHomeTeam:"Sweden",strAwayTeam:"Tunisia",strGroup:"Grupo F",intHomeScore:"5",intAwayScore:"1",strStatus:"FT"}
+];
 const TEAMS_EN={
 "Mexico":["México","mx"],"South Africa":["Sudáfrica","za"],"South Korea":["Corea del Sur","kr"],"Korea Republic":["Corea del Sur","kr"],
 "Czech Republic":["Rep. Checa","cz"],"Czechia":["Rep. Checa","cz"],"Chequia":["Rep. Checa","cz"],"Rep. Checa":["Rep. Checa","cz"],"Switzerland":["Suiza","ch"],"Canada":["Canadá","ca"],
@@ -773,10 +787,25 @@ function fmtKick(ts,date){try{const d=ts?new Date(ts):new Date(date+'T12:00:00')
 function roundName(r){if(!r)return '';const n=parseInt(r);if(n>=1&&n<=12)return 'Fase de grupos · J'+r;return String(r);}
 function canonicalTeam(n){const raw=(n||'').trim();const t=TEAMS_EN[raw];return (t?t[0]:tname(raw)).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');}
 function teamsKey(e){return [canonicalTeam(e.strHomeTeam),canonicalTeam(e.strAwayTeam)].join('|');}
+function eventHasScore(e){return !!(e&&e.intHomeScore!==null&&e.intHomeScore!==undefined&&e.intHomeScore!==''&&e.intAwayScore!==null&&e.intAwayScore!==undefined&&e.intAwayScore!=='');}
+function mergeResultEvents(events){
+  const byKey=new Map();
+  CONFIRMED_RESULTS.forEach(e=>byKey.set(teamsKey(e),{...e,fromFallback:true}));
+  (events||[]).filter(e=>e.dateEvent||e.strTimestamp).forEach(e=>{
+    if(!e.dateEvent&&e.strTimestamp)e.dateEvent=e.strTimestamp.slice(0,10);
+    const key=teamsKey(e),prev=byKey.get(key);
+    const merged={...(prev||{}),...e,strGroup:e.strGroup||(prev&&prev.strGroup)||''};
+    if(prev&&eventHasScore(prev)&&!eventHasScore(e)){
+      merged.intHomeScore=prev.intHomeScore;merged.intAwayScore=prev.intAwayScore;merged.strStatus=prev.strStatus||e.strStatus||'FT';
+    }
+    byKey.set(key,merged);
+  });
+  return [...byKey.values()];
+}
 function mergeConfirmedFixtures(events){
   const byKey=new Map();
   CONFIRMED_FIXTURES.forEach(e=>byKey.set(teamsKey(e),{...e,fromFixture:true}));
-  (events||[]).filter(e=>e.dateEvent||e.strTimestamp).forEach(e=>{
+  mergeResultEvents(events).filter(e=>e.dateEvent||e.strTimestamp).forEach(e=>{
     if(!e.dateEvent&&e.strTimestamp)e.dateEvent=e.strTimestamp.slice(0,10);
     const base=byKey.get(teamsKey(e))||{};
     byKey.set(teamsKey(e),{...base,...e,strGroup:e.strGroup||base.strGroup});
@@ -818,7 +847,7 @@ async function loadLive(){
     const r=await fetch(WC_API,{cache:'no-store'});const j=await r.json();
     const apiEvents=(j&&j.events)||[];
     renderLive(mergeConfirmedFixtures(apiEvents));
-    if(meta)meta.textContent='Actualizado '+new Date().toLocaleTimeString('es-AR')+' · API '+apiEvents.length+' partidos + fixture FIFA confirmado';
+    if(meta)meta.textContent='Actualizado '+new Date().toLocaleTimeString('es-AR')+' · API '+apiEvents.length+' partidos + resultados confirmados';
   }catch(e){
     renderLive(mergeConfirmedFixtures([]));
     if(meta)meta.textContent='Sin conexión con resultados en vivo · mostrando fixture FIFA confirmado';
@@ -1056,9 +1085,10 @@ function picksMatches(g,ms){return GFIX.map((pr,idx)=>{const sc=(ms||{})[g+idx];
 function picksStandings(g,ms){return standingsFrom(GRUPOS[g],picksMatches(g,ms));}
 function memberChampion(p){return (p&&p.kb&&p.kb['104'])||(p&&p.camp)||'';}
 function esName(n){const t=TEAMS_EN[(n||'').trim()];return t?t[0]:(n||'');}
-async function fetchActual(){try{const r=await fetch(WC_API,{cache:'no-store'});const j=await r.json();const ev=(j&&j.events)||[];const byG={};for(const g in GRUPOS)byG[g]=[];
-  ev.forEach(e=>{if(!isLive(e.strStatus)&&!isFin(e.strStatus))return;if(e.intHomeScore==null||e.intAwayScore==null||e.intHomeScore==='')return;const h=esName(e.strHomeTeam),a=esName(e.strAwayTeam);for(const g in GRUPOS){if(GRUPOS[g].includes(h)&&GRUPOS[g].includes(a)){byG[g].push({h:h,a:a,hs:+e.intHomeScore,as:+e.intAwayScore});break;}}});
-  const st={};for(const g in GRUPOS)st[g]=byG[g].length?{standings:standingsFrom(GRUPOS[g],byG[g]),matches:byG[g]}:null;return st;}catch(e){return null;}}
+async function fetchActual(){let ev=[];try{const r=await fetch(WC_API,{cache:'no-store'});const j=await r.json();ev=(j&&j.events)||[];}catch(e){}
+  const byG={};for(const g in GRUPOS)byG[g]=[];
+  mergeResultEvents(ev).forEach(e=>{if(!isLive(e.strStatus)&&!isFin(e.strStatus))return;if(e.intHomeScore==null||e.intAwayScore==null||e.intHomeScore==='')return;const h=esName(e.strHomeTeam),a=esName(e.strAwayTeam);for(const g in GRUPOS){if(GRUPOS[g].includes(h)&&GRUPOS[g].includes(a)){byG[g].push({h:h,a:a,hs:+e.intHomeScore,as:+e.intAwayScore});break;}}});
+  const st={};for(const g in GRUPOS)st[g]=byG[g].length?{standings:standingsFrom(GRUPOS[g],byG[g]),matches:byG[g]}:null;return st;}
 function scoreOutcome(a,b){return a>b?1:(a<b?-1:0);}
 function findActualMatch(matches,home,away){for(const m of (matches||[])){if(m.h===home&&m.a===away)return {hs:m.hs,as:m.as};if(m.h===away&&m.a===home)return {hs:m.as,as:m.hs};}return null;}
 function scoreMember(p,actual){if(!actual||!p)return 0;let pts=0;for(const g in GRUPOS){const real=actual[g];if(!real)continue;const predMatches=picksMatches(g,p.ms),pred=standingsFrom(GRUPOS[g],predMatches),realStand=real.standings||real;if((real.matches||[]).length===6&&predMatches.length===6){for(let i=0;i<3;i++){if(pred[i]&&realStand[i]&&pred[i].t===realStand[i].t)pts+=(3-i);}}
@@ -1472,7 +1502,7 @@ async function loadFixtureResults(){
     const r=await fetch(WC_API,{cache:'no-store'});
     const j=await r.json();
     const byKey=new Map();
-    (j.events||[]).forEach(e=>byKey.set(teamsKey(e),e));
+    mergeResultEvents(j.events||[]).forEach(e=>byKey.set(teamsKey(e),e));
     if(!ALL_FX)ALL_FX=buildAllFixture();
     ALL_FX.forEach(x=>{
       if(x.kind!=='group')return;
@@ -1484,7 +1514,21 @@ async function loadFixtureResults(){
       x.realAwayScore=e.intAwayScore;
     });
     filterFixture();
-  }catch(e){}
+  }catch(e){
+    const byKey=new Map();
+    mergeResultEvents([]).forEach(e=>byKey.set(teamsKey(e),e));
+    if(!ALL_FX)ALL_FX=buildAllFixture();
+    ALL_FX.forEach(x=>{
+      if(x.kind!=='group')return;
+      const e=byKey.get([canonicalTeam(x.home),canonicalTeam(x.away)].join('|'));
+      if(!e)return;
+      x.realStatus=e.strStatus||'';
+      x.realProgress=e.strProgress||'';
+      x.realHomeScore=e.intHomeScore;
+      x.realAwayScore=e.intAwayScore;
+    });
+    filterFixture();
+  }
 }
 function renderFixture(){
   const cont=document.getElementById('fx-content');if(!cont)return;
