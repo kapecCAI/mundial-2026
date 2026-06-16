@@ -1090,19 +1090,33 @@ function grTimeLabel(ms){return ms?new Date(ms).toLocaleString('es-AR',{day:'2-d
 function standingsFrom(teams,matches){const m={};teams.forEach(t=>m[t]={t:t,pj:0,pts:0,gf:0,ga:0});
   matches.forEach(x=>{if(!m[x.h]||!m[x.a])return;const H=m[x.h],A=m[x.a];H.pj++;A.pj++;H.gf+=x.hs;H.ga+=x.as;A.gf+=x.as;A.ga+=x.hs;if(x.hs>x.as)H.pts+=3;else if(x.as>x.hs)A.pts+=3;else{H.pts++;A.pts++;}});
   const arr=teams.map(t=>{const z=m[t];z.dg=z.gf-z.ga;return z;});arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.t.localeCompare(b.t,'es'));return arr;}
+function completeActualGroups(actual){const out={};for(const g in GRUPOS){const real=actual&&actual[g];if(real&&(real.matches||[]).length===6)out[g]=real.standings||real;}return out;}
+function actualThirdSlots(actual){const arr=[];for(const g in GRUPOS){const st=actual&&actual[g];if(st&&st[2])arr.push({g:g,t:st[2].t,pts:st[2].pts,dg:st[2].dg,gf:st[2].gf});}arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.g.localeCompare(b.g));return arr.slice(0,8).map(x=>x.g).sort().map(g=>actual[g][2].t);}
 function picksMatches(g,ms){return GFIX.map((pr,idx)=>{const sc=(ms||{})[g+idx];if(!sc||sc[0]==null||sc[1]==null)return null;return {h:GRUPOS[g][pr[0]],a:GRUPOS[g][pr[1]],hs:+sc[0],as:+sc[1]};}).filter(Boolean);}
 function picksStandings(g,ms){return standingsFrom(GRUPOS[g],picksMatches(g,ms));}
 function memberChampion(p){return (p&&p.kb&&p.kb['104'])||(p&&p.camp)||'';}
 function esName(n){const t=TEAMS_EN[(n||'').trim()];return t?t[0]:(n||'');}
+function eventDateKey(e){return e&&e.strTimestamp?e.strTimestamp.slice(0,10):(e&&e.dateEvent?e.dateEvent:'');}
+function eventWinner(e){if(!e||(!isLive(e.strStatus)&&!isFin(e.strStatus)))return '';if(!eventHasScore(e))return '';const h=+e.intHomeScore,a=+e.intAwayScore;if(h===a)return esName(e.strWinner||e.strWinnerTeam||e.strWinningTeam||'');return h>a?esName(e.strHomeTeam):esName(e.strAwayTeam);}
+function findKoEventByTeams(events,home,away){const h=canonicalTeam(home),a=canonicalTeam(away);for(const e of (events||[])){if(eventDateKey(e)<'2026-06-28')continue;const eh=canonicalTeam(e.strHomeTeam),ea=canonicalTeam(e.strAwayTeam);if((eh===h&&ea===a)||(eh===a&&ea===h))return e;}return null;}
+function koWinnersFromActual(actual,events){
+  const st=completeActualGroups(actual),ts=actualThirdSlots(st),teams={},wins={};
+  function rref(ref){if(ref[0]==='W')return wins[ref.slice(1)]||'';if(ref[0]==='L'){const mn=ref.slice(1),tm=teams[mn]||[],w=wins[mn]||'';return w&&tm[0]&&tm[1]?(tm[0]===w?tm[1]:tm[0]):'';}if(ref[0]==='T')return ts[parseInt(ref.slice(1))-1]||'';const pos=(+ref[0])-1,g=ref.slice(1);return st[g]&&st[g][pos]?st[g][pos].t:'';}
+  [...R32,...R16,...QFR,...SFR,...TPR,...FNR].forEach(m=>{const a=rref(m[1]),b=rref(m[2]);teams[m[0]]=[a,b];if(!a||!b)return;const e=findKoEventByTeams(events,a,b),w=eventWinner(e);if(w)wins[m[0]]=w;});
+  return wins;
+}
 async function fetchActual(){let ev=[];try{const r=await fetch(WC_API,{cache:'no-store'});const j=await r.json();ev=(j&&j.events)||[];}catch(e){}
   const byG={};for(const g in GRUPOS)byG[g]=[];
-  mergeResultEvents(ev).forEach(e=>{if(!isLive(e.strStatus)&&!isFin(e.strStatus))return;if(e.intHomeScore==null||e.intAwayScore==null||e.intHomeScore==='')return;const h=esName(e.strHomeTeam),a=esName(e.strAwayTeam);for(const g in GRUPOS){if(GRUPOS[g].includes(h)&&GRUPOS[g].includes(a)){byG[g].push({h:h,a:a,hs:+e.intHomeScore,as:+e.intAwayScore});break;}}});
-  const st={};for(const g in GRUPOS)st[g]=byG[g].length?{standings:standingsFrom(GRUPOS[g],byG[g]),matches:byG[g]}:null;return st;}
+  const merged=mergeResultEvents(ev);
+  merged.forEach(e=>{if(!isLive(e.strStatus)&&!isFin(e.strStatus))return;if(e.intHomeScore==null||e.intAwayScore==null||e.intHomeScore==='')return;const h=esName(e.strHomeTeam),a=esName(e.strAwayTeam);for(const g in GRUPOS){if(GRUPOS[g].includes(h)&&GRUPOS[g].includes(a)){byG[g].push({h:h,a:a,hs:+e.intHomeScore,as:+e.intAwayScore});break;}}});
+  const st={};for(const g in GRUPOS)st[g]=byG[g].length?{standings:standingsFrom(GRUPOS[g],byG[g]),matches:byG[g]}:null;st.ko=koWinnersFromActual(st,merged);return st;}
 function scoreOutcome(a,b){return a>b?1:(a<b?-1:0);}
 function findActualMatch(matches,home,away){for(const m of (matches||[])){if(m.h===home&&m.a===away)return {hs:m.hs,as:m.as};if(m.h===away&&m.a===home)return {hs:m.as,as:m.hs};}return null;}
+function koMatchPoints(n){n=+n;if(n>=73&&n<=88)return 1;if(n>=89&&n<=96)return 2;if(n>=97&&n<=100)return 4;if(n>=101&&n<=102)return 8;if(n===103)return 4;if(n===104)return 16;return 0;}
+function scoreKnockouts(p,actual){if(!p||!p.kb||!actual||!actual.ko)return 0;let pts=0;Object.keys(actual.ko).forEach(k=>{if(p.kb[k]&&p.kb[k]===actual.ko[k])pts+=koMatchPoints(k);});return pts;}
 function scoreMember(p,actual){if(!actual||!p)return 0;let pts=0;for(const g in GRUPOS){const real=actual[g];if(!real)continue;const predMatches=picksMatches(g,p.ms),pred=standingsFrom(GRUPOS[g],predMatches),realStand=real.standings||real;if((real.matches||[]).length===6&&predMatches.length===6){for(let i=0;i<3;i++){if(pred[i]&&realStand[i]&&pred[i].t===realStand[i].t)pts+=(3-i);}}
     GFIX.forEach((pr,idx)=>{const sc=(p.ms||{})[g+idx];if(!sc||sc[0]==null||sc[1]==null)return;const home=GRUPOS[g][pr[0]],away=GRUPOS[g][pr[1]],m=findActualMatch(real.matches||[],home,away);if(!m)return;const ph=+sc[0],pa=+sc[1];pts+=(ph===m.hs&&pa===m.as)?3:(scoreOutcome(ph,pa)===scoreOutcome(m.hs,m.as)?1:0);});}
-  return pts;}
+  return pts+scoreKnockouts(p,actual);}
 function myGroupsShellHTML(){
   const u=authUser();
   if(!u)return `<div class="my-groups"><h3>Mis grupos</h3><div class="my-group-empty">Entrá con el botón de usuario de arriba para ver tus grupos en cualquier dispositivo.</div></div>`;
@@ -1236,7 +1250,7 @@ async function loadGroup(id){const cont=document.getElementById('gr-view');if(!c
   if(!members.length){h+='<div class="live-empty">Todavía no hay prodes cargados. Armá el tuyo y tocá “Sumar mi prode”.</div>';}
   else{h+='<table class="gr-table"><tr><th>#</th><th>Jugador</th><th>Campeón</th><th>Última carga</th><th>Pts</th><th>Acciones</th></tr>';
     members.forEach((m,i)=>{const ownerBadge=(g.ownerPid&&m.pid===g.ownerPid)?' <span class="gr-owner">Dueño</span>':'';h+=`<tr><td>${i+1}</td><td>${esc(m.name)}${ownerBadge}</td><td>${m.picks?grPickLabel(memberChampion(m.picks)):'—'}</td><td>${grTimeLabel(m.updated)}</td><td><b>${m.pts}</b></td><td><div class="gr-actions"><button class="gr-mini" data-view-prode="${esc(m.pid)}">Ver prode</button>${isOwner&&m.pid!==localPid?`<button class="gr-mini del" data-del-member="${esc(m.pid)}" data-del-name="${esc(m.name)}">Borrar</button>`:''}</div></td></tr>`;});
-    h+='</table><p class="gr-note">Puntos automáticos: posiciones de grupo (3 por 1º, 2 por 2º, 1 por 3º) + partidos de grupo en vivo/finalizados (1 por acertar ganador/empate, 3 por resultado exacto). La hora muestra cuándo se cargó o actualizó el prode.</p>';}
+    h+='</table><p class="gr-note">Puntos automáticos: partidos de grupo (1 por ganador/empate, 3 por exacto) + posiciones de grupo (3 por 1º, 2 por 2º, 1 por 3º) + eliminatorias por ganador de llave (16avos +1, octavos +2, cuartos +4, semis +8, campeón +16; 3º puesto +4). La hora muestra cuándo se cargó o actualizó el prode.</p>';}
   h+='<p class="gr-note"><a href="'+location.pathname+'" style="color:#7c3aed;font-weight:700">← Crear / entrar a otro grupo</a></p>';
   cont.innerHTML=h;
   const cp=cont.querySelector('#gr-copy');if(cp)cp.onclick=()=>{const i=document.getElementById('gr-link');i.select();try{navigator.clipboard.writeText(i.value);}catch(e){}pbToast('Link copiado 📋');};
