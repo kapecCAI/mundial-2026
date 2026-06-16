@@ -310,6 +310,10 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 .fx-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
 .fx-filters select,.fx-filters input{padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);min-width:140px;}
 .fx-filters .fx-count{margin-left:auto;font-size:13px;color:var(--muted);font-weight:700;}
+.fx-periods{display:flex;gap:6px;flex-wrap:wrap;width:100%;order:-1;}
+.fx-period-btn{border:1px solid #cfe0f3;background:#fff;color:var(--navy);border-radius:999px;padding:8px 12px;font-family:inherit;font-size:12px;font-weight:900;cursor:pointer;transition:.15s;}
+.fx-period-btn:hover{border-color:var(--celeste);background:#f3f9ff;}
+.fx-period-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;box-shadow:0 8px 18px rgba(11,37,69,.14);}
 .fx-day{margin:18px 0;}
 .fx-day-h{font-size:14px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:1.5px;padding:8px 14px;background:linear-gradient(90deg,var(--celeste-3) 0%,#fff 100%);border-left:5px solid var(--celeste);border-radius:8px;margin-bottom:10px;}
 .fx-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:10px;}
@@ -1500,6 +1504,7 @@ function buildAllFixture(){
 }
 let ALL_FX=null;
 let FX_RESULTS_LOADED=false;
+let FX_PERIOD='all';
 async function loadFixtureResults(){
   if(FX_RESULTS_LOADED)return;
   FX_RESULTS_LOADED=true;
@@ -1539,7 +1544,9 @@ function renderFixture(){
   const cont=document.getElementById('fx-content');if(!cont)return;
   if(!ALL_FX)ALL_FX=buildAllFixture();
   const allTeams=Object.keys(GRUPOS).reduce((a,g)=>a.concat(GRUPOS[g]),[]).sort((a,b)=>a.localeCompare(b,'es'));
+  const periods=[['all','Todos'],['played','Jugados'],['upcoming','Por jugar'],['today','Hoy'],['tomorrow','Mañana'],['week','Semana']];
   let h=`<div class="fx-filters">
+    <div class="fx-periods" role="group" aria-label="Filtrar fixture">${periods.map(p=>`<button type="button" class="fx-period-btn ${FX_PERIOD===p[0]?'active':''}" data-fx-period="${p[0]}" aria-pressed="${FX_PERIOD===p[0]?'true':'false'}">${p[1]}</button>`).join('')}</div>
     <select id="fx-grp"><option value="">Todos los grupos</option>${"ABCDEFGHIJKL".split('').map(g=>`<option value="${g}">Grupo ${g}</option>`).join('')}<option value="ko">Eliminatorias</option></select>
     <select id="fx-team"><option value="">Toda selección</option>${allTeams.map(t=>`<option value="${t}">${t}</option>`).join('')}</select>
     <input id="fx-q" placeholder="🔍 Buscar fecha/equipo">
@@ -1547,6 +1554,7 @@ function renderFixture(){
   </div><div id="fx-render"></div>`;
   cont.innerHTML=h;
   const f=()=>filterFixture();
+  cont.querySelectorAll('[data-fx-period]').forEach(b=>b.onclick=()=>{FX_PERIOD=b.dataset.fxPeriod;filterFixture();});
   cont.querySelector('#fx-grp').onchange=f;cont.querySelector('#fx-team').onchange=f;
   cont.querySelector('#fx-q').oninput=f;
   filterFixture();
@@ -1610,11 +1618,31 @@ function fxCardHTML(x){
     ${fxProdeHTML(x)}
   </div>`;
 }
+function fxLocalISO(offsetDays){
+  const d=new Date();
+  d.setDate(d.getDate()+(offsetDays||0));
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function fxPlayed(x){
+  const hasScore=x.realHomeScore!==null&&x.realHomeScore!==undefined&&x.realHomeScore!==''&&x.realAwayScore!==null&&x.realAwayScore!==undefined&&x.realAwayScore!=='';
+  return hasScore||isFin(x.realStatus);
+}
+function fxInPeriod(x,period){
+  if(period==='played')return fxPlayed(x);
+  if(period==='upcoming')return !fxPlayed(x);
+  if(period==='today')return x.date===fxLocalISO(0);
+  if(period==='tomorrow')return x.date===fxLocalISO(1);
+  if(period==='week'){const a=fxLocalISO(0),b=fxLocalISO(6);return x.date>=a&&x.date<=b;}
+  return true;
+}
 function filterFixture(){
   const grp=document.getElementById('fx-grp').value;
   const tm=document.getElementById('fx-team').value;
   const q=(document.getElementById('fx-q').value||'').toLowerCase().trim();
+  document.querySelectorAll('[data-fx-period]').forEach(b=>{const on=b.dataset.fxPeriod===FX_PERIOD;b.classList.toggle('active',on);b.setAttribute('aria-pressed',on?'true':'false');});
   let list=ALL_FX.filter(x=>{
+    if(!fxInPeriod(x,FX_PERIOD))return false;
     if(grp==='ko'&&x.kind!=='ko')return false;
     if(grp&&grp!=='ko'&&x.grp!=='Grupo '+grp)return false;
     if(tm&&x.home!==tm&&x.away!==tm)return false;
