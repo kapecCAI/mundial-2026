@@ -683,6 +683,27 @@ function fixtureHTML(a){
 }
 // ===== LIVE (TheSportsDB, sin API key, refresco 60s) =====
 const WC_API="https://www.thesportsdb.com/api/v1/json/3/eventsseason.php?id=4429&s=2026";
+// API oficial FIFA (gratis, sin key, CORS abierto) — fixture+resultados+en vivo completos del Mundial 2026.
+const FIFA_API="https://api.fifa.com/api/v3/calendar/matches?idCompetition=17&from=2026-06-01T00:00:00Z&to=2026-07-31T00:00:00Z&count=200&language=es";
+// Nombres FIFA que difieren de los del sitio (para banderas y para deduplicar contra el fixture hardcodeado).
+const FIFA_NAME={"EE. UU.":"Estados Unidos","República de Corea":"Corea del Sur","RI de Irán":"Irán","Islas de Cabo Verde":"Cabo Verde","Bosnia y Herzegovina":"Bosnia","Chequia":"Rep. Checa","Catar":"Qatar","Arabia Saudí":"Arabia Saudita"};
+function fifaTeam(o){const n=(o&&o.TeamName&&o.TeamName[0]&&o.TeamName[0].Description)||"";return FIFA_NAME[n]||n;}
+function fifaAdapt(m){
+  const score=(m.HomeTeamScore!==null&&m.HomeTeamScore!==undefined);
+  const st=m.MatchStatus;
+  const status= st===0?"FT": (st===3?"LIVE": (score&&st!==1?"LIVE":"NS"));
+  return {dateEvent:(m.Date||"").slice(0,10),strTimestamp:m.Date||"",strHomeTeam:fifaTeam(m.Home),strAwayTeam:fifaTeam(m.Away),
+    intHomeScore: score?String(m.HomeTeamScore):"",intAwayScore: score?String(m.AwayTeamScore):"",
+    strGroup:(m.GroupName&&m.GroupName[0]&&m.GroupName[0].Description)||(m.StageName&&m.StageName[0]&&m.StageName[0].Description)||"",
+    strStatus:status,strProgress: status==="LIVE"?(m.MatchTime||""):""};
+}
+async function loadFifa(){
+  try{
+    const r=await fetch(FIFA_API,{cache:'no-store'});
+    const j=await r.json();
+    return ((j&&j.Results)||[]).map(fifaAdapt).filter(e=>e.strHomeTeam&&e.strAwayTeam);
+  }catch(e){return [];}
+}
 const RESULTS_API="/api/results";
 let liveTimer=null;
 const CONFIRMED_FIXTURES=[
@@ -837,13 +858,16 @@ async function loadManualResults(force){
   return MANUAL_RESULTS_CACHE;
 }
 async function loadResultSources(){
-  const out={apiEvents:[],manualEvents:[]};
+  const out={fifaEvents:[],apiEvents:[],manualEvents:[]};
+  const fifaP=loadFifa();
   const apiP=fetch(WC_API,{cache:'no-store'}).then(r=>r.json()).then(j=>(j&&j.events)||[]).catch(()=>[]);
   const manualP=loadManualResults(true);
-  const a=await Promise.all([apiP,manualP]);
-  out.apiEvents=a[0]||[];
-  out.manualEvents=a[1]||[];
-  out.events=out.apiEvents.concat(out.manualEvents);
+  const a=await Promise.all([fifaP,apiP,manualP]);
+  out.fifaEvents=a[0]||[];
+  out.apiEvents=a[1]||[];
+  out.manualEvents=a[2]||[];
+  // Orden = prioridad (el ultimo pisa): TheSportsDB < FIFA (oficial) < manual (correcciones admin).
+  out.events=out.apiEvents.concat(out.fifaEvents,out.manualEvents);
   return out;
 }
 function liveSec(t,inner){return `<div class="live-sec">${t}</div><div class="live-grid">${inner}</div>`;}
@@ -880,7 +904,7 @@ async function loadLive(){
   try{
     const src=await loadResultSources();
     renderLive(mergeConfirmedFixtures(src.events));
-    if(meta)meta.textContent='Actualizado '+new Date().toLocaleTimeString('es-AR')+' · API '+src.apiEvents.length+' partidos + '+src.manualEvents.length+' manuales';
+    if(meta)meta.textContent='Actualizado '+new Date().toLocaleTimeString('es-AR')+' · FIFA '+src.fifaEvents.length+' partidos + '+src.manualEvents.length+' manuales';
   }catch(e){
     renderLive(mergeConfirmedFixtures([]));
     if(meta)meta.textContent='Sin conexión con resultados en vivo · mostrando fixture FIFA confirmado';
