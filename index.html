@@ -683,6 +683,7 @@ function fixtureHTML(a){
 }
 // ===== LIVE (TheSportsDB, sin API key, refresco 60s) =====
 const WC_API="https://www.thesportsdb.com/api/v1/json/3/eventsseason.php?id=4429&s=2026";
+const RESULTS_API="/api/results";
 let liveTimer=null;
 const CONFIRMED_FIXTURES=[
 {dateEvent:"2026-06-11",strHomeTeam:"Mexico",strAwayTeam:"South Africa",strGroup:"Grupo A",strStatus:"NS"},
@@ -774,7 +775,10 @@ const CONFIRMED_RESULTS=[
 {dateEvent:"2026-06-15",strHomeTeam:"Spain",strAwayTeam:"Cape Verde",strGroup:"Grupo H",intHomeScore:"0",intAwayScore:"0",strStatus:"FT"},
 {dateEvent:"2026-06-15",strHomeTeam:"Belgium",strAwayTeam:"Egypt",strGroup:"Grupo G",intHomeScore:"1",intAwayScore:"1",strStatus:"FT"},
 {dateEvent:"2026-06-15",strHomeTeam:"Saudi Arabia",strAwayTeam:"Uruguay",strGroup:"Grupo H",intHomeScore:"1",intAwayScore:"1",strStatus:"FT"},
-{dateEvent:"2026-06-15",strHomeTeam:"Iran",strAwayTeam:"New Zealand",strGroup:"Grupo G",intHomeScore:"2",intAwayScore:"2",strStatus:"FT"}
+{dateEvent:"2026-06-15",strHomeTeam:"Iran",strAwayTeam:"New Zealand",strGroup:"Grupo G",intHomeScore:"2",intAwayScore:"2",strStatus:"FT"},
+{dateEvent:"2026-06-16",strHomeTeam:"France",strAwayTeam:"Senegal",strGroup:"Grupo I",intHomeScore:"3",intAwayScore:"1",strStatus:"FT"},
+{dateEvent:"2026-06-16",strHomeTeam:"Iraq",strAwayTeam:"Norway",strGroup:"Grupo I",intHomeScore:"1",intAwayScore:"4",strStatus:"FT"},
+{dateEvent:"2026-06-16",strHomeTeam:"Argentina",strAwayTeam:"Algeria",strGroup:"Grupo J",intHomeScore:"3",intAwayScore:"0",strStatus:"FT"}
 ];
 const TEAMS_EN={
 "Mexico":["México","mx"],"South Africa":["Sudáfrica","za"],"South Korea":["Corea del Sur","kr"],"Korea Republic":["Corea del Sur","kr"],
@@ -821,6 +825,27 @@ function mergeConfirmedFixtures(events){
   });
   return [...byKey.values()];
 }
+let MANUAL_RESULTS_CACHE=null,MANUAL_RESULTS_TS=0;
+async function loadManualResults(force){
+  if(!force&&MANUAL_RESULTS_CACHE&&Date.now()-MANUAL_RESULTS_TS<30000)return MANUAL_RESULTS_CACHE;
+  try{
+    const r=await fetch(RESULTS_API,{cache:'no-store'});
+    const j=await r.json();
+    MANUAL_RESULTS_CACHE=(j&&j.events)||[];
+  }catch(e){MANUAL_RESULTS_CACHE=[];}
+  MANUAL_RESULTS_TS=Date.now();
+  return MANUAL_RESULTS_CACHE;
+}
+async function loadResultSources(){
+  const out={apiEvents:[],manualEvents:[]};
+  const apiP=fetch(WC_API,{cache:'no-store'}).then(r=>r.json()).then(j=>(j&&j.events)||[]).catch(()=>[]);
+  const manualP=loadManualResults(true);
+  const a=await Promise.all([apiP,manualP]);
+  out.apiEvents=a[0]||[];
+  out.manualEvents=a[1]||[];
+  out.events=out.apiEvents.concat(out.manualEvents);
+  return out;
+}
 function liveSec(t,inner){return `<div class="live-sec">${t}</div><div class="live-grid">${inner}</div>`;}
 function liveCard(e,kind){
   const hs=e.intHomeScore,as=e.intAwayScore;
@@ -853,10 +878,9 @@ function trackProde(){clearTimeout(_trackProdeT);_trackProdeT=setTimeout(()=>{tr
 async function loadLive(){
   const meta=document.getElementById('live-meta');const cont=document.getElementById('live-content');
   try{
-    const r=await fetch(WC_API,{cache:'no-store'});const j=await r.json();
-    const apiEvents=(j&&j.events)||[];
-    renderLive(mergeConfirmedFixtures(apiEvents));
-    if(meta)meta.textContent='Actualizado '+new Date().toLocaleTimeString('es-AR')+' · API '+apiEvents.length+' partidos + resultados confirmados';
+    const src=await loadResultSources();
+    renderLive(mergeConfirmedFixtures(src.events));
+    if(meta)meta.textContent='Actualizado '+new Date().toLocaleTimeString('es-AR')+' · API '+src.apiEvents.length+' partidos + '+src.manualEvents.length+' manuales';
   }catch(e){
     renderLive(mergeConfirmedFixtures([]));
     if(meta)meta.textContent='Sin conexión con resultados en vivo · mostrando fixture FIFA confirmado';
@@ -1105,7 +1129,7 @@ function koWinnersFromActual(actual,events){
   [...R32,...R16,...QFR,...SFR,...TPR,...FNR].forEach(m=>{const a=rref(m[1]),b=rref(m[2]);teams[m[0]]=[a,b];if(!a||!b)return;const e=findKoEventByTeams(events,a,b),w=eventWinner(e);if(w)wins[m[0]]=w;});
   return wins;
 }
-async function fetchActual(){let ev=[];try{const r=await fetch(WC_API,{cache:'no-store'});const j=await r.json();ev=(j&&j.events)||[];}catch(e){}
+async function fetchActual(){let ev=[];try{const src=await loadResultSources();ev=src.events||[];}catch(e){}
   const byG={};for(const g in GRUPOS)byG[g]=[];
   const merged=mergeResultEvents(ev);
   merged.forEach(e=>{if(!isLive(e.strStatus)&&!isFin(e.strStatus))return;if(e.intHomeScore==null||e.intAwayScore==null||e.intHomeScore==='')return;const h=esName(e.strHomeTeam),a=esName(e.strAwayTeam);for(const g in GRUPOS){if(GRUPOS[g].includes(h)&&GRUPOS[g].includes(a)){byG[g].push({h:h,a:a,hs:+e.intHomeScore,as:+e.intAwayScore});break;}}});
@@ -1523,10 +1547,9 @@ async function loadFixtureResults(){
   if(FX_RESULTS_LOADED)return;
   FX_RESULTS_LOADED=true;
   try{
-    const r=await fetch(WC_API,{cache:'no-store'});
-    const j=await r.json();
+    const src=await loadResultSources();
     const byKey=new Map();
-    mergeResultEvents(j.events||[]).forEach(e=>byKey.set(teamsKey(e),e));
+    mergeResultEvents(src.events||[]).forEach(e=>byKey.set(teamsKey(e),e));
     if(!ALL_FX)ALL_FX=buildAllFixture();
     ALL_FX.forEach(x=>{
       if(x.kind!=='group')return;
