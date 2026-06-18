@@ -585,7 +585,7 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 <div class="account-widget" id="accountWidget"></div>
 <header>
 <div class="hero">
-<div class="trophy">🏆</div>
+<div class="trophy" id="trophyEgg" onclick="openPenales()" title="">🏆</div>
 <h1>PRODE MUNDIAL 2026</h1>
 <p class="sub">Canadá · México · Estados Unidos</p>
 <div class="cd-label" id="cd-label">Arranca en</div>
@@ -2288,6 +2288,171 @@ function build(){
   trackVisit();
 }
 build();
+</script>
+
+<!-- ===== EASTER EGG: minijuego de penales (se abre al tocar la copa 🏆) ===== -->
+<style>
+.pen-bg{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;padding:16px;background:radial-gradient(circle at 50% 0%,rgba(117,170,219,.4),rgba(8,23,43,.94));backdrop-filter:blur(8px);}
+.pen-bg.show{display:flex;animation:fadeIn .25s;}
+.pen-game{position:relative;width:100%;max-width:460px;background:linear-gradient(180deg,#0b2545 0%,#163b66 100%);border-radius:20px;padding:18px 16px 20px;box-shadow:0 30px 80px rgba(0,0,0,.55);color:#fff;}
+.pen-x{position:absolute;top:12px;right:12px;width:34px;height:34px;border:none;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:20px;font-weight:900;cursor:pointer;line-height:1;transition:.18s;}
+.pen-x:hover{background:rgba(255,255,255,.32);transform:rotate(90deg);}
+.pen-title{text-align:center;font-size:20px;font-weight:900;letter-spacing:.5px;}
+.pen-hud{display:flex;justify-content:space-between;gap:8px;margin:10px 2px 12px;font-size:13px;font-weight:700;color:#cfe0f4;}
+.pen-hud b{color:#f6b40e;font-size:16px;}
+.pen-arena{position:relative;width:100%;aspect-ratio:5/4;border-radius:14px;overflow:hidden;background:linear-gradient(180deg,#1b2b3f 0%,#15351c 56%,#1a4022 100%);}
+.pen-arena::after{content:"";position:absolute;left:50%;bottom:9%;width:9px;height:9px;border-radius:50%;background:#fff;opacity:.85;transform:translateX(-50%);box-shadow:0 0 6px rgba(255,255,255,.5);}
+.pen-goal{position:absolute;left:50%;top:8%;transform:translateX(-50%);width:84%;height:50%;border:5px solid #fff;border-bottom:none;border-radius:6px 6px 0 0;box-shadow:0 0 0 2px rgba(0,0,0,.15);background:repeating-linear-gradient(90deg,rgba(255,255,255,.13) 0 1px,transparent 1px 15px),repeating-linear-gradient(0deg,rgba(255,255,255,.13) 0 1px,transparent 1px 15px);}
+.pen-zones{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);z-index:2;}
+.pen-zone{border:none;background:transparent;cursor:pointer;transition:.15s;border-radius:4px;}
+.pen-zone:hover{background:rgba(246,180,14,.22);box-shadow:inset 0 0 0 2px rgba(246,180,14,.55);}
+.pen-keeper{position:absolute;left:50%;top:85%;transform:translate(-50%,-50%);font-size:38px;transition:left .45s ease,top .45s ease;pointer-events:none;z-index:3;filter:drop-shadow(0 3px 4px rgba(0,0,0,.45));}
+.pen-ball{position:absolute;left:50%;top:122%;transform:translate(-50%,-50%);font-size:30px;transition:left .5s cubic-bezier(.25,.7,.3,1),top .5s cubic-bezier(.25,.7,.3,1);pointer-events:none;z-index:4;filter:drop-shadow(0 3px 4px rgba(0,0,0,.45));}
+.pen-flash{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%) scale(.6);font-size:28px;font-weight:900;color:#fff;text-shadow:0 3px 12px rgba(0,0,0,.7);opacity:0;pointer-events:none;z-index:6;white-space:nowrap;}
+.pen-flash.go{animation:penPop 1s ease;}
+@keyframes penPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}28%{opacity:1;transform:translate(-50%,-50%) scale(1.12)}72%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
+.pen-shake{animation:penShake .42s;}
+@keyframes penShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.pen-msg{text-align:center;margin-top:12px;font-size:15px;font-weight:800;color:#fff;min-height:22px;}
+.pen-over{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(8,23,43,.9);backdrop-filter:blur(3px);border-radius:20px;padding:18px;}
+.pen-over.show{display:flex;animation:fadeIn .25s;}
+.pen-over-card{width:100%;max-width:360px;text-align:center;}
+.pen-over-card h3{margin:0;font-size:24px;font-weight:900;}
+.pen-over-score{font-size:16px;color:#f6b40e;font-weight:800;margin:6px 0 2px;}
+.pen-rank-status{font-size:13px;color:#cfe0f4;margin-bottom:8px;min-height:18px;}
+.pen-board{list-style:none;margin:10px 0 14px;padding:0;max-height:210px;overflow:auto;text-align:left;}
+.pen-board li{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,.06);margin-bottom:5px;font-size:14px;}
+.pen-board li.me{background:rgba(246,180,14,.22);box-shadow:inset 0 0 0 1px rgba(246,180,14,.55);}
+.pen-board .pos{width:26px;font-weight:900;text-align:center;}
+.pen-board .nm{flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pen-board .sc{font-weight:900;color:#f6b40e;}
+.pen-board .pen-empty{justify-content:center;color:#cfe0f4;}
+.pen-over-btns{display:flex;gap:10px;justify-content:center;}
+.pen-over-btns button{flex:1;padding:11px;border:none;border-radius:10px;font-weight:800;cursor:pointer;font-family:inherit;font-size:14px;transition:.18s;}
+.pen-over-btns button:first-child{background:#f6b40e;color:#0b2545;}
+.pen-over-btns button:first-child:hover{background:#ffc62e;}
+.pen-over-btns button:last-child{background:rgba(255,255,255,.15);color:#fff;}
+</style>
+<div class="pen-bg" id="penBg" onclick="if(event.target===this)closePenales()">
+  <div class="pen-game">
+    <button class="pen-x" onclick="closePenales()" aria-label="Cerrar">&times;</button>
+    <div class="pen-title">⚽ Penales Mundial</div>
+    <div class="pen-hud"><span>Goles <b id="penGoals">0</b></span><span id="penLives">❤❤❤</span><span>Récord <b id="penBest">0</b></span></div>
+    <div class="pen-arena" id="penArena">
+      <div class="pen-goal" id="penGoal">
+        <div class="pen-zones">
+          <button class="pen-zone" data-z="0"></button><button class="pen-zone" data-z="1"></button><button class="pen-zone" data-z="2"></button>
+          <button class="pen-zone" data-z="3"></button><button class="pen-zone" data-z="4"></button><button class="pen-zone" data-z="5"></button>
+        </div>
+        <div class="pen-keeper" id="penKeeper">🧤</div>
+        <div class="pen-ball" id="penBall">⚽</div>
+      </div>
+      <div class="pen-flash" id="penFlash"></div>
+    </div>
+    <div class="pen-msg" id="penMsg">Tocá dónde patear</div>
+    <div class="pen-over" id="penOver">
+      <div class="pen-over-card">
+        <h3 id="penOverTitle">¡Game Over!</h3>
+        <div class="pen-over-score" id="penOverScore"></div>
+        <div class="pen-rank-status" id="penRankStatus"></div>
+        <ol class="pen-board" id="penBoard"></ol>
+        <div class="pen-over-btns"><button onclick="penStart()">Jugar de nuevo</button><button onclick="closePenales()">Salir</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+// ===== Minijuego de penales (easter egg) =====
+const PEN_ZC=[{x:17,y:30},{x:50,y:30},{x:83,y:30},{x:17,y:72},{x:50,y:72},{x:83,y:72}];
+const PEN_ADJ={0:[1,3],1:[0,2,4],2:[1,5],3:[0,4],4:[1,3,5],5:[2,4]};
+const PEN_SPOT={x:50,y:122},PEN_KREST={x:50,y:85};
+let pen={goals:0,lives:3,mode:'over',busy:false,machineShot:null,boardCache:[]};
+function penEl(id){return document.getElementById(id);}
+function penSetPos(el,p){el.style.left=p.x+'%';el.style.top=p.y+'%';}
+function penResetBall(instant){const b=penEl('penBall');if(instant)b.style.transition='none';penSetPos(b,PEN_SPOT);if(instant){void b.offsetWidth;b.style.transition='';}}
+function penResetKeeper(){penSetPos(penEl('penKeeper'),PEN_KREST);}
+function penSetMsg(t){penEl('penMsg').textContent=t;}
+function penHud(){penEl('penGoals').textContent=pen.goals;penEl('penLives').textContent='❤'.repeat(Math.max(0,pen.lives))+'🖤'.repeat(Math.max(0,3-pen.lives));}
+function penFlash(t){const f=penEl('penFlash');f.textContent=t;f.classList.remove('go');void f.offsetWidth;f.classList.add('go');}
+function penShake(){const a=penEl('penArena');a.classList.remove('pen-shake');void a.offsetWidth;a.classList.add('pen-shake');}
+function penKeeperGuess(z){const read=Math.min(0.12+pen.goals*0.03,0.6);let g=Math.random()<read?z:Math.floor(Math.random()*6);const cov=[g];if(pen.goals>=8&&Math.random()<0.32){const a=PEN_ADJ[g];cov.push(a[Math.floor(Math.random()*a.length)]);}return cov;}
+function penPick(z){if(pen.busy||pen.mode==='over')return;if(pen.mode==='save')penSave(z);else penShoot(z);}
+function penShoot(z){
+  pen.busy=true;
+  const cov=penKeeperGuess(z);
+  penSetPos(penEl('penBall'),PEN_ZC[z]);
+  penSetPos(penEl('penKeeper'),PEN_ZC[cov[0]]);
+  setTimeout(()=>{
+    const saved=cov.indexOf(z)>=0;
+    if(saved){pen.lives--;penFlash('¡Atajó! 🧤');penShake();}
+    else{pen.goals++;penFlash('¡GOOOL! ⚽');}
+    penHud();
+    setTimeout(()=>{
+      penResetBall(true);
+      if(pen.lives<=0){penGameOver();return;}
+      penResetKeeper();
+      if(!saved&&pen.goals%5===0)penStartSave();
+      else{pen.busy=false;pen.mode='shoot';penSetMsg('Tocá dónde patear');}
+    },850);
+  },620);
+}
+function penStartSave(){pen.mode='save';pen.busy=false;pen.machineShot=Math.floor(Math.random()*6);penSetMsg('🧤 ¡Atajá! Tocá dónde tirarte');}
+function penSave(d){
+  pen.busy=true;
+  penSetPos(penEl('penKeeper'),PEN_ZC[d]);
+  penSetPos(penEl('penBall'),PEN_ZC[pen.machineShot]);
+  setTimeout(()=>{
+    if(d===pen.machineShot){pen.goals+=2;penFlash('¡ATAJADAA! +2 🧤');}
+    else{penFlash('Te la hizo… ¡seguí!');penShake();}
+    penHud();
+    setTimeout(()=>{penResetBall(true);penResetKeeper();pen.mode='shoot';pen.busy=false;penSetMsg('Tocá dónde patear');},900);
+  },620);
+}
+function penStart(){
+  pen.goals=0;pen.lives=3;pen.mode='shoot';pen.busy=false;pen.machineShot=null;
+  penEl('penOver').classList.remove('show');
+  penResetBall(true);penResetKeeper();penHud();penSetMsg('Tocá dónde patear');
+}
+function penRenderBoard(scores){
+  const u=(typeof authUser==='function')?authUser():null;const me=u?String(u.username||'').toLowerCase():null;
+  const ol=penEl('penBoard');const medal=['🥇','🥈','🥉'];
+  if(!scores||!scores.length){ol.innerHTML='<li class="pen-empty">Todavía nadie marcó. ¡Sé el primero! 🎯</li>';return;}
+  ol.innerHTML=scores.map((s,i)=>`<li class="${me&&String(s.username||'').toLowerCase()===me?'me':''}"><span class="pos">${medal[i]||(i+1)}</span><span class="nm">${esc(s.username)}</span><span class="sc">${s.score}</span></li>`).join('');
+}
+async function penGameOver(){
+  pen.mode='over';pen.busy=true;
+  penEl('penOverScore').textContent='Hiciste '+pen.goals+(pen.goals===1?' gol':' goles');
+  const u=(typeof authUser==='function')?authUser():null;
+  const status=penEl('penRankStatus');
+  let scores=pen.boardCache||[];
+  if(u){
+    status.textContent='Guardando puntaje…';
+    try{
+      const r=await fetch('/api/ranking',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'submit',score:pen.goals,token:authToken()})});
+      const j=await r.json();if(!r.ok)throw j;
+      scores=j.scores||scores;
+      status.textContent=j.improved?('🏅 ¡Nuevo récord tuyo: '+j.best+'!'):('Tu récord sigue siendo '+j.best);
+      penEl('penBest').textContent=j.best;
+    }catch(e){status.textContent='No se pudo guardar el puntaje.';}
+  }else{
+    status.textContent='Iniciá sesión (botón de cuenta arriba) para entrar al ranking.';
+    try{const r=await fetch('/api/ranking');const j=await r.json();scores=j.scores||scores;}catch(e){}
+  }
+  pen.boardCache=scores;penRenderBoard(scores);
+  penEl('penOver').classList.add('show');
+}
+async function openPenales(){
+  penEl('penBg').classList.add('show');document.body.style.overflow='hidden';
+  try{
+    const r=await fetch('/api/ranking');const j=await r.json();pen.boardCache=j.scores||[];
+    const u=(typeof authUser==='function')?authUser():null;
+    if(u){const mine=(j.scores||[]).find(s=>String(s.username||'').toLowerCase()===String(u.username||'').toLowerCase());penEl('penBest').textContent=mine?mine.score:'0';}
+  }catch(e){}
+  penStart();
+}
+function closePenales(){penEl('penBg').classList.remove('show');document.body.style.overflow='';pen.mode='over';pen.busy=true;}
+penEl('penGoal').addEventListener('click',function(e){const b=e.target.closest('.pen-zone');if(b)penPick(+b.dataset.z);});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&penEl('penBg').classList.contains('show'))closePenales();});
 </script>
 </body>
 </html>
