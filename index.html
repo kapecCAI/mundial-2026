@@ -1182,13 +1182,6 @@ function completeActualGroups(actual){const out={};for(const g in GRUPOS){const 
 function actualThirdSlots(actual){const arr=[];for(const g in GRUPOS){const st=actual&&actual[g];if(st&&st[2])arr.push({g:g,t:st[2].t,pts:st[2].pts,dg:st[2].dg,gf:st[2].gf});}arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.g.localeCompare(b.g));return arr.slice(0,8).map(x=>x.g).sort().map(g=>actual[g][2].t);}
 function picksMatches(g,ms){return GFIX.map((pr,idx)=>{const sc=(ms||{})[g+idx];if(!sc||sc[0]==null||sc[1]==null)return null;return {h:GRUPOS[g][pr[0]],a:GRUPOS[g][pr[1]],hs:+sc[0],as:+sc[1]};}).filter(Boolean);}
 function picksStandings(g,ms){return standingsFrom(GRUPOS[g],picksMatches(g,ms));}
-// Bracket del prode de un miembro (equipos por llave) a partir de sus picks de grupos + ganadores.
-function memberGroupComplete(ms,g){return GFIX.every((pr,idx)=>{const sc=(ms||{})[g+idx];return sc&&sc[0]!=null&&sc[1]!=null;});}
-function memberThirds(ms,ST){const arr=Object.keys(GRUPOS).filter(g=>memberGroupComplete(ms,g)).map(g=>{const o=ST[g][2];return {g:g,t:o.t,pts:o.pts,dg:o.dg,gf:o.gf};});arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.g.localeCompare(b.g));return arr.slice(0,8).map(x=>x.g).sort().map(g=>ST[g][2].t);}
-function memberKoTeams(p){const ms=(p&&p.ms)||{},kb=(p&&p.kb)||{};const ST={};for(const g in GRUPOS)ST[g]=picksStandings(g,ms);const ts=memberThirds(ms,ST);const teams={};
-  function rref(ref){if(ref[0]==='W')return kb[ref.slice(1)]||'';if(ref[0]==='L'){const mn=ref.slice(1),tm=teams[mn]||[],w=kb[mn]||'';return w&&tm[0]&&tm[1]?(tm[0]===w?tm[1]:tm[0]):'';}if(ref[0]==='T')return ts[parseInt(ref.slice(1))-1]||'';const pos=(+ref[0])-1,g=ref.slice(1);return memberGroupComplete(ms,g)&&ST[g][pos]?ST[g][pos].t:'';}
-  [...R32,...R16,...QFR,...SFR,...TPR,...FNR].forEach(m=>{teams[m[0]]=[rref(m[1]),rref(m[2])];});
-  return teams;}
 function memberChampion(p){return (p&&p.kb&&p.kb['104'])||(p&&p.camp)||'';}
 function esName(n){const t=TEAMS_EN[(n||'').trim()];return t?t[0]:(n||'');}
 function eventDateKey(e){return e&&e.strTimestamp?e.strTimestamp.slice(0,10):(e&&e.dateEvent?e.dateEvent:'');}
@@ -1244,7 +1237,8 @@ function fxKoProdeHTML(x){
 function scoreOutcome(a,b){return a>b?1:(a<b?-1:0);}
 function findActualMatch(matches,home,away){for(const m of (matches||[])){if(m.h===home&&m.a===away)return {hs:m.hs,as:m.as};if(m.h===away&&m.a===home)return {hs:m.as,as:m.hs};}return null;}
 function koMatchPoints(n){n=+n;if(n>=73&&n<=88)return 1;if(n>=89&&n<=96)return 2;if(n>=97&&n<=100)return 4;if(n>=101&&n<=102)return 8;if(n===103)return 4;if(n===104)return 16;return 0;}
-function scoreKnockouts(p,actual){if(!p||!p.kb||!actual||!actual.ko)return 0;let pts=0;Object.keys(actual.ko).forEach(k=>{if(p.kb[k]&&p.kb[k]===actual.ko[k])pts+=koMatchPoints(k);});return pts;}
+// Puntos de eliminatorias del grupo: pronóstico OFICIAL de cada uno (kbr, cargado en el fixture) vs el ganador real.
+function scoreKnockouts(p,actual){if(!p||!p.kbr||!actual||!actual.ko)return 0;let pts=0;Object.keys(actual.ko).forEach(k=>{if(p.kbr[k]&&p.kbr[k]===actual.ko[k])pts+=koMatchPoints(k);});return pts;}
 function scoreMember(p,actual){if(!actual||!p)return 0;let pts=0;for(const g in GRUPOS){const real=actual[g];if(!real)continue;const predMatches=picksMatches(g,p.ms),pred=standingsFrom(GRUPOS[g],predMatches),realStand=real.standings||real;if((real.matches||[]).length===6&&predMatches.length===6){for(let i=0;i<3;i++){if(pred[i]&&realStand[i]&&pred[i].t===realStand[i].t)pts+=(3-i);}}
     GFIX.forEach((pr,idx)=>{const sc=(p.ms||{})[g+idx];if(!sc||sc[0]==null||sc[1]==null)return;const home=GRUPOS[g][pr[0]],away=GRUPOS[g][pr[1]],m=findActualMatch(real.matches||[],home,away);if(!m)return;const ph=+sc[0],pa=+sc[1];pts+=(ph===m.hs&&pa===m.as)?3:(scoreOutcome(ph,pa)===scoreOutcome(m.hs,m.as)?1:0);});}
   return pts+scoreKnockouts(p,actual);}
@@ -1308,12 +1302,12 @@ function grOpenProde(m){
     groups+=`<table class="gr-prode-table"><tr><th>#</th><th>Equipo</th><th>Pts</th><th>DG</th></tr>${[0,1,2,3].map(i=>`<tr><td>${i+1}</td><td>${st[i]?team(st[i].t):'—'}</td><td>${st[i]?st[i].pts:0}</td><td>${st[i]?(st[i].dg>0?'+':'')+st[i].dg:'0'}</td></tr>`).join('')}</table></div>`;
   }
   groups+='</div>';
-  const koTeamsM=memberKoTeams(p);
+  // Eliminatorias: SIEMPRE los partidos oficiales (bracket real), con lo que esa persona cargó en el fixture.
   const ko=(ROUNDS||[]).map(rd=>{
-    const rows=rd[1].map(x=>{const mn=x[0],tm=koTeamsM[mn]||['',''],sc=(p.ks||{})[mn],w=(p.kb||{})[mn]||'';
-      if(!tm[0]||!tm[1])return '';
+    const rows=rd[1].map(x=>{const mn=x[0],r=KO_REAL[mn]||{},sc=(p.ksr||{})[mn],w=(p.kbr||{})[mn]||'';
+      if(!r.home||!r.away)return '';
       const hasSc=sc&&sc[0]!=null&&sc[1]!=null,scL=hasSc?sc[0]+'-'+sc[1]:'—',tie=hasSc&&+sc[0]===+sc[1];
-      return `<div class="gr-match-row"><span class="gr-match-team r ${w&&w===tm[0]?'win':''}">${team(tm[0])}</span><span class="gr-score ${hasSc?'':'empty'}">${scL}${tie&&w?' 🥅':''}</span><span class="gr-match-team ${w&&w===tm[1]?'win':''}">${team(tm[1])}</span></div>`;
+      return `<div class="gr-match-row"><span class="gr-match-team r ${w&&w===r.home?'win':''}">${team(r.home)}</span><span class="gr-score ${hasSc?'':'empty'}">${scL}${tie&&w?' 🥅':''}</span><span class="gr-match-team ${w&&w===r.away?'win':''}">${team(r.away)}</span></div>`;
     }).filter(Boolean).join('');
     return rows?`<div class="gr-prode-group"><div class="gr-prode-gh"><span>${rd[0]}</span></div>${rows}</div>`:'';
   }).filter(Boolean).join('');
@@ -1325,7 +1319,7 @@ function grOpenProde(m){
   <div class="modal-body">
     <div class="modal-stats">${defs.map(d=>`<div class="modal-stat"><b style="font-size:15px">${d[1]?grPickLabel(d[1]):'—'}</b><span>${d[0]}</span></div>`).join('')}</div>
     <div class="modal-section"><h3>Fase de grupos</h3>${groups}</div>
-    <div class="modal-section"><h3>Eliminatorias</h3>${ko?`<div class="gr-prode-groups">${ko}</div>`:'<div class="mtag">Todavía no cargó eliminatorias.</div>'}</div></div>
+    <div class="modal-section"><h3>Eliminatorias <span style="font-weight:600;color:#94a3b8;font-size:12px">(oficiales)</span></h3>${ko?`<div class="gr-prode-groups">${ko}</div>`:'<div class="mtag">Todavía no hay llaves oficiales confirmadas.</div>'}</div></div>
   </div>`);
 }
 async function claimGroupOwner(id){
@@ -1374,6 +1368,7 @@ async function leaveGroup(id,isOwner,memberCount){
 async function loadGroup(id){const cont=document.getElementById('gr-view');if(!cont)return;cont.innerHTML='<div class="live-empty">Cargando grupo…</div>';
   let g;try{const r=await fetch(GR_API+'?id='+encodeURIComponent(id));if(!r.ok)throw 0;g=await r.json();}catch(e){cont.innerHTML='<div class="live-empty">No se encontró el grupo, o estás abriendo el archivo local. Los grupos funcionan en el sitio publicado (Vercel).<br><br><a href="'+location.pathname+'" style="color:#7c3aed;font-weight:700">← Volver</a></div>';return;}
   const actual=await fetchActual();
+  await loadKoReal();
   const localPid=grPid();
   const isOwner=!!(g.ownerPid&&g.ownerPid===localPid);
   const members=Object.entries(g.entries||{}).map(([pid,m])=>({pid:pid,name:m.name,picks:m.picks||{},submittedAt:m.submittedAt||m.updated||0,updated:m.updated||0,pts:scoreMember(m.picks||{},actual)}));
