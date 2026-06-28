@@ -266,6 +266,7 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 .gr-match-row:last-child{border-bottom:none;}
 .gr-match-team{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:650;}
 .gr-match-team.r{text-align:right;}
+.gr-match-team.win{color:#0ea5e9;font-weight:900;}
 .gr-score{display:inline-flex;align-items:center;justify-content:center;min-height:28px;border-radius:8px;background:#0f172a;color:#fff;font-weight:900;font-variant-numeric:tabular-nums;}
 .gr-score.empty{background:#f1f5f9;color:#94a3b8;}
 #gr-code,#gr-newname,#gr-newplayer{padding:9px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;}
@@ -1181,6 +1182,13 @@ function completeActualGroups(actual){const out={};for(const g in GRUPOS){const 
 function actualThirdSlots(actual){const arr=[];for(const g in GRUPOS){const st=actual&&actual[g];if(st&&st[2])arr.push({g:g,t:st[2].t,pts:st[2].pts,dg:st[2].dg,gf:st[2].gf});}arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.g.localeCompare(b.g));return arr.slice(0,8).map(x=>x.g).sort().map(g=>actual[g][2].t);}
 function picksMatches(g,ms){return GFIX.map((pr,idx)=>{const sc=(ms||{})[g+idx];if(!sc||sc[0]==null||sc[1]==null)return null;return {h:GRUPOS[g][pr[0]],a:GRUPOS[g][pr[1]],hs:+sc[0],as:+sc[1]};}).filter(Boolean);}
 function picksStandings(g,ms){return standingsFrom(GRUPOS[g],picksMatches(g,ms));}
+// Bracket del prode de un miembro (equipos por llave) a partir de sus picks de grupos + ganadores.
+function memberGroupComplete(ms,g){return GFIX.every((pr,idx)=>{const sc=(ms||{})[g+idx];return sc&&sc[0]!=null&&sc[1]!=null;});}
+function memberThirds(ms,ST){const arr=Object.keys(GRUPOS).filter(g=>memberGroupComplete(ms,g)).map(g=>{const o=ST[g][2];return {g:g,t:o.t,pts:o.pts,dg:o.dg,gf:o.gf};});arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.g.localeCompare(b.g));return arr.slice(0,8).map(x=>x.g).sort().map(g=>ST[g][2].t);}
+function memberKoTeams(p){const ms=(p&&p.ms)||{},kb=(p&&p.kb)||{};const ST={};for(const g in GRUPOS)ST[g]=picksStandings(g,ms);const ts=memberThirds(ms,ST);const teams={};
+  function rref(ref){if(ref[0]==='W')return kb[ref.slice(1)]||'';if(ref[0]==='L'){const mn=ref.slice(1),tm=teams[mn]||[],w=kb[mn]||'';return w&&tm[0]&&tm[1]?(tm[0]===w?tm[1]:tm[0]):'';}if(ref[0]==='T')return ts[parseInt(ref.slice(1))-1]||'';const pos=(+ref[0])-1,g=ref.slice(1);return memberGroupComplete(ms,g)&&ST[g][pos]?ST[g][pos].t:'';}
+  [...R32,...R16,...QFR,...SFR,...TPR,...FNR].forEach(m=>{teams[m[0]]=[rref(m[1]),rref(m[2])];});
+  return teams;}
 function memberChampion(p){return (p&&p.kb&&p.kb['104'])||(p&&p.camp)||'';}
 function esName(n){const t=TEAMS_EN[(n||'').trim()];return t?t[0]:(n||'');}
 function eventDateKey(e){return e&&e.strTimestamp?e.strTimestamp.slice(0,10):(e&&e.dateEvent?e.dateEvent:'');}
@@ -1300,7 +1308,15 @@ function grOpenProde(m){
     groups+=`<table class="gr-prode-table"><tr><th>#</th><th>Equipo</th><th>Pts</th><th>DG</th></tr>${[0,1,2,3].map(i=>`<tr><td>${i+1}</td><td>${st[i]?team(st[i].t):'—'}</td><td>${st[i]?st[i].pts:0}</td><td>${st[i]?(st[i].dg>0?'+':'')+st[i].dg:'0'}</td></tr>`).join('')}</table></div>`;
   }
   groups+='</div>';
-  const ko=(ROUNDS||[]).map(rd=>{const ws=rd[1].map(x=>(p.kb||{})[x[0]]).filter(Boolean);return ws.length?`<div class="mtag"><b>${rd[0]}:</b> ${ws.map(grPickLabel).join(', ')}</div>`:'';}).filter(Boolean).join('');
+  const koTeamsM=memberKoTeams(p);
+  const ko=(ROUNDS||[]).map(rd=>{
+    const rows=rd[1].map(x=>{const mn=x[0],tm=koTeamsM[mn]||['',''],sc=(p.ks||{})[mn],w=(p.kb||{})[mn]||'';
+      if(!tm[0]||!tm[1])return '';
+      const hasSc=sc&&sc[0]!=null&&sc[1]!=null,scL=hasSc?sc[0]+'-'+sc[1]:'—',tie=hasSc&&+sc[0]===+sc[1];
+      return `<div class="gr-match-row"><span class="gr-match-team r ${w&&w===tm[0]?'win':''}">${team(tm[0])}</span><span class="gr-score ${hasSc?'':'empty'}">${scL}${tie&&w?' 🥅':''}</span><span class="gr-match-team ${w&&w===tm[1]?'win':''}">${team(tm[1])}</span></div>`;
+    }).filter(Boolean).join('');
+    return rows?`<div class="gr-prode-group"><div class="gr-prode-gh"><span>${rd[0]}</span></div>${rows}</div>`:'';
+  }).filter(Boolean).join('');
   openModal(`<div class="modal-head">
     <button class="modal-close" onclick="closeModal()">×</button>
     <h2>Prode de ${esc(m.name||'Anónimo')}</h2>
@@ -1309,7 +1325,7 @@ function grOpenProde(m){
   <div class="modal-body">
     <div class="modal-stats">${defs.map(d=>`<div class="modal-stat"><b style="font-size:15px">${d[1]?grPickLabel(d[1]):'—'}</b><span>${d[0]}</span></div>`).join('')}</div>
     <div class="modal-section"><h3>Fase de grupos</h3>${groups}</div>
-    <div class="modal-section"><h3>Eliminatorias</h3><div class="modal-grid">${ko||'<div class="mtag">Todavía no cargó ganadores de eliminatorias.</div>'}</div></div>
+    <div class="modal-section"><h3>Eliminatorias</h3>${ko?`<div class="gr-prode-groups">${ko}</div>`:'<div class="mtag">Todavía no cargó eliminatorias.</div>'}</div></div>
   </div>`);
 }
 async function claimGroupOwner(id){
