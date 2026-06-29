@@ -1217,10 +1217,12 @@ async function loadKoReal(onDone){try{const src=await loadResultSources();const 
 // ===== Predicción del fixture sobre el bracket REAL (marcador + penales) =====
 function korStepHTML(mn,side,v){const t=(v===null||v===undefined)?'–':v;return `<span class="stp"><button class="st-b" data-kor="${mn}" data-s="${side}" data-d="-1" aria-label="Bajar gol">−</button><span class="st-v" data-korview="${mn}-${side}">${t}</span><button class="st-b" data-kor="${mn}" data-s="${side}" data-d="1" aria-label="Subir gol">+</button></span>`;}
 function korSetWinner(mn){const r=KO_REAL[mn]||{},sc=PB_KSR[mn];if(!r.home||!r.away){delete PB_KBR[mn];return;}if(sc&&sc[0]!=null&&sc[1]!=null){if(+sc[0]>+sc[1])PB_KBR[mn]=r.home;else if(+sc[1]>+sc[0])PB_KBR[mn]=r.away;else if(PB_KBR[mn]!==r.home&&PB_KBR[mn]!==r.away)delete PB_KBR[mn];}else if(PB_KBR[mn]!==r.home&&PB_KBR[mn]!==r.away)delete PB_KBR[mn];}
+// Re-renderiza las vistas que muestran llaves reales (fixture y calendario) tras editar.
+function koRerenderViews(){if(document.getElementById('fx-render'))filterFixture();if(document.getElementById('cal-day')&&_CAL_BYDATE)renderCalDay(_CAL_BYDATE);}
 function korStep(mn,side,d){const r=KO_REAL[mn]||{};if(!r.home||!r.away){pbToast('Esa llave todavía no está confirmada');return;}const cur=(PB_KSR[mn]||[null,null]).slice();let v=cur[side];v=(v===null||v===undefined)?(d>0?0:null):v+d;if(v!==null&&v<0)v=null;if(v!==null&&v>20)v=20;cur[side]=v;PB_KSR[mn]=cur;
   document.querySelectorAll(`[data-korview="${mn}-${side}"]`).forEach(el=>{el.textContent=(v===null?'–':v);});
-  korSetWinner(mn);prodeSave();if(document.getElementById('fx-render'))filterFixture();}
-function korPen(mn,t){const r=KO_REAL[mn]||{};if(t!==r.home&&t!==r.away)return;PB_KBR[mn]=t;prodeSave();if(document.getElementById('fx-render'))filterFixture();}
+  korSetWinner(mn);prodeSave();koRerenderViews();}
+function korPen(mn,t){const r=KO_REAL[mn]||{};if(t!==r.home&&t!==r.away)return;PB_KBR[mn]=t;prodeSave();koRerenderViews();}
 function korPoints(mn){const sc=PB_KSR[mn],r=KO_REAL[mn];if(!sc||sc[0]==null||sc[1]==null||!r)return null;const rh=r.realHomeScore,ra=r.realAwayScore;if(rh==null||rh===''||ra==null||ra==='')return null;const ph=+sc[0],pa=+sc[1];return (ph===+rh&&pa===+ra)?3:(scoreOutcome(ph,pa)===scoreOutcome(+rh,+ra)?1:0);}
 function fxKoProdeHTML(x){
   const mn=x.mn,r=KO_REAL[mn]||{};
@@ -1599,17 +1601,18 @@ function dayOfWeek(iso){const d=new Date(iso+'T12:00:00-03:00');return d.toLocal
 // ===== INICIO =====
 function renderInicio(){
   const cont=document.getElementById('inicio-content');if(!cont)return;
-  // Next match (la primera fecha futura, o el inaugural si todavía no arrancó)
+  // Próximo partido: el primero a futuro entre grupos Y eliminatorias (equipos reales del bracket oficial).
+  if(!_koRealLoaded)loadKoReal(()=>{if(document.getElementById('inicio-content'))renderInicio();});
   const now=Date.now();
-  let next=CONFIRMED_FIXTURES.find(f=>new Date(f.dateEvent+'T'+(MATCH_INFO[f.dateEvent+'|'+f.strHomeTeam+'|'+f.strAwayTeam]?MATCH_INFO[f.dateEvent+'|'+f.strHomeTeam+'|'+f.strAwayTeam][0]:'14:00')+':00-03:00').getTime()>now);
-  if(!next)next=CONFIRMED_FIXTURES[0];
-  const k=next.dateEvent+'|'+next.strHomeTeam+'|'+next.strAwayTeam;
-  const info=MATCH_INFO[k]||['14:00',0];
-  const sede=SEDES[info[1]];
-  const homeES=spName(next.strHomeTeam),awayES=spName(next.strAwayTeam);
+  const cands=[];
+  CONFIRMED_FIXTURES.forEach(f=>{const kk=f.dateEvent+'|'+f.strHomeTeam+'|'+f.strAwayTeam,inf=MATCH_INFO[kk]||['14:00',0];cands.push({ms:new Date(f.dateEvent+'T'+inf[0]+':00-03:00').getTime(),date:f.dateEvent,time:inf[0],sede:SEDES[inf[1]],home:spName(f.strHomeTeam),away:spName(f.strAwayTeam)});});
+  KO_MATCHES.forEach(km=>{const r=KO_REAL[km.mn]||{};cands.push({ms:new Date(km.date+'T'+km.time+':00-03:00').getTime(),date:km.date,time:km.time,sede:SEDES[km.sede],home:r.home||'',away:r.away||''});});
+  cands.sort((a,b)=>a.ms-b.ms);
+  let next=cands.find(c=>c.ms>now&&c.home&&c.away)||cands.find(c=>c.ms>now)||cands[cands.length-1];
+  const sede=next.sede,homeES=next.home,awayES=next.away,tbd=!homeES||!awayES;
   let h=`<div class="next-match"><div class="nm-label">🔜 Próximo partido</div>
-    <div class="nm-teams">${flagImg(homeES,'48x36')}<span>${homeES}</span><span class="nm-vs">VS</span><span>${awayES}</span>${flagImg(awayES,'48x36')}</div>
-    <div class="nm-when">${fmtDateLong(next.dateEvent)} · ${info[0]} hs ART · ${sede.n}, ${sede.c}</div></div>`;
+    <div class="nm-teams">${tbd?'':flagImg(homeES,'48x36')}<span>${homeES||'Por definir'}</span><span class="nm-vs">VS</span><span>${awayES||'Por definir'}</span>${tbd?'':flagImg(awayES,'48x36')}</div>
+    <div class="nm-when">${fmtDateLong(next.date)} · ${next.time} hs ART · ${sede.n}, ${sede.c}</div></div>`;
   h+=`<div class="home-hero">
     <div class="home-card">
       <div class="hc-title">🇦🇷 Bienvenido</div>
@@ -1810,12 +1813,13 @@ function filterFixture(){
 }
 
 // ===== CALENDARIO (grilla mensual + .ics export) =====
-let CAL_FOCUS=null;
+let CAL_FOCUS=null,_CAL_BYDATE=null;
 function renderCalendario(){
   const cont=document.getElementById('cal-content');if(!cont)return;
   if(!ALL_FX)ALL_FX=buildAllFixture();
   if(!_koRealLoaded)loadKoReal(()=>{if(document.getElementById('cal-content'))renderCalendario();});
   const byDate={};ALL_FX.forEach(x=>{(byDate[x.date]=byDate[x.date]||[]).push(x);});
+  _CAL_BYDATE=byDate;
   const dates=Object.keys(byDate).sort();
   if(!CAL_FOCUS)CAL_FOCUS=dates[0]; // primer día
   const months=[
