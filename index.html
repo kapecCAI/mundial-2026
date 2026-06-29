@@ -1582,9 +1582,9 @@ const KO_MATCHES=[
   {date:"2026-07-14",time:"16:00",round:"Semifinal",sede:4},{date:"2026-07-15",time:"16:00",round:"Semifinal",sede:6},
   {date:"2026-07-18",time:"18:00",round:"3er puesto",sede:10},{date:"2026-07-19",time:"16:00",round:"FINAL",sede:3}
 ];
-// Cada partido del calendario KO se liga a su número de llave (73-104) por orden de ronda,
-// así muestra los mismos equipos que el cuadro del prode.
-(function(){const flat=[...R32,...R16,...QFR,...SFR,...TPR,...FNR];KO_MATCHES.forEach((k,i)=>{k.mn=flat[i]?flat[i][0]:null;});})();
+// Nº de llave oficial (73-104) por cada slot del calendario, según el fixture FIFA 2026
+// (cada slot ya tiene su fecha/hora/sede reales; esto le pone el partido correcto).
+(function(){const order=[73,76,74,75,78,77,79,80,82,81,84,83,85,88,86,87, 90,89,91,92,93,94,95,96, 97,98,99,100, 101,102, 103,104];KO_MATCHES.forEach((k,i)=>{k.mn=order[i];});})();
 
 // ===== COUNTDOWN al 11-jun-2026 16:00 ART (kickoff Azteca) =====
 const KICKOFF=new Date('2026-06-11T16:00:00-03:00').getTime();
