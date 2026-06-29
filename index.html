@@ -983,7 +983,13 @@ function computeStandings(g){const ts=GRUPOS[g];const m={};ts.forEach(t=>m[t]={t
 function groupComplete(g){return GFIX.every((pr,idx)=>{const sc=PB_MS[g+idx];return sc&&sc[0]!==null&&sc[0]!==undefined&&sc[1]!==null&&sc[1]!==undefined;});}
 function bestThirds(ST){const arr=Object.keys(GRUPOS).filter(groupComplete).map(g=>{const o=ST[g][2];return {g:g,t:o.t,pts:o.pts,dg:o.dg,gf:o.gf,pj:o.pj};});
   arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.g.localeCompare(b.g));return arr;}
-function thirdSlots(ST){return bestThirds(ST).slice(0,8).map(x=>x.g).sort().map(g=>ST[g][2].t);}
+// Tabla oficial FIFA 2026: según de qué 8 grupos salen los mejores terceros,
+// define qué tercero (por grupo) ocupa cada slot T1..T8 (1E,1I,1A,1L,1D,1G,1B,1K).
+const THIRD_ALLOC={
+  'BDEFIJKL':['D','F','E','K','B','I','J','L'] // combinación real del Mundial 2026
+};
+function allocThirdGroups(groups8){const key=groups8.slice().sort().join('');return THIRD_ALLOC[key]||groups8.slice().sort();}
+function thirdSlots(ST){const g8=bestThirds(ST).slice(0,8).map(x=>x.g);return allocThirdGroups(g8).map(g=>ST[g]&&ST[g][2]?ST[g][2].t:'');}
 function stepHTML(k,side,v,locked){const t=(v===null||v===undefined)?'–':v;const dis=locked?' disabled':'';return `<span class="stp ${locked?'locked':''}"><button class="st-b" data-k="${k}" data-s="${side}" data-d="-1" aria-label="Bajar gol"${dis}>−</button><span class="st-v" data-score-view="${k}-${side}">${t}</span><button class="st-b" data-k="${k}" data-s="${side}" data-d="1" aria-label="Subir gol"${dis}>+</button></span>`;}
 function standHTML(g){const st=computeStandings(g);let h='<table><tr><th>#</th><th style="text-align:left">Equipo</th><th>PJ</th><th>Pts</th><th>DG</th></tr>';
   st.forEach((x,i)=>{const cls=i<2?'q':(i===2?'q3':'');h+=`<tr class="${cls}"><td>${i+1}</td><td class="tn">${team(x.t)}</td><td>${x.pj}</td><td><b>${x.pts}</b></td><td>${x.dg>0?'+':''}${x.dg}</td></tr>`;});
@@ -1179,7 +1185,7 @@ function standingsFrom(teams,matches){const m={};teams.forEach(t=>m[t]={t:t,pj:0
   matches.forEach(x=>{if(!m[x.h]||!m[x.a])return;const H=m[x.h],A=m[x.a];H.pj++;A.pj++;H.gf+=x.hs;H.ga+=x.as;A.gf+=x.as;A.ga+=x.hs;if(x.hs>x.as)H.pts+=3;else if(x.as>x.hs)A.pts+=3;else{H.pts++;A.pts++;}});
   const arr=teams.map(t=>{const z=m[t];z.dg=z.gf-z.ga;return z;});arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.t.localeCompare(b.t,'es'));return arr;}
 function completeActualGroups(actual){const out={};for(const g in GRUPOS){const real=actual&&actual[g];if(real&&(real.matches||[]).length===6)out[g]=real.standings||real;}return out;}
-function actualThirdSlots(actual){const arr=[];for(const g in GRUPOS){const st=actual&&actual[g];if(st&&st[2])arr.push({g:g,t:st[2].t,pts:st[2].pts,dg:st[2].dg,gf:st[2].gf});}arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.g.localeCompare(b.g));return arr.slice(0,8).map(x=>x.g).sort().map(g=>actual[g][2].t);}
+function actualThirdSlots(actual){const arr=[];for(const g in GRUPOS){const st=actual&&actual[g];if(st&&st[2])arr.push({g:g,t:st[2].t,pts:st[2].pts,dg:st[2].dg,gf:st[2].gf});}arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.g.localeCompare(b.g));const g8=arr.slice(0,8).map(x=>x.g);return allocThirdGroups(g8).map(g=>actual[g]&&actual[g][2]?actual[g][2].t:'');}
 function picksMatches(g,ms){return GFIX.map((pr,idx)=>{const sc=(ms||{})[g+idx];if(!sc||sc[0]==null||sc[1]==null)return null;return {h:GRUPOS[g][pr[0]],a:GRUPOS[g][pr[1]],hs:+sc[0],as:+sc[1]};}).filter(Boolean);}
 function picksStandings(g,ms){return standingsFrom(GRUPOS[g],picksMatches(g,ms));}
 function memberChampion(p){return (p&&p.kb&&p.kb['104'])||(p&&p.camp)||'';}
