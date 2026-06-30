@@ -703,10 +703,14 @@ function fifaAdapt(m){
   const score=(m.HomeTeamScore!==null&&m.HomeTeamScore!==undefined);
   const st=m.MatchStatus;
   const status= st===0?"FT": (st===3?"LIVE": (score&&st!==1?"LIVE":"NS"));
+  // Si la llave terminó empatada y hubo penales, el ganador sale de los penales (campo oficial FIFA).
+  const ph=m.HomeTeamPenaltyScore,pa=m.AwayTeamPenaltyScore;
+  let winner='';
+  if(score&&+m.HomeTeamScore===+m.AwayTeamScore&&ph!=null&&pa!=null&&+ph!==+pa)winner=(+ph>+pa)?fifaTeam(m.Home):fifaTeam(m.Away);
   return {dateEvent:(m.Date||"").slice(0,10),strTimestamp:m.Date||"",strHomeTeam:fifaTeam(m.Home),strAwayTeam:fifaTeam(m.Away),
     intHomeScore: score?String(m.HomeTeamScore):"",intAwayScore: score?String(m.AwayTeamScore):"",
     strGroup:(m.GroupName&&m.GroupName[0]&&m.GroupName[0].Description)||(m.StageName&&m.StageName[0]&&m.StageName[0].Description)||"",
-    strStatus:status,strProgress: status==="LIVE"?(m.MatchTime||""):""};
+    strStatus:status,strProgress: status==="LIVE"?(m.MatchTime||""):"",strWinner:winner};
 }
 async function loadFifa(){
   try{
