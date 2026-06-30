@@ -1262,11 +1262,14 @@ function findActualMatch(matches,home,away){for(const m of (matches||[])){if(m.h
 function koMatchPoints(n){n=+n;if(n>=73&&n<=88)return 1;if(n>=89&&n<=96)return 2;if(n>=97&&n<=100)return 4;if(n>=101&&n<=102)return 8;if(n===103)return 4;if(n===104)return 16;return 0;}
 // Puntos de eliminatorias (pronóstico OFICIAL cargado en el fixture):
 // bonus por acertar quién pasa (16avos +1 … final +16) + marcador (exacto +3, resultado +1).
-function scoreKnockouts(p,actual){if(!p||!actual||!actual.ko)return 0;let pts=0;const koSc=actual.koSc||{};Object.keys(actual.ko).forEach(k=>{
-  if(p.kbr&&p.kbr[k]&&p.kbr[k]===actual.ko[k])pts+=koMatchPoints(k);
-  const real=koSc[k],pred=p.ksr&&p.ksr[k];
-  if(real&&pred&&pred[0]!=null&&pred[1]!=null)pts+=(+pred[0]===+real[0]&&+pred[1]===+real[1])?3:(scoreOutcome(+pred[0],+pred[1])===scoreOutcome(+real[0],+real[1])?1:0);
-});return pts;}
+function scoreKnockouts(p,actual){if(!p||!actual)return 0;let pts=0;const ko=actual.ko||{},koSc=actual.koSc||{};
+  // recorre toda llave con ganador O con marcador real (las que se definen por penales no tienen ganador, pero igual suman por marcador)
+  const keys=new Set(Object.keys(ko).concat(Object.keys(koSc)));
+  keys.forEach(k=>{
+    if(p.kbr&&p.kbr[k]&&ko[k]&&p.kbr[k]===ko[k])pts+=koMatchPoints(k);
+    const real=koSc[k],pred=p.ksr&&p.ksr[k];
+    if(real&&pred&&pred[0]!=null&&pred[1]!=null)pts+=(+pred[0]===+real[0]&&+pred[1]===+real[1])?3:(scoreOutcome(+pred[0],+pred[1])===scoreOutcome(+real[0],+real[1])?1:0);
+  });return pts;}
 function scoreMember(p,actual){if(!actual||!p)return 0;let pts=0;for(const g in GRUPOS){const real=actual[g];if(!real)continue;const predMatches=picksMatches(g,p.ms),pred=standingsFrom(GRUPOS[g],predMatches),realStand=real.standings||real;if((real.matches||[]).length===6&&predMatches.length===6){for(let i=0;i<3;i++){if(pred[i]&&realStand[i]&&pred[i].t===realStand[i].t)pts+=(3-i);}}
     GFIX.forEach((pr,idx)=>{const sc=(p.ms||{})[g+idx];if(!sc||sc[0]==null||sc[1]==null)return;const home=GRUPOS[g][pr[0]],away=GRUPOS[g][pr[1]],m=findActualMatch(real.matches||[],home,away);if(!m)return;const ph=+sc[0],pa=+sc[1];pts+=(ph===m.hs&&pa===m.as)?3:(scoreOutcome(ph,pa)===scoreOutcome(m.hs,m.as)?1:0);});}
   return pts+scoreKnockouts(p,actual);}
