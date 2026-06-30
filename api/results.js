@@ -22,6 +22,7 @@ function rowToEvent(r) {
     intHomeScore: String(r.home_score),
     intAwayScore: String(r.away_score),
     strStatus: r.status || 'FT',
+    strWinner: r.winner || '',
     fromManual: true
   };
 }
@@ -82,6 +83,7 @@ module.exports = async (req, res) => {
       home_score: hs,
       away_score: as,
       status: clean(b.strStatus || b.status || 'FT', 20) || 'FT',
+      winner: clean(b.winner || b.strWinner, 80),
       updated: new Date().toISOString()
     };
     const r = await fetch(URL_ + '/rest/v1/resultados_manual?on_conflict=match_key', {

@@ -106,6 +106,7 @@ th{color:#94a3b8;font-size:11px;text-transform:uppercase;}
     <option>Grupo E</option><option>Grupo F</option><option>Grupo G</option><option>Grupo H</option>
     <option>Grupo I</option><option>Grupo J</option><option>Grupo K</option><option>Grupo L</option>
   </select>
+  <select id="res-winner" title="Solo si fue empate y se definió por penales"><option value="">Pasó (si penales)</option></select>
   <button class="btn alt" id="res-save">Guardar</button>
 </div>
 <div id="resultados"><p style="color:#94a3b8;font-size:13px">Cargando resultados manuales...</p></div>
@@ -170,16 +171,22 @@ async function loadResults(){
 function renderResults(events,setupRequired){
   const box=$('resultados');if(!box)return;
   if(setupRequired){box.innerHTML='<p style="color:#fbbf24;font-size:13px">Falta crear la tabla resultados_manual en Supabase. Mientras tanto la app usa los resultados confirmados del codigo.</p>';return;}
-  box.innerHTML=events.length?('<table><tr><th>Fecha</th><th>Partido</th><th>Resultado</th><th>Grupo</th><th>Acción</th></tr>'+events.map(e=>`<tr><td>${esc(e.dateEvent)}</td><td>${esc(e.strHomeTeam)} vs ${esc(e.strAwayTeam)}</td><td><b>${esc(e.intHomeScore)}-${esc(e.intAwayScore)}</b></td><td>${esc(e.strGroup||'')}</td><td><button class="mini-btn del" data-del-result="${esc(resultKey(e.strHomeTeam,e.strAwayTeam))}">Borrar</button></td></tr>`).join('')+'</table>'):'<p style="color:#94a3b8;font-size:13px">Todavía no hay resultados manuales.</p>';
+  box.innerHTML=events.length?('<table><tr><th>Fecha</th><th>Partido</th><th>Resultado</th><th>Grupo</th><th>Acción</th></tr>'+events.map(e=>`<tr><td>${esc(e.dateEvent)}</td><td>${esc(e.strHomeTeam)} vs ${esc(e.strAwayTeam)}</td><td><b>${esc(e.intHomeScore)}-${esc(e.intAwayScore)}</b>${e.strWinner?` <span style="color:#fbbf24">(pen: ${esc(e.strWinner)})</span>`:''}</td><td>${esc(e.strGroup||'')}</td><td><button class="mini-btn del" data-del-result="${esc(resultKey(e.strHomeTeam,e.strAwayTeam))}">Borrar</button></td></tr>`).join('')+'</table>'):'<p style="color:#94a3b8;font-size:13px">Todavía no hay resultados manuales.</p>';
   document.querySelectorAll('[data-del-result]').forEach(b=>b.onclick=()=>deleteResult(b.dataset.delResult));
+}
+function refreshWinnerOpts(){
+  const h=$('res-home').value.trim(),a=$('res-away').value.trim(),sel=$('res-winner'),cur=sel.value;
+  sel.innerHTML='<option value="">Pasó (si penales)</option>'+[h,a].filter(Boolean).map(t=>`<option value="${esc(t)}">Pasó: ${esc(t)}</option>`).join('');
+  if(cur===h||cur===a)sel.value=cur;
 }
 async function saveResult(){
   if(!PASS_){PASS_=sessionStorage.getItem('admin_pass');if(!PASS_)return;}
-  const body={pass:PASS_,dateEvent:$('res-date').value,strHomeTeam:$('res-home').value,intHomeScore:$('res-hs').value,strAwayTeam:$('res-away').value,intAwayScore:$('res-as').value,strGroup:$('res-group').value,strStatus:'FT'};
+  const body={pass:PASS_,dateEvent:$('res-date').value,strHomeTeam:$('res-home').value,intHomeScore:$('res-hs').value,strAwayTeam:$('res-away').value,intAwayScore:$('res-as').value,strGroup:$('res-group').value,winner:$('res-winner').value,strStatus:'FT'};
+  if(body.winner&&body.winner!==body.strHomeTeam.trim()&&body.winner!==body.strAwayTeam.trim()){alert('El que pasó por penales debe ser uno de los dos equipos.');return;}
   try{
     const r=await fetch('/api/results',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const j=await r.json();if(!r.ok)throw j;
-    $('res-home').value='';$('res-away').value='';$('res-hs').value='';$('res-as').value='';
+    $('res-home').value='';$('res-away').value='';$('res-hs').value='';$('res-as').value='';refreshWinnerOpts();
     loadResults();
   }catch(e){alert('No se pudo guardar: '+((e&&e.error)||'error'));}
 }
@@ -211,6 +218,8 @@ $('reload').onclick=reload;
 $('user-search').onclick=searchUsers;
 $('user-q').addEventListener('keydown',e=>{if(e.key==='Enter')searchUsers();});
 $('res-save').onclick=saveResult;
+$('res-home').addEventListener('input',refreshWinnerOpts);
+$('res-away').addEventListener('input',refreshWinnerOpts);
 const saved=sessionStorage.getItem('admin_pass');
 if(saved){PASS_=saved;fetch('/api/admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pass:saved})}).then(r=>r.ok?r.json():null).then(j=>{if(j){$('login-view').style.display='none';$('dash').style.display='block';render(j);loadResults();}});}
 </script>

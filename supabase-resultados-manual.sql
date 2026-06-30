@@ -7,8 +7,12 @@ create table if not exists public.resultados_manual (
   home_score integer not null check (home_score >= 0),
   away_score integer not null check (away_score >= 0),
   status text not null default 'FT',
+  winner text default '',
   updated timestamptz not null default now()
 );
+
+-- Si la tabla ya existía, agregá la columna del ganador por penales:
+alter table public.resultados_manual add column if not exists winner text default '';
 
 create index if not exists resultados_manual_date_event_idx
   on public.resultados_manual (date_event desc);
