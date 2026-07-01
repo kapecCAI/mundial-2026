@@ -966,13 +966,13 @@ function prodeMatchLocked(g,idx,o){if(canEditClosedProde())return false;const k=
 function matchPickPoints(sc,x){if(!x||!sc||sc[0]==null||sc[1]==null)return null;const hs=x.realHomeScore,as=x.realAwayScore;if(hs===null||hs===undefined||hs===''||as===null||as===undefined||as==='')return null;const ph=+(x.pflip?sc[1]:sc[0]),pa=+(x.pflip?sc[0]:sc[1]),rh=+hs,ra=+as;return (ph===rh&&pa===ra)?3:(scoreOutcome(ph,pa)===scoreOutcome(rh,ra)?1:0);}
 function makeProde(){
   const defs=`<div class="pb-card"><h3>🏆 Definiciones del torneo</h3><div class="pb-defs">`+
-    [['camp','🏆 Campeón (auto)'],['sub','🥈 Subcampeón (auto)'],['ter','🥉 Tercer puesto (auto)'],['cua','4º puesto (auto)']].map(d=>`<label class="pb-field">${d[1]}<select id="pr-${d[0]}" disabled>${pbOpts(ALL48)}</select></label>`).join('')+
+    `<label class="pb-field">🏆 Campeón<select id="pr-camp">${pbOpts(ALL48)}</select></label>`+
     `<label class="pb-field">👟 Goleador<input id="pr-gol" placeholder="Ej: Kylian Mbappé"></label>`+
     `<label class="pb-field">⭐ Mejor jugador<input id="pr-mvp" placeholder="Ej: Lamine Yamal"></label></div></div>`;
   const groups=`<div class="pb-card pb-card-groups"><h3>📋 Fase de grupos — cargá los resultados</h3><p class="pb-help"><span>Marcadores ordenados por fixture.</span><span class="pb-legend"><span class="pb-dot"></span>1º-2º clasifican</span><span class="pb-legend"><span class="pb-dot third"></span>3º pelea cupo</span></p><div class="pb-grid" id="pb-groups"></div></div>`;
-  const bracket=`<div class="pb-card"><h3>🏆 Cuadro de eliminatorias</h3><p style="color:#64748b;font-size:13px;margin:0 0 10px">Se arma con tus clasificados. Tocá el equipo que pasa en cada llave; los ganadores avanzan solos hasta la final y al partido por el 3º puesto. <i>(Terceros asignados por orden de grupo, simplificado.)</i></p><div id="pb-bracket"></div></div>`;
+  const bracket=`<div class="pb-card"><h3>🏆 Eliminatorias — partidos reales</h3><p style="color:#64748b;font-size:13px;margin:0 0 10px">Las llaves <b>oficiales</b> del Mundial. Cargá tu <b>marcador</b> en cada partido (y quién pasa por <b>penales</b> si empatan). <b>Esto es lo que puntúa</b> en tus grupos. Se edita hasta 5 min antes de cada partido.</p><div id="pb-bracket"></div></div>`;
   const actions=`<div class="prode-toolbar"><div class="prode-status" data-tone="idle"><span class="status-dot"></span><div><b data-save-status data-tone="idle">Guardado local</b><span class="status-sub">Los grupos se sincronizan solos.</span></div></div><div class="prode-actions"><button class="pb-btn alt" id="pb-copy">📋 Copiar</button><button class="pb-btn alt" id="pb-dl">⬇️ Descargar</button><button class="pb-btn ghost" id="pb-reset">🗑️ Borrar</button></div></div>`;
-  const intro=`<div class="banner" style="background:#334155">ℹ️ Armá tu propio prode cargando los resultados. Se <b>guarda solo</b> en este navegador. La tabla, los clasificados y el cuadro se <b>autocompletan</b>; después tocás quién pasa en las llaves y <b>copiás o descargás</b> tu resumen.</div>`;
+  const intro=`<div class="banner" style="background:#334155">ℹ️ Cargá los <b>resultados de los grupos</b> y, abajo, los de las <b>llaves reales</b>. Se <b>guarda solo</b> y se sincroniza con tus grupos.</div>`;
   return `<div class="auth-slot"></div>`+intro+actions+`<div class="prode-layout"><div class="prode-main">`+defs+groups+bracket+`</div></div>`;
 }
 function pbVal(id){const e=document.getElementById(id);return e?e.value:'';}
@@ -1038,18 +1038,28 @@ function koMatchHTML(mn,tm){tm=tm||['',''];const sc=PB_KS[mn]||[null,null],w=PB_
   let h=`<div class="bk-m">${side(0)}${side(1)}`;
   if(tie)h+=`<div class="bk-pen">🥅 Penales: <button class="bk-penb ${w===tm[0]?'sel':''}" data-pen="${mn}" data-pent="${esc(tm[0])}">${esc(tm[0])}</button><button class="bk-penb ${w===tm[1]?'sel':''}" data-pen="${mn}" data-pent="${esc(tm[1])}">${esc(tm[1])}</button></div>`;
   return h+'</div>';}
+// Una llave REAL en Mi Prode: equipos oficiales + steppers de marcador (y penales si empatan). Editable hasta 5' antes.
+function realKoMatchHTML(mn){
+  const r=KO_REAL[mn]||{},home=r.home||'',away=r.away||'';
+  if(!home||!away)return `<div class="bk-m"><div class="bk-side"><span class="bk-tn empty">—</span></div><div class="bk-side"><span class="bk-tn empty">—</span></div><div class="bk-wait">Esperando definición</div></div>`;
+  const sc=PB_KSR[mn]||[null,null],w=PB_KBR[mn]||'',locked=koMatchLocked(mn),pts=korPoints(mn);
+  const both=sc[0]!=null&&sc[1]!=null,tie=both&&+sc[0]===+sc[1];
+  const side=i=>{const t=i===0?home:away;return `<div class="bk-side ${w&&w===t?'win':''}"><span class="bk-tn">${team(t)}</span>${locked?`<span class="st-v" style="min-width:20px;text-align:center">${sc[i]==null?'–':sc[i]}</span>`:korStepHTML(mn,i,sc[i])}</div>`;};
+  let h=`<div class="bk-m">${side(0)}${side(1)}`;
+  if(tie&&!locked)h+=`<div class="bk-pen">🥅 Penales: <button class="bk-penb ${w===home?'sel':''}" data-penr="${mn}" data-pent="${esc(home)}">${esc(home)}</button><button class="bk-penb ${w===away?'sel':''}" data-penr="${mn}" data-pent="${esc(away)}">${esc(away)}</button></div>`;
+  else if(tie&&w)h+=`<div class="bk-pen">🥅 Pasa ${esc(w)}</div>`;
+  if(locked&&pts!=null)h+=`<div class="bk-wait" style="color:${pts>0?'#16a34a':'#94a3b8'};font-weight:800">+${pts}</div>`;
+  return h+'</div>';}
 function renderBracket(){const cont=document.getElementById('pb-bracket');if(!cont)return;
-  const teams=koTeams();
+  if(!_koRealLoaded){cont.innerHTML='<div class="bk-wait" style="padding:16px">Cargando llaves oficiales…</div>';loadKoReal(()=>renderBracket());return;}
   let h='<div class="bk-rounds">';
   ROUNDS.forEach(rd=>{h+=`<div class="bk-round"><div class="bk-h">${rd[0]}</div><div class="bk-ms">`;
-    rd[1].forEach(m=>{h+=koMatchHTML(m[0],teams[m[0]]);});
+    rd[1].forEach(m=>{h+=realKoMatchHTML(m[0]);});
     h+='</div></div>';});
   h+='</div>';
-  const third=PB_KB['103']||'',tp=teams['103']||['',''],champ=PB_KB['104']||'',fin=teams['104']||['',''];
-  h+=`<div class="bk-champ">🥉 ${third?team(third):'<span style="color:#94a3b8">— definí el 3º puesto —</span>'} &nbsp; · &nbsp; 🏆 ${champ?team(champ):'<span style="color:#94a3b8">— definí la final —</span>'}</div>`;
-  cont.innerHTML=h;
-  pbSet('pr-camp',champ||'');pbSet('pr-sub',champ?(fin[0]===champ?fin[1]:fin[0]):'');
-  pbSet('pr-ter',third||'');pbSet('pr-cua',third?(tp[0]===third?tp[1]:tp[0]):'');}
+  const champ=PB_KBR['104']||'',third=PB_KBR['103']||'';
+  h+=`<div class="bk-champ">🥉 ${third?team(third):'<span style="color:#94a3b8">— 3º puesto —</span>'} &nbsp; · &nbsp; 🏆 ${champ?team(champ):'<span style="color:#94a3b8">— campeón (se define en la final) —</span>'}</div>`;
+  cont.innerHTML=h;}
 // Delegación global para los controles de eliminatorias (sirve en cuadro, fixture y calendario).
 document.addEventListener('click',function(e){
   const s=e.target.closest('.st-b[data-ko]');if(s){koStep(s.dataset.ko,+s.dataset.s,+s.dataset.d);return;}
@@ -1067,8 +1077,8 @@ function prodeSummary(){const s=prodeRead();const c=document.getElementById('pb-
   c.innerHTML=h;}
 function prodeText(){const s=prodeRead();const L=['PRODE MUNDIAL 2026','','CAMPEON: '+(s.camp||'-'),'SUBCAMPEON: '+(s.sub||'-'),'TERCERO: '+(s.ter||'-'),'CUARTO: '+(s.cua||'-'),'GOLEADOR: '+(s.gol||'-'),'MEJOR JUGADOR: '+(s.mvp||'-'),'','FASE DE GRUPOS (posiciones):'];
   for(const g in GRUPOS){const st=computeStandings(g);L.push(groupComplete(g)?('Grupo '+g+': 1) '+st[0].t+'  2) '+st[1].t+'  3) '+st[2].t+'  4) '+st[3].t):('Grupo '+g+': sin completar'));}
-  const any=ROUNDS.some(rd=>rd[1].some(m=>PB_KB[m[0]]));
-  if(any){L.push('','CUADRO (ganadores):');ROUNDS.forEach(rd=>{const ws=rd[1].map(m=>PB_KB[m[0]]).filter(Boolean);if(ws.length)L.push(rd[0]+': '+ws.join(', '));});}
+  const any=ROUNDS.some(rd=>rd[1].some(m=>PB_KBR[m[0]]));
+  if(any){L.push('','ELIMINATORIAS (quién pasa):');ROUNDS.forEach(rd=>{const ws=rd[1].map(m=>PB_KBR[m[0]]).filter(Boolean);if(ws.length)L.push(rd[0]+': '+ws.join(', '));});}
   return L.join('\n');}
 function pbToast(m){let t=document.getElementById('pb-toast');if(!t){t=document.createElement('div');t.id='pb-toast';t.className='pb-toast';document.body.appendChild(t);}t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600);}
 function genScores(g,ord){GFIX.forEach((pr,idx)=>{const ti=GRUPOS[g][pr[0]],tj=GRUPOS[g][pr[1]];PB_MS[g+idx]=(ord.indexOf(ti)<ord.indexOf(tj))?[2,0]:[0,2];});}
@@ -1193,7 +1203,7 @@ function completeActualGroups(actual){const out={};for(const g in GRUPOS){const 
 function actualThirdSlots(actual){const arr=[];for(const g in GRUPOS){const st=actual&&actual[g];if(st&&st[2])arr.push({g:g,t:st[2].t,pts:st[2].pts,dg:st[2].dg,gf:st[2].gf});}arr.sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.g.localeCompare(b.g));const g8=arr.slice(0,8).map(x=>x.g);return allocThirdGroups(g8).map(g=>actual[g]&&actual[g][2]?actual[g][2].t:'');}
 function picksMatches(g,ms){return GFIX.map((pr,idx)=>{const sc=(ms||{})[g+idx];if(!sc||sc[0]==null||sc[1]==null)return null;return {h:GRUPOS[g][pr[0]],a:GRUPOS[g][pr[1]],hs:+sc[0],as:+sc[1]};}).filter(Boolean);}
 function picksStandings(g,ms){return standingsFrom(GRUPOS[g],picksMatches(g,ms));}
-function memberChampion(p){return (p&&p.kb&&p.kb['104'])||(p&&p.camp)||'';}
+function memberChampion(p){return (p&&p.camp)||(p&&p.kbr&&p.kbr['104'])||(p&&p.kb&&p.kb['104'])||'';}
 function esName(n){const t=TEAMS_EN[(n||'').trim()];return t?t[0]:(n||'');}
 function eventDateKey(e){return e&&e.strTimestamp?e.strTimestamp.slice(0,10):(e&&e.dateEvent?e.dateEvent:'');}
 function eventWinner(e){if(!e||(!isLive(e.strStatus)&&!isFin(e.strStatus)))return '';if(!eventHasScore(e))return '';const h=+e.intHomeScore,a=+e.intAwayScore;if(h===a)return esName(e.strWinner||e.strWinnerTeam||e.strWinningTeam||'');return h>a?esName(e.strHomeTeam):esName(e.strAwayTeam);}
