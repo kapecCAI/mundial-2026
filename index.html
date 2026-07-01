@@ -150,6 +150,10 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 .pb-defs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:12px;}
 .pb-field{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#475569;}
 .pb-field select,.pb-field input{padding:8px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;background:#fff;}
+.pb-field select:disabled,.pb-field input:disabled{background:#f1f5f9;color:#475569;cursor:not-allowed;opacity:1;}
+.pb-defs-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;}
+.pb-confirm-note{font-size:12px;color:#64748b;flex:1;min-width:180px;}
+.pb-btn.confirmed{background:#16a34a;cursor:default;}
 .pb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(250px,100%),1fr));gap:12px;}
 .pb-g{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
 .pb-g h4{margin:0 0 8px;display:flex;align-items:center;gap:8px;font-size:15px;}
@@ -941,6 +945,10 @@ const ROUNDS=[["16avos",R32],["Octavos",R16],["Cuartos",QFR],["Semis",SFR],["3º
 let PB_MS={}, PB_KB={}, PB_KS={}, KO_TEAMS={};
 // Predicción de eliminatorias sobre el bracket REAL (fixture): marcador + ganador por penales, por nº de llave.
 let PB_KSR={}, PB_KBR={};
+let PB_DEFLOCK=false; // ¿el usuario confirmó (fijó) campeón/goleador/MVP?
+// Respuestas OFICIALES para puntuar las definiciones al final del torneo.
+// Campeón sale solo del ganador de la final; goleador y MVP se cargan a mano acá cuando terminen:
+const DEF_OFICIAL={camp:"",gol:"",mvp:""};
 const CONSENSO_ORDER={A:["México","Corea del Sur","Rep. Checa","Sudáfrica"],B:["Suiza","Canadá","Bosnia","Qatar"],C:["Brasil","Marruecos","Escocia","Haití"],D:["Estados Unidos","Turquía","Paraguay","Australia"],E:["Alemania","Ecuador","Costa de Marfil","Curazao"],F:["Países Bajos","Japón","Suecia","Túnez"],G:["Bélgica","Egipto","Irán","Nueva Zelanda"],H:["España","Uruguay","Arabia Saudita","Cabo Verde"],I:["Francia","Noruega","Senegal","Irak"],J:["Argentina","Austria","Argelia","Jordania"],K:["Portugal","Colombia","RD Congo","Uzbekistán"],L:["Inglaterra","Croacia","Ghana","Panamá"]};
 const CONSENSO_KB={"73":"Canadá","74":"Alemania","75":"Países Bajos","76":"Brasil","77":"Francia","78":"Noruega","79":"México","80":"Inglaterra","81":"Estados Unidos","82":"Bélgica","83":"Colombia","84":"España","85":"Suiza","86":"Argentina","87":"Portugal","88":"Turquía","89":"Francia","90":"Países Bajos","91":"Brasil","92":"Inglaterra","93":"España","94":"Bélgica","95":"Argentina","96":"Portugal","97":"Francia","98":"España","99":"Brasil","100":"Argentina","101":"España","102":"Argentina","103":"Francia","104":"España"};
 function pbOpts(arr){return '<option value="">— elegí —</option>'+arr.map(t=>`<option value="${t}">${t}</option>`).join('');}
@@ -968,7 +976,8 @@ function makeProde(){
   const defs=`<div class="pb-card"><h3>🏆 Definiciones del torneo</h3><div class="pb-defs">`+
     `<label class="pb-field">🏆 Campeón<select id="pr-camp">${pbOpts(ALL48)}</select></label>`+
     `<label class="pb-field">👟 Goleador<input id="pr-gol" placeholder="Ej: Kylian Mbappé"></label>`+
-    `<label class="pb-field">⭐ Mejor jugador<input id="pr-mvp" placeholder="Ej: Lamine Yamal"></label></div></div>`;
+    `<label class="pb-field">⭐ Mejor jugador<input id="pr-mvp" placeholder="Ej: Lamine Yamal"></label></div>`+
+    `<div class="pb-defs-foot"><button class="pb-btn" id="pb-confirm-defs">✅ Confirmar</button><span class="pb-confirm-note">Puntúan si acertás: 🏆 Campeón <b>+15</b> · 👟 Goleador <b>+10</b> · ⭐ Mejor jugador <b>+5</b>. <b>Solo suman si confirmás</b>, y una vez confirmado no se pueden cambiar.</span></div></div>`;
   const groups=`<div class="pb-card pb-card-groups"><h3>📋 Fase de grupos — cargá los resultados</h3><p class="pb-help"><span>Marcadores ordenados por fixture.</span><span class="pb-legend"><span class="pb-dot"></span>1º-2º clasifican</span><span class="pb-legend"><span class="pb-dot third"></span>3º pelea cupo</span></p><div class="pb-grid" id="pb-groups"></div></div>`;
   const bracket=`<div class="pb-card"><h3>🏆 Eliminatorias — partidos reales</h3><p style="color:#64748b;font-size:13px;margin:0 0 10px">Las llaves <b>oficiales</b> del Mundial. Cargá tu <b>marcador</b> en cada partido (y quién pasa por <b>penales</b> si empatan). <b>Esto es lo que puntúa</b> en tus grupos. Se edita hasta 5 min antes de cada partido.</p><div id="pb-bracket"></div></div>`;
   const actions=`<div class="prode-toolbar"><div class="prode-status" data-tone="idle"><span class="status-dot"></span><div><b data-save-status data-tone="idle">Guardado local</b><span class="status-sub">Los grupos se sincronizan solos.</span></div></div><div class="prode-actions"><button class="pb-btn alt" id="pb-copy">📋 Copiar</button><button class="pb-btn alt" id="pb-dl">⬇️ Descargar</button><button class="pb-btn ghost" id="pb-reset">🗑️ Borrar</button></div></div>`;
@@ -978,8 +987,9 @@ function makeProde(){
 function pbVal(id){const e=document.getElementById(id);return e?e.value:'';}
 function pbSet(id,v){const e=document.getElementById(id);if(e)e.value=v||'';}
 function prodeRead(){return {camp:pbVal('pr-camp'),sub:pbVal('pr-sub'),ter:pbVal('pr-ter'),cua:pbVal('pr-cua'),gol:pbVal('pr-gol'),mvp:pbVal('pr-mvp')};}
-function fullState(){const s=prodeRead();s.ms=PB_MS;s.kb=PB_KB;s.ks=PB_KS;s.ksr=PB_KSR;s.kbr=PB_KBR;return s;}
-function prodeWrite(s){if(!s)return;pbSet('pr-camp',s.camp);pbSet('pr-sub',s.sub);pbSet('pr-ter',s.ter);pbSet('pr-cua',s.cua);pbSet('pr-gol',s.gol);pbSet('pr-mvp',s.mvp);PB_MS=Object.assign({},s.ms||{});PB_KB=Object.assign({},s.kb||{});PB_KS=Object.assign({},s.ks||{});PB_KSR=Object.assign({},s.ksr||{});PB_KBR=Object.assign({},s.kbr||{});if(s.grupos)mergeGroups(s.grupos);}
+function fullState(){const s=prodeRead();s.ms=PB_MS;s.kb=PB_KB;s.ks=PB_KS;s.ksr=PB_KSR;s.kbr=PB_KBR;s.deflock=PB_DEFLOCK;return s;}
+function prodeWrite(s){if(!s)return;pbSet('pr-camp',s.camp);pbSet('pr-sub',s.sub);pbSet('pr-ter',s.ter);pbSet('pr-cua',s.cua);pbSet('pr-gol',s.gol);pbSet('pr-mvp',s.mvp);PB_MS=Object.assign({},s.ms||{});PB_KB=Object.assign({},s.kb||{});PB_KS=Object.assign({},s.ks||{});PB_KSR=Object.assign({},s.ksr||{});PB_KBR=Object.assign({},s.kbr||{});PB_DEFLOCK=!!s.deflock;if(s.grupos)mergeGroups(s.grupos);}
+function applyDefsLock(){const lock=PB_DEFLOCK;['pr-camp','pr-gol','pr-mvp'].forEach(id=>{const e=document.getElementById(id);if(e)e.disabled=lock;});const b=document.getElementById('pb-confirm-defs');if(b){b.disabled=lock;b.textContent=lock?'✅ Confirmado':'✅ Confirmar';b.classList.toggle('confirmed',lock);}}
 function computeStandings(g){const ts=GRUPOS[g];const m={};ts.forEach(t=>m[t]={t:t,pj:0,pts:0,gf:0,ga:0});
   GFIX.forEach((pr,idx)=>{const sc=PB_MS[g+idx];if(!sc||sc[0]===null||sc[0]===undefined||sc[1]===null||sc[1]===undefined)return;const H=m[ts[pr[0]]],A=m[ts[pr[1]]];const h=+sc[0],a=+sc[1];H.pj++;A.pj++;H.gf+=h;H.ga+=a;A.gf+=a;A.ga+=h;if(h>a)H.pts+=3;else if(a>h)A.pts+=3;else{H.pts++;A.pts++;}});
   const arr=ts.map(t=>{const x=m[t];x.dg=x.gf-x.ga;return x;});
@@ -1067,7 +1077,7 @@ document.addEventListener('click',function(e){
   const sr=e.target.closest('.st-b[data-kor]');if(sr){korStep(sr.dataset.kor,+sr.dataset.s,+sr.dataset.d);return;}
   const pr=e.target.closest('[data-penr]');if(pr){korPen(pr.dataset.penr,pr.dataset.pent);}
 });
-function prodeSave(){renderThirds();renderBracket();try{localStorage.setItem('prode2026',JSON.stringify(fullState()));}catch(e){}prodeSummary();trackProde();authSavePicks();scheduleGroupSync();}
+function prodeSave(){renderThirds();renderBracket();applyDefsLock();try{localStorage.setItem('prode2026',JSON.stringify(fullState()));}catch(e){}prodeSummary();trackProde();authSavePicks();scheduleGroupSync();}
 function prodeSummary(){const s=prodeRead();const c=document.getElementById('pb-sum');if(!c)return;let h='<h3>📝 Tu prode</h3>';
   h+=`<div class="row">🏆 <b>Campeón:</b> ${s.camp?team(s.camp):'—'}</div>`;
   h+=`<div class="row">🥈 ${s.sub?team(s.sub):'—'} &nbsp;·&nbsp; 🥉 ${s.ter?team(s.ter):'—'} &nbsp;·&nbsp; 4º ${s.cua?team(s.cua):'—'}</div>`;
@@ -1086,7 +1096,8 @@ function wireProde(panel){
   panel.querySelectorAll('select,input').forEach(el=>el.addEventListener('change',prodeSave));
   panel.querySelectorAll('input').forEach(el=>el.addEventListener('input',()=>{clearTimeout(window._pbt);window._pbt=setTimeout(prodeSave,400);}));
   panel.querySelector('#pb-groups').addEventListener('click',e=>{const b=e.target.closest('.st-b');if(b)pbStep(b.dataset.k,+b.dataset.s,+b.dataset.d);});
-  panel.querySelector('#pb-reset').onclick=()=>{if(confirm('¿Borrar tu prode?')){try{localStorage.removeItem('prode2026');}catch(e){}PB_MS={};PB_KB={};PB_KS={};PB_KSR={};PB_KBR={};prodeWrite({});renderGroups();prodeSave();pbToast('Prode borrado');}};
+  panel.querySelector('#pb-reset').onclick=()=>{if(confirm('¿Borrar tu prode?')){try{localStorage.removeItem('prode2026');}catch(e){}PB_MS={};PB_KB={};PB_KS={};PB_KSR={};PB_KBR={};PB_DEFLOCK=false;prodeWrite({});renderGroups();prodeSave();pbToast('Prode borrado');}};
+  const cd=panel.querySelector('#pb-confirm-defs');if(cd)cd.onclick=()=>{if(PB_DEFLOCK)return;const s=prodeRead();if(!s.camp&&!s.gol&&!s.mvp){pbToast('Elegí campeón, goleador o mejor jugador primero');return;}if(!confirm('¿Confirmar campeón, goleador y mejor jugador? No los vas a poder cambiar.'))return;PB_DEFLOCK=true;applyDefsLock();prodeSave();pbToast('Definiciones confirmadas ✅');};
   panel.querySelector('#pb-copy').onclick=async()=>{try{await navigator.clipboard.writeText(prodeText());pbToast('Resumen copiado 📋');}catch(e){pbToast('No pude copiar');}};
   panel.querySelector('#pb-dl').onclick=()=>{const b=new Blob([prodeText()],{type:'text/plain'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='mi-prode-2026.txt';a.click();URL.revokeObjectURL(u);pbToast('Descargando ⬇️');};
   let saved=null;try{saved=JSON.parse(localStorage.getItem('prode2026')||'null');}catch(e){}
@@ -1109,7 +1120,7 @@ function rememberGroup(id,name){if(!id)return;const l=myGroups().filter(x=>x&&x.
 function mergeGroups(arr){if(!Array.isArray(arr))return;const cur=myGroups();const ids=new Set(cur.map(x=>x.id));arr.forEach(x=>{if(x&&x.id&&!ids.has(x.id)){cur.push({id:String(x.id).slice(0,6),name:String(x.name||x.id).slice(0,40)});ids.add(x.id);}});try{localStorage.setItem('mis_grupos',JSON.stringify(cur.slice(0,12)));}catch(e){}}
 function forgetGroup(id){try{localStorage.setItem('mis_grupos',JSON.stringify(myGroups().filter(x=>x&&x.id!==id)));}catch(e){}authSavePicks();}
 function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
-function currentPicks(){const s=prodeRead();return {ms:PB_MS,kb:PB_KB,ks:PB_KS,ksr:PB_KSR,kbr:PB_KBR,camp:s.camp,sub:s.sub,ter:s.ter,cua:s.cua,gol:s.gol,mvp:s.mvp};}
+function currentPicks(){const s=prodeRead();return {ms:PB_MS,kb:PB_KB,ks:PB_KS,ksr:PB_KSR,kbr:PB_KBR,deflock:PB_DEFLOCK,camp:s.camp,sub:s.sub,ter:s.ter,cua:s.cua,gol:s.gol,mvp:s.mvp};}
 function authPicksPayload(){const p=currentPicks();p.grupos=myGroups();return p;}
 function setSaveStatus(text,tone){document.querySelectorAll('[data-save-status]').forEach(el=>{const t=tone||'idle';el.textContent=text||'Guardado local';el.dataset.tone=t;const box=el.closest('.prode-status');if(box)box.dataset.tone=t;});}
 function syncPids(){const pids=[grPid()],legacy=grLegacyPid();if(legacy&&legacy!==pids[0])pids.push(legacy);return pids;}
@@ -1286,7 +1297,16 @@ function scoreKnockouts(p,actual){if(!p||!actual)return 0;let pts=0;const ko=act
   });return pts;}
 function scoreMember(p,actual){if(!actual||!p)return 0;let pts=0;for(const g in GRUPOS){const real=actual[g];if(!real)continue;const predMatches=picksMatches(g,p.ms),pred=standingsFrom(GRUPOS[g],predMatches),realStand=real.standings||real;if((real.matches||[]).length===6&&predMatches.length===6){for(let i=0;i<3;i++){if(pred[i]&&realStand[i]&&pred[i].t===realStand[i].t)pts+=(3-i);}}
     GFIX.forEach((pr,idx)=>{const sc=(p.ms||{})[g+idx];if(!sc||sc[0]==null||sc[1]==null)return;const home=GRUPOS[g][pr[0]],away=GRUPOS[g][pr[1]],m=findActualMatch(real.matches||[],home,away);if(!m)return;const ph=+sc[0],pa=+sc[1];pts+=(ph===m.hs&&pa===m.as)?3:(scoreOutcome(ph,pa)===scoreOutcome(m.hs,m.as)?1:0);});}
-  return pts+scoreKnockouts(p,actual);}
+  return pts+scoreKnockouts(p,actual)+scoreDefs(p,actual);}
+function normDef(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[.\-]/g,' ').replace(/\s+/g,' ').trim();}
+function defMatch(pick,real){const a=normDef(pick),b=normDef(real);if(!a||!b)return false;return a===b||a.includes(b)||b.includes(a);}
+// Puntos de las definiciones — SOLO si el usuario confirmó: campeón +15, goleador +10, mejor jugador +5.
+function scoreDefs(p,actual){if(!p||!p.deflock)return 0;let pts=0;
+  const realCamp=DEF_OFICIAL.camp||(actual&&actual.ko&&actual.ko['104'])||'';
+  if(realCamp&&p.camp&&normDef(p.camp)===normDef(realCamp))pts+=15;
+  if(DEF_OFICIAL.gol&&p.gol&&defMatch(p.gol,DEF_OFICIAL.gol))pts+=10;
+  if(DEF_OFICIAL.mvp&&p.mvp&&defMatch(p.mvp,DEF_OFICIAL.mvp))pts+=5;
+  return pts;}
 function myGroupsShellHTML(){
   const u=authUser();
   if(!u)return `<div class="my-groups"><h3>Mis grupos</h3><div class="my-group-empty">Entrá con el botón de usuario de arriba para ver tus grupos en cualquier dispositivo.</div></div>`;
@@ -1437,7 +1457,7 @@ async function loadGroup(id){const cont=document.getElementById('gr-view');if(!c
   if(!members.length){h+='<div class="live-empty">Todavía no hay prodes cargados. Armá el tuyo y sumate al grupo.</div>';}
   else{h+='<table class="gr-table"><tr><th>#</th><th>Jugador</th><th>Campeón</th><th>Última carga</th><th>Pts</th><th>Acciones</th></tr>';
     members.forEach((m,i)=>{const ownerBadge=(g.ownerPid&&m.pid===g.ownerPid)?' <span class="gr-owner">Dueño</span>':'';h+=`<tr><td>${i+1}</td><td>${esc(m.name)}${ownerBadge}</td><td>${m.picks?grPickLabel(memberChampion(m.picks)):'—'}</td><td>${grTimeLabel(m.updated)}</td><td><b>${m.pts}</b></td><td><div class="gr-actions"><button class="gr-mini" data-view-prode="${esc(m.pid)}">Ver prode</button>${isOwner&&m.pid!==localPid?`<button class="gr-mini del" data-del-member="${esc(m.pid)}" data-del-name="${esc(m.name)}">Borrar</button>`:''}</div></td></tr>`;});
-    h+='</table><p class="gr-note">Puntos automáticos: partidos de grupo (1 por ganador/empate, 3 por exacto) + posiciones de grupo (3 por 1º, 2 por 2º, 1 por 3º) + eliminatorias: por ganador de llave (16avos +1, octavos +2, cuartos +4, semis +8, campeón +16; 3º puesto +4) MÁS el marcador (3 por exacto, 1 por resultado). La hora muestra cuándo se cargó o actualizó el prode.</p>';}
+    h+='</table><p class="gr-note">Puntos automáticos: partidos de grupo (1 por ganador/empate, 3 por exacto) + posiciones de grupo (3 por 1º, 2 por 2º, 1 por 3º) + eliminatorias: por ganador de llave (16avos +1, octavos +2, cuartos +4, semis +8, campeón +16; 3º puesto +4) MÁS el marcador (3 por exacto, 1 por resultado) + definiciones confirmadas (campeón +15, goleador +10, mejor jugador +5). La hora muestra cuándo se cargó o actualizó el prode.</p>';}
   h+='<p class="gr-note"><a href="'+location.pathname+'" style="color:#7c3aed;font-weight:700">← Crear / entrar a otro grupo</a></p>';
   cont.innerHTML=h;
   const cp=cont.querySelector('#gr-copy');if(cp)cp.onclick=()=>{const i=document.getElementById('gr-link');i.select();try{navigator.clipboard.writeText(i.value);}catch(e){}pbToast('Link copiado 📋');};
